@@ -1,0 +1,9 @@
+.chart-sparkline-line {
+    fill: none;
+    stroke: blue;
+}
+
+.chart-sparkline-area {
+    fill: rgba(0,128,0, 0.6);
+    stroke: green;
+}
