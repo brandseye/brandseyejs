@@ -2,7 +2,13 @@
 
 A JavaScript library for displaying data.
 
-# License
+## Using
+
+- JQuery
+- D3
+- NVd3
+
+## License
 
 Copyright (C) 2013-2014 BrandsEye (PTY) LTD
 

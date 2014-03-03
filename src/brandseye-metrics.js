@@ -370,6 +370,9 @@ brandseye.charts = function() {
             var xScale = nvChart.multibar.xScale();
             var yScale = nvChart.multibar.yScale();
             var container = d3.select(nvChart.container);
+
+            container.classed('bm', true);
+
             container.selectAll('.chart-background').remove();
             container.select('.nv-wrap').insert('rect', ':first-child')
                 .attr('class', 'chart-background')
@@ -785,6 +788,9 @@ brandseye.charts = function() {
             // Now we want to rotate and translate the labels appropriately.
             var seen = false;
             var container = d3.select(nvChart.container);
+
+            container.classed('bm', true);
+
             var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
             xTicks
                 .selectAll('text')
@@ -1009,7 +1015,7 @@ brandseye.charts = function() {
         function chart(selection) {
             // We want to figure out how much size the x-axis text (on the left side of the chart)
             // requires to fit nicely.
-            var margins = {left: 30, right: 30, top: 0, bottom: 0};
+            var margins = {left: 30, right: 30, top: 20, bottom: 20};
             var maxLabelLength = 0;
             var xAxisRestriction = 25;
 
@@ -1091,6 +1097,7 @@ brandseye.charts = function() {
             }
 
             var container = d3.select(nvChart.container);
+            container.classed('bm', true);
 
             // Add some tooltips
             var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
@@ -1406,6 +1413,8 @@ brandseye.charts = function() {
 
 
             var container = d3.select(nvChart.container);
+            container.classed('bm', true);
+
             var xScale = nvChart.multibar.xScale();
             var yScale = nvChart.multibar.yScale();
 
@@ -1673,6 +1682,10 @@ brandseye.charts = function() {
             // Call the chart.
             nvChart(selection);
 
+            selection.each(function() {
+                d3.select(this).classed('bm', true);
+            });
+
             if (tooltip) {
                 nvChart.dispatch.on('tooltipShow', function(e) {
                     Beef.Tooltip.show({
@@ -1682,7 +1695,7 @@ brandseye.charts = function() {
                         target: d3.event.currentTarget,
                         model: tooltip.data(nvChart, e)
                     })
-                })
+                });
                 nvChart.dispatch.on('tooltipHide', function() {
                     Beef.Tooltip.close();
                 })
@@ -2419,9 +2432,9 @@ brandseye.charts = function() {
             })
             .interpolate('linear');
 
-        var lines = svg.selectAll('.chart-sparkline-line').data([data]);
+        var lines = svg.selectAll('.bm-chart-sparkline-line').data([data]);
         lines.exit().remove();
-        lines.enter().append('path').classed('chart-sparkline-line', true);
+        lines.enter().append('path').classed('bm-chart-sparkline-line', true);
 
         lines.attr('d', line);
     };
@@ -2458,11 +2471,11 @@ brandseye.charts = function() {
                 return yScale(y(d));
             });
 
-        var areas = svg.selectAll('.chart-sparkline-area').data([data]);
+        var areas = svg.selectAll('.bm-chart-sparkline-area').data([data]);
         areas.exit().remove();
         areas.enter()
             .append('path')
-            .classed('chart-sparkline-area', true)
+            .classed('bm-chart-sparkline-area', true)
             .style('opacity', 0)
             .transition()
             .duration(1000)
