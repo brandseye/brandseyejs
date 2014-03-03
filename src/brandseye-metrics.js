@@ -20,6 +20,7 @@
  */
 
 var brandseye = {};
+
 brandseye.charts = function() {
     var namespace = {
         version: "0.0.1"
@@ -1405,7 +1406,7 @@ brandseye.charts = function() {
                         target: e.e.currentTarget,
                         model: tooltip.data(nvChart, e)
                     })
-                })
+                });
                 nvChart.dispatch.on('tooltipHide', function() {
                     Beef.Tooltip.close();
                 })
