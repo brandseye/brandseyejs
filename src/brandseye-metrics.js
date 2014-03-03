@@ -201,6 +201,8 @@ brandseye.charts = function() {
 
         //noinspection UnnecessaryLocalVariableJS
         var nvChart = nv.models.multiBarChart(),
+            data,
+            element,
             width,
             height,
             x,
@@ -479,8 +481,40 @@ brandseye.charts = function() {
 
         //-------------------------------------
 
+        chart.render = function() {
+            console.log(this.element());
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(this);
+            return chart;
+        };
+
+        //-------------------------------------
+
         chart.nvChart = nvChart;
         chart.dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick');
+
+        chart.data = function(_) {
+            if (!arguments.length) return data;
+            data = _;
+            return chart;
+        };
+
+        chart.element = function(_) {
+            if (!arguments.length) return element;
+            element = _;
+            return chart;
+        };
 
         chart.width = function(_) {
             if (!arguments.length) return width;
@@ -618,6 +652,8 @@ brandseye.charts = function() {
 
         //noinspection UnnecessaryLocalVariableJS
         var nvChart = nv.models.lineChart(),
+            data,
+            element,
             width,
             height,
             x,
@@ -848,8 +884,40 @@ brandseye.charts = function() {
 
         //-------------------------------------
 
+        chart.render = function() {
+            console.log(this.element());
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(this);
+            return chart;
+        };
+
+        //-------------------------------------
+
         chart.nvChart = nvChart;
         chart.dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick'); // nvChart.lines.dispatch;
+
+        chart.data = function(_) {
+            if (!arguments.length) return data;
+            data = _;
+            return chart;
+        };
+
+        chart.element = function(_) {
+            if (!arguments.length) return element;
+            element = _;
+            return chart;
+        };
 
         chart.width = function(_) {
             if (!arguments.length) return width;
@@ -987,6 +1055,8 @@ brandseye.charts = function() {
 
         //noinspection UnnecessaryLocalVariableJS
         var nvChart = nv.models.multiBarHorizontalChart(),
+            data,
+            element,
             width,
             height,
             x,
@@ -1147,8 +1217,40 @@ brandseye.charts = function() {
 
         //-------------------------------------
 
+        chart.render = function() {
+            console.log(this.element());
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(this);
+            return chart;
+        };
+
+        //-------------------------------------
+
         chart.nvChart = nvChart;
         chart.dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick'); // nvChart.multibar.dispatch;
+
+        chart.data = function(_) {
+            if (!arguments.length) return data;
+            data = _;
+            return chart;
+        };
+
+        chart.element = function(_) {
+            if (!arguments.length) return element;
+            element = _;
+            return chart;
+        };
 
         chart.width = function(_) {
             if (!arguments.length) return width;
@@ -1288,6 +1390,8 @@ brandseye.charts = function() {
 
         //noinspection UnnecessaryLocalVariableJS
         var nvChart = nv.models.multiBarChart(),
+            data,
+            element,
             width,
             height,
             x,
@@ -1470,8 +1574,40 @@ brandseye.charts = function() {
 
         //-------------------------------------
 
+        chart.render = function() {
+            console.log(this.element());
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(this);
+            return chart;
+        };
+
+        //-------------------------------------
+
         chart.nvChart = nvChart;
         chart.dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick'); // nvChart.multibar.dispatch;
+
+        chart.data = function(_) {
+            if (!arguments.length) return data;
+            data = _;
+            return chart;
+        };
+
+        chart.element = function(_) {
+            if (!arguments.length) return element;
+            element = _;
+            return chart;
+        };
 
         chart.width = function(_) {
             if (!arguments.length) return width;
@@ -1609,6 +1745,8 @@ brandseye.charts = function() {
         //-------------------------------------
 
         var nvChart = nv.models.pieChart(),
+            data,
+            element,
             width,
             height,
             x,
@@ -1722,7 +1860,39 @@ brandseye.charts = function() {
 
         //-------------------------------------
 
+        chart.render = function() {
+            console.log(this.element());
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(this);
+            return chart;
+        };
+
+        //-------------------------------------
+
         chart.dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick'); // nvChart.pie.dispatch;
+
+        chart.data = function(_) {
+            if (!arguments.length) return data;
+            data = _;
+            return chart;
+        };
+
+        chart.element = function(_) {
+            if (!arguments.length) return element;
+            element = _;
+            return chart;
+        };
 
         chart.width = function(_) {
             if (!arguments.length) return width;
