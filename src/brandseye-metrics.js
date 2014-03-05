@@ -21,6 +21,39 @@
 
 var brandseye = {};
 
+// A basic colour scheme that we use throughout the library.
+brandseye.colours = {
+    scheme: [
+        '#58B6FF',
+        '#5473BD',
+        '#DF71FC',
+        '#9856B0',
+        '#ff58a3',
+        '#D22D6F',
+        '#fc6a4b',
+        '#E53E39',
+        '#FFD658',
+        '#E8AF44',
+        '#43C278',
+        '#318F58'
+    ],
+    allColours: [
+        '#f0f8ff', '#faebd7', '#00ffff', '#7fffd4', '#f0ffff', '#f5f5dc', '#ffe4c4', '#000000', '#ffebcd', '#0000ff', '#8a2be2',
+        '#a52a2a', '#deb887', '#5f9ea0', '#7fff00', '#d2691e', '#ff7f50', '#6495ed', '#fff8dc', '#dc143c', '#00ffff', '#00008b',
+        '#008b8b', '#b8860b', '#a9a9a9', '#006400', '#bdb76b', '#8b008b', '#556b2f', '#ff8c00', '#9932cc', '#8b0000', '#e9967a',
+        '#8fbc8f', '#483d8b', '#2f4f4f', '#00ced1', '#9400d3', '#ff1493', '#00bfff', '#696969', '#1e90ff', '#d19275', '#b22222',
+        '#fffaf0', '#228b22', '#ff00ff', '#dcdcdc', '#f8f8ff', '#ffd700', '#daa520', '#808080', '#008000', '#adff2f', '#f0fff0',
+        '#ff69b4', '#cd5c5c', '#4b0082', '#fffff0', '#f0e68c', '#e6e6fa', '#fff0f5', '#7cfc00', '#fffacd', '#add8e6', '#f08080',
+        '#e0ffff', '#fafad2', '#d3d3d3', '#90ee90', '#ffb6c1', '#ffa07a', '#20b2aa', '#87cefa', '#8470ff', '#778899', '#b0c4de',
+        '#ffffe0', '#00ff00', '#32cd32', '#faf0e6', '#ff00ff', '#800000', '#66cdaa', '#0000cd', '#ba55d3', '#9370d8', '#3cb371',
+        '#7b68ee', '#00fa9a', '#48d1cc', '#c71585', '#191970', '#f5fffa', '#ffe4e1', '#ffe4b5', '#ffdead', '#000080', '#fdf5e6',
+        '#808000', '#6b8e23', '#ffa500', '#ff4500', '#da70d6', '#eee8aa', '#98fb98', '#afeeee', '#d87093', '#ffefd5', '#ffdab9',
+        '#cd853f', '#ffc0cb', '#dda0dd', '#b0e0e6', '#800080', '#ff0000', '#bc8f8f', '#4169e1', '#8b4513', '#fa8072', '#f4a460',
+        '#2e8b57', '#fff5ee', '#a0522d', '#c0c0c0', '#87ceeb', '#6a5acd', '#708090', '#fffafa', '#00ff7f', '#4682b4', '#d2b48c',
+        '#008080', '#d8bfd8', '#ff6347', '#40e0d0', '#ee82ee', '#d02090', '#f5deb3', '#ffffff', '#f5f5f5', '#ffff00', '#9acd32'
+    ]
+};
+
 brandseye.charts = function() {
 
     var namespace = {
@@ -195,6 +228,7 @@ brandseye.charts = function() {
 
     namespace.Bob = function() {
         this.attributes = {};
+        this.attributes.tickFormat = d3.format(',.f')
         this.attributes.name = "YES";
 
     };
@@ -209,7 +243,12 @@ brandseye.charts = function() {
         // encapsulation. Here we're placing the member data in set called attributes.
         // Since we want the member data to be unique to each instance, we create it here
         // in the constructor, rather than below in the prototype.
-        this.attributes = {};
+        this.attributes = {
+            colours: brandseye.colours.scheme,
+            showLegend: true,
+            coarseness: 'daily',
+            padding: {left: 0, right: 0, bottom: 0, top: 0}
+        };
         return this;
     };
 
@@ -225,26 +264,88 @@ brandseye.charts = function() {
             }
 
             var svg = parent.select('svg');
+            var tickFormat = this.tickFormat();
+            var padding = this.padding();
 
             // Here we set up basic
-//            svg
-//                .datum(this.data())
-//                .transition()
-//                .duration(100)
-//                .call(this.renderImpl);
+            console.log("Data", this.data());
+            var that = this;
+            svg
+                .datum(this.data())
+                .transition()
+                .duration(100)
+                .call(function(selection) {
+
+                    var maxLabelLength = 0;
+                    selection.each(function(data) {
+                        if (data) {
+                            _(data).each(function(s, i) {
+                                _(s.values).each(function(d) {
+                                    d.legendKey = i;
+                                    var length = tickFormat(d).length;
+                                    if (length > maxLabelLength) {
+                                        maxLabelLength = length;
+                                    }
+                                });
+                            });
+                        }
+                    });
+
+                    var margins = {
+                        top:    30,
+                        bottom: (that.coarseness() === 'weekly' ? 45 : 40),
+                        left:   40,
+                        right:  20
+                    };
+
+                    if (maxLabelLength) margins.left = (margins.left || 0) + maxLabelLength * 10;
+
+                    margins.left += padding.left;
+                    margins.right += padding.right;
+                    margins.bottom += padding.bottom;
+                    margins.top += padding.top;
+
+                    that.attributes.legend
+                        .colours(that.colours())
+                        .margin({top: 0, left: 60, right: that.width()})
+                        .height(that.height())
+                        .width(that.width())
+                        .showLegend(that.showLegend());
+                    selection.call(that.attributes.legend);
+                    margins.bottom = margins.bottom + that.attributes.legend.finalHeight() + 20;
+
+                    if (that.dataAxisLabel()) {
+                        margins.left = (margins.left || 0) + drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height(), 'column');
+                    }
+
+                    console.log("That: ", that);
+                    that.nvChart
+                        .margin(margins)
+                        .width(that.width())
+                        .height(that.height())
+                        .showControls(false)
+                        .showLegend(false)
+                        .reduceXTicks(false)
+                        .x(that.x())
+                        .y(that.y())
+                        .noData(loadingText)
+                        .tooltips(false)
+                        .color(that.colours());
+
+                    that.nvChart(selection);
+
+                    console.log("FINISHED RENDERING");
+
+                });
             return this;
         },
 
         setup: function() {
-            if (this.attributes.hasBeenSetup) {
-                this.nvchart = this.createChart();
+            if (!this.attributes.hasBeenSetup) {
+                this.nvChart = this.createChart();
+                this.attributes.legend = namespace.chartLegend()
             }
             this.attributes.hasBeenSetup = true;
-        },
-
-        // Subgraphs can provide their own rendering functionality be overriding this method.
-        renderImpl: function() {
-            console.log("Renderimpl being called");
         },
 
         // Override this function to return an instance of the nvchart
@@ -266,22 +367,32 @@ brandseye.charts = function() {
         },
 
         width: function(_) {
+            if (!arguments.length) return this.attributes.width;
+            this.attributes.width = _;
             return this;
         },
 
         height: function(_) {
+            if (!arguments.length) return this.attributes.height;
+            this.attributes.height = _;
             return this;
         },
 
         x: function(_) {
+            if (!arguments.length) return this.attributes.x;
+            this.attributes.x = _;
             return this;
         },
 
         y: function(_) {
+            if (!arguments.length) return this.attributes.y;
+            this.attributes.y = _;
             return this;
         },
 
         tickFormat: function(_) {
+            if (!arguments.length) return this.attributes.tickFormat;
+            this.attributes.tickFormat = _;
             return this;
         },
 
@@ -332,24 +443,37 @@ brandseye.charts = function() {
         },
 
         colours: function(_) {
-//            if (!arguments.length) return colours;
-//            colours = _.concat(Beef.Colours.allColours);
+            if (!arguments.length) return this.attributes.colours;
+            this.attributes.colours = _.concat(brandseye.colours.allColours);
             return this;
         },
 
         coarseness: function(_) {
+            if (!arguments.length) return this.attributes.coarseness;
+            this.attributes.coarseness = _;
             return this;
         },
 
         showLegend: function(_) {
+            if (!arguments.length) return this.attributes.showLegend;
+            this.attributes.showLegend = _;
             return this;
         },
 
         dataAxisLabel: function(_) {
+            if (!arguments.length) return this.attributes.dataAxisLabel;
+            this.attributes.dataAxisLabel = _;
             return this;
         },
 
-        padding: function(p) {
+        padding: function(_) {
+            if (!arguments.length) return this.attributes.padding;
+            this.attributes.padding = {
+                top:    _.top || 0,
+                bottom: _.bottom || 0,
+                left:   _.left || 0,
+                right:  _.right || 0
+            };
             return this;
         }
     };
