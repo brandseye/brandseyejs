@@ -266,6 +266,7 @@ brandseye.charts = function() {
             var svg = parent.select('svg');
             var tickFormat = this.tickFormat();
             var padding = this.padding();
+            var nvChart = this.attributes.nvChart;
 
             // Here we set up basic
             console.log("Data", this.data());
@@ -275,6 +276,18 @@ brandseye.charts = function() {
                 .transition()
                 .duration(100)
                 .call(function(selection) {
+
+                    // Returns true if we should format this date long, rather than just
+                    // with the date.
+                    var longFormat = function(m, i) {
+                        return i === 0 || m.date() === 1;
+                    };
+
+                    var dateRegex = /^\d+-\d+-\d+$/;
+
+                    var isMonday = function(m) {
+                        return m.day() === 1;
+                    };
 
                     var maxLabelLength = 0;
                     selection.each(function(data) {
@@ -319,20 +332,63 @@ brandseye.charts = function() {
                     }
 
                     console.log("That: ", that);
-                    that.nvChart
+                    nvChart
                         .margin(margins)
                         .width(that.width())
                         .height(that.height())
-                        .showControls(false)
                         .showLegend(false)
-                        .reduceXTicks(false)
                         .x(that.x())
                         .y(that.y())
                         .noData(loadingText)
                         .tooltips(false)
                         .color(that.colours());
 
-                    that.nvChart(selection);
+                    if (nvChart.reduceXTicks) nvChart.reduceXTicks(false);
+                    if (nvChart.showControls) nvChart.showControls(false);
+
+
+
+                    if (that.attributes.forceMaxY) {
+                        if (nvChart.forceY) nvChart.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
+                        else if (nvChart.multibar) nvChart.multibar.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
+                    }
+
+                    if (nvChart.xAxis) {
+                        nvChart.xAxis.tickFormat(xAxisTickFormat);
+
+                        nvChart.xAxis.tickFormat(function(d, i) {
+                            if (!dateRegex.test(d)) return d;
+                            var m = new moment(d);
+
+                            switch (that.coarseness()) {
+                                case 'daily':
+                                    if (longFormat(m, i)) return m.format("MMM DD");
+                                    if (m.day() === 1) return m.format("ddd DD");
+
+                                    return m.format("DD");
+                                case 'weekly':
+                                    var next = m.clone().add('days', 6),
+                                        label = m.format("MMM DD") + '→';
+                                    if (next.months() === m.months()) label += next.format("DD");
+                                    else label += next.format("MMM DD");
+                                    return label;
+                                case 'monthly':
+                                    if (m.month() == 0) return m.format("MMMM ’YY");
+                                    return m.format("MMMM");
+                                case 'yearly':
+                                    return m.format("YYYY");
+                            }
+                        });
+                    }
+
+                    if (nvChart.yAxis) {
+                        nvChart.yAxis
+                            .tickFormat(tickFormat)
+                            .showMaxMin(false);
+                    }
+
+                    nvChart(selection);
+
 
                     console.log("FINISHED RENDERING");
 
@@ -342,7 +398,8 @@ brandseye.charts = function() {
 
         setup: function() {
             if (!this.attributes.hasBeenSetup) {
-                this.nvChart = this.createChart();
+                this.attributes.nvChart = this.createChart();
+                console.log("----Creating chart: ", this.attributes.nvChart);
                 this.attributes.legend = namespace.chartLegend()
             }
             this.attributes.hasBeenSetup = true;
@@ -417,15 +474,15 @@ brandseye.charts = function() {
         },
 
         forceY: function(force) {
-//            if (!arguments.length) return [forceMinY, forceMaxY];
-//            if (_.isArray(force)) {
-//                forceMinY = force[0];
-//                forceMaxY = force[1];
-//            }
-//            else {
-//                forceMinY = 0;
-//                forceMaxY = force;
-//            }
+            if (!arguments.length) return [this.attributes.forceMinY, this.attributes.forceMaxY];
+            if (_.isArray(force)) {
+                this.attributes.forceMinY = force[0];
+                this.attributes.forceMaxY = force[1];
+            }
+            else {
+                this.attributes.forceMinY = 0;
+                this.attributes.forceMaxY = force;
+            }
             return this;
         },
 
@@ -488,7 +545,7 @@ brandseye.charts = function() {
     };
 
     namespace.Histogram.prototype = new namespace.Graph();
-    namespace.Histogram.prototype.createChart = function() { return nv.models.multiBarChart(); };
+    namespace.Histogram.prototype.createChart = function() { console.log("Histogram!!"); return nv.models.multiBarChart(); };
 
     //--------------------------------------------------------------
     // # Bar charts
@@ -500,7 +557,7 @@ brandseye.charts = function() {
     };
 
     namespace.BarChart.prototype = new namespace.Graph();
-    namespace.BarChart.prototype.createChart = function() { return nv.models.multiBarHorizontalChart(); };
+    namespace.BarChart.prototype.createChart = function() { console.log("barchart!!"); return nv.models.multiBarHorizontalChart(); };
 
     //--------------------------------------------------------------
     // # Column charts
@@ -512,7 +569,7 @@ brandseye.charts = function() {
     };
 
     namespace.ColumnChart.prototype = new namespace.Graph();
-    namespace.ColumnChart.prototype.createChart = function() { return nv.models.multiBarChart(); };
+    namespace.ColumnChart.prototype.createChart = function() { console.log("columnchart!!"); return nv.models.multiBarChart(); };
 
     //--------------------------------------------------------------
     // # Pie charts
@@ -522,7 +579,7 @@ brandseye.charts = function() {
     };
 
     namespace.PieChart.prototype = new namespace.Graph();
-    namespace.PieChart.prototype.createChart = function() { return nv.models.pieChart(); };
+    namespace.PieChart.prototype.createChart = function() { console.log("piechart!!"); return nv.models.pieChart(); };
 
     //--------------------------------------------------------------
     // # Line charts
@@ -532,7 +589,7 @@ brandseye.charts = function() {
     };
 
     namespace.LineChart.prototype = new namespace.Graph();
-    namespace.LineChart.prototype.createChart = function() { return nv.models.lineChart(); };
+    namespace.LineChart.prototype.createChart = function() { console.log("linechart!!"); return nv.models.lineChart(); };
 
     //--------------------------------------------------------------
 
