@@ -22,6 +22,7 @@
 var brandseye = {};
 
 brandseye.charts = function() {
+
     var namespace = {
         version: "0.0.1"
     };
@@ -190,6 +191,225 @@ brandseye.charts = function() {
     }
 
     //--------------------------------------------------------------
+    // # Basic graph functionality
+
+    namespace.Bob = function() {
+        this.attributes = {};
+        this.attributes.name = "YES";
+
+    };
+    namespace.Bob.prototype = {
+        getName: function() { return this.attributes.name; },
+        setName: function(n) { this.attributes.name = n; }
+    };
+
+    // This defines the parent object from which most of the graphs descend.
+    namespace.Graph = function() {
+        // Javascript does not have a great way to provide member data
+        // encapsulation. Here we're placing the member data in set called attributes.
+        // Since we want the member data to be unique to each instance, we create it here
+        // in the constructor, rather than below in the prototype.
+        this.attributes = {};
+        return this;
+    };
+
+    namespace.Graph.prototype = {
+
+        render: function() {
+            this.setup();
+
+            var parent = d3.select(this.element());
+
+            if (parent.selectAll('svg').empty()) {
+                parent.append('svg');
+            }
+
+            var svg = parent.select('svg');
+
+            // Here we set up basic
+//            svg
+//                .datum(this.data())
+//                .transition()
+//                .duration(100)
+//                .call(this.renderImpl);
+            return this;
+        },
+
+        setup: function() {
+            if (this.attributes.hasBeenSetup) {
+                this.nvchart = this.createChart();
+            }
+            this.attributes.hasBeenSetup = true;
+        },
+
+        // Subgraphs can provide their own rendering functionality be overriding this method.
+        renderImpl: function() {
+            console.log("Renderimpl being called");
+        },
+
+        // Override this function to return an instance of the nvchart
+        // that the child of *Graph* should use.
+        createChart: function() {
+            throw new Error("createChart not implemented");
+        },
+
+        data: function(_) {
+            if (!arguments.length) return this.attributes.data;
+            this.attributes.data = _;
+            return this;
+        },
+
+        element: function(_) {
+            if (!arguments.length) return this.attributes.element;
+            this.attributes.element = _;
+            return this;
+        },
+
+        width: function(_) {
+            return this;
+        },
+
+        height: function(_) {
+            return this;
+        },
+
+        x: function(_) {
+            return this;
+        },
+
+        y: function(_) {
+            return this;
+        },
+
+        tickFormat: function(_) {
+            return this;
+        },
+
+        labelFormat: function(_) {
+            return this;
+        },
+
+        labelCompression: function(_) {
+            return this;
+        },
+
+        showLabels: function(_) {
+            return this;
+        },
+
+        labels: function() {
+            return labels;
+        },
+
+        tooltip: function(_) {
+            return this;
+        },
+
+        forceY: function(force) {
+//            if (!arguments.length) return [forceMinY, forceMaxY];
+//            if (_.isArray(force)) {
+//                forceMinY = force[0];
+//                forceMaxY = force[1];
+//            }
+//            else {
+//                forceMinY = 0;
+//                forceMaxY = force;
+//            }
+            return this;
+        },
+
+        xAxisTooltips: function(_) {
+            return this;
+        },
+
+        xAxisOverride: function(_) {
+            return this;
+        },
+
+        colourIndex: function(index) {
+            this.colours(Beef.Colours.getScheme(index));
+            return this;
+        },
+
+        colours: function(_) {
+//            if (!arguments.length) return colours;
+//            colours = _.concat(Beef.Colours.allColours);
+            return this;
+        },
+
+        coarseness: function(_) {
+            return this;
+        },
+
+        showLegend: function(_) {
+            return this;
+        },
+
+        dataAxisLabel: function(_) {
+            return this;
+        },
+
+        padding: function(p) {
+            return this;
+        }
+    };
+
+    //--------------------------------------------------------------
+    // # Histograms
+    // The histogram is useful for accumulating discrete values in to buckets,
+    // such as for showing the number of mentions appearing over time.
+
+    namespace.Histogram = function() {
+        return this;
+    };
+
+    namespace.Histogram.prototype = new namespace.Graph();
+    namespace.Histogram.prototype.createChart = function() { return nv.models.multiBarChart(); };
+
+    //--------------------------------------------------------------
+    // # Bar charts
+    // *Bar charts* are useful for comparing categories of things. Bar charts
+    // are rendered horizontally: if you would like vertical bars, see the *ColumnChart*.
+
+    namespace.BarChart = function() {
+        return this;
+    };
+
+    namespace.BarChart.prototype = new namespace.Graph();
+    namespace.BarChart.prototype.createChart = function() { return nv.models.multiBarHorizontalChart(); };
+
+    //--------------------------------------------------------------
+    // # Column charts
+    // *Column charts* are useful for comparing categories of things. Column charts
+    // are rendered vertically: if you would like horizontal bars, see the *BarChart*.
+
+    namespace.ColumnChart = function() {
+        return this;
+    };
+
+    namespace.ColumnChart.prototype = new namespace.Graph();
+    namespace.ColumnChart.prototype.createChart = function() { return nv.models.multiBarChart(); };
+
+    //--------------------------------------------------------------
+    // # Pie charts
+
+    namespace.PieChart = function() {
+        return this;
+    };
+
+    namespace.PieChart.prototype = new namespace.Graph();
+    namespace.PieChart.prototype.createChart = function() { return nv.models.pieChart(); };
+
+    //--------------------------------------------------------------
+    // # Line charts
+
+    namespace.LineChart = function() {
+        return this;
+    };
+
+    namespace.LineChart.prototype = new namespace.Graph();
+    namespace.LineChart.prototype.createChart = function() { return nv.models.lineChart(); };
+
     //--------------------------------------------------------------
 
     /**
@@ -482,7 +702,6 @@ brandseye.charts = function() {
         //-------------------------------------
 
         chart.render = function() {
-            console.log(this.element());
             var parent = d3.select(this.element());
 
             if (parent.selectAll('svg').empty()) {
