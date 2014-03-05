@@ -197,10 +197,19 @@ brandseye.charts = function() {
         });
     }
 
-    function setupDispatcher(chart, container, originalDispatch, originalData, selector, transformData) {
+    function setupDispatcher(dispatch, container, originalDispatch, tooltipDispatch, originalData, selector, transformData) {
         if (_(transformData).isUndefined()) transformData = _.identity;
+        console.log("originalDispatch", originalDispatch);
         originalDispatch.on('elementClick', function(data) {
-            chart.dispatch.elementClick(data);
+            dispatch.elementClick(data);
+        });
+
+        tooltipDispatch.on('tooltipShow', function(data) {
+            dispatch.tooltipShow(data);
+        });
+
+        tooltipDispatch.on('tooltipHide', function(data) {
+            dispatch.tooltipHide(data);
         });
 
         container.selectAll(selector).on('mouseup', function(d) {
@@ -209,8 +218,8 @@ brandseye.charts = function() {
                 e: d3.event,
                 series: originalData[d.series]
             };
-            if (d3.event.which == 2) chart.dispatch.elementMiddleClick(data);
-            if (d3.event.which == 3) chart.dispatch.elementRightClick(data);
+            if (d3.event.which == 2) dispatch.elementMiddleClick(data);
+            if (d3.event.which == 3) dispatch.elementRightClick(data);
         });
     }
 
@@ -247,7 +256,8 @@ brandseye.charts = function() {
             colours: brandseye.colours.scheme,
             showLegend: true,
             coarseness: 'daily',
-            padding: {left: 0, right: 0, bottom: 0, top: 0}
+            padding: {left: 0, right: 0, bottom: 0, top: 0},
+            dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide')
         };
         return this;
     };
@@ -389,6 +399,41 @@ brandseye.charts = function() {
 
                     nvChart(selection);
 
+                    // Here, if there are comparisons, we want to map label dates to lists of comparison dates.
+//                    var comparisons = {};
+//                    if (that.data() && that.data().length > 1) {
+//                        _(that.data()).each(function(s) {
+//                            _(s.values).each(function(d) {
+//                                if (d.originalPublished) {
+//                                    var dates = comparisons[d.published] || [];
+//                                    dates.push(d.originalPublished);
+//                                    comparisons[d.published] = dates;
+//                                }
+//                            });
+//                        });
+//                    }
+
+//                    // We don't want to include any duplicate dates.
+//                    _(comparisons).each(function(dates, key) {
+//                        comparisons[key] = _(dates).uniq();
+//                    });
+//
+//                    var xScale = nvChart.multibar.xScale();
+//                    var yScale = nvChart.multibar.yScale();
+                    var container = d3.select(nvChart.container);
+//
+//                    container.classed('bm', true);
+//
+//                    container.selectAll('.chart-background').remove();
+//                    container.select('.nv-wrap').insert('rect', ':first-child')
+//                        .attr('class', 'chart-background')
+//                        .attr('fill', backgroundColour)
+//                        .attr('width', _(xScale.rangeExtent()).last())
+//                        .attr('height', _(yScale.range()).first());
+//
+                    if (nvChart.multibar) {
+                        setupDispatcher(that.dispatch(), container, nvChart.multibar.dispatch, nvChart.dispatch, that.data(), '.nv-bar');
+                    }
 
                     console.log("FINISHED RENDERING");
 
@@ -411,16 +456,36 @@ brandseye.charts = function() {
             throw new Error("createChart not implemented");
         },
 
+        //----------------------------------------
+        // ## Getters and Setters
+        // The getters and setters provide access to the various data elements that a graph requires.
+        // Most of the functions below act as both getters and setters. When given an argument, they will
+        // set the value of an item, and then return the graph object, allowing calls to be chained. When used
+        // with no argument, they will merely return the data element.
+        //
+        // An example of using this:
+        //
+        //        graph
+        //            .data(data)
+        //            .element($('.graph')[0]);
+
+        // Sets the data to be displayed.
         data: function(_) {
             if (!arguments.length) return this.attributes.data;
             this.attributes.data = _;
             return this;
         },
 
+        // Sets the element in which the graph should be displayed. This
+        // should be native dom element (rather than a jquery or d3 selection).
         element: function(_) {
             if (!arguments.length) return this.attributes.element;
             this.attributes.element = _;
             return this;
+        },
+
+        nvChart: function() {
+            return this.attributes.nvChart;
         },
 
         width: function(_) {
@@ -532,6 +597,17 @@ brandseye.charts = function() {
                 right:  _.right || 0
             };
             return this;
+        },
+
+        // Provides access to a [d3 event dispatch object](https://github.com/mbostock/d3/wiki/Internals#wiki-events),
+        // for handling events fired by the graph. The following events are supported:
+        // - *elementClick*. Fired when elements, such as bars, are left clicked once.
+        // - *elementMiddleClick*. Fired when elements, such as bars, are middle clicked.
+        // - *elementRightClick*. Fired when elements, such as bars, are right clicked once.
+        // - *tooltipShow*. Fired when it is appropriate to show a tooltip.
+        // - *tooltipHide*. Fired when a tooltip should be hidden.
+        dispatch: function() {
+            return this.attributes.dispatch;
         }
     };
 
