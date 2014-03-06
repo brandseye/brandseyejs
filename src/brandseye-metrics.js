@@ -433,7 +433,6 @@ brandseye.charts = function() {
         arrangeTicks: function() { },
 
         arrangeLabels: function(selection) {
-            console.log("Arranging labels", this.labels());
             var nvChart = this.nvChart(),
                 labels = this.labels()
 
