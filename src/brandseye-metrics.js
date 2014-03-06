@@ -235,17 +235,6 @@ brandseye.charts = function() {
     //--------------------------------------------------------------
     // # Basic graph functionality
 
-    namespace.Bob = function() {
-        this.attributes = {};
-        this.attributes.tickFormat = d3.format(',.f')
-        this.attributes.name = "YES";
-
-    };
-    namespace.Bob.prototype = {
-        getName: function() { return this.attributes.name; },
-        setName: function(n) { this.attributes.name = n; }
-    };
-
     // This defines the parent object from which most of the graphs descend.
     namespace.Graph = function() {
         // Javascript does not have a great way to provide member data
@@ -257,7 +246,9 @@ brandseye.charts = function() {
             showLegend: true,
             coarseness: 'daily',
             padding: {left: 0, right: 0, bottom: 0, top: 0},
-            dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide')
+            dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide'),
+            labelFormat: d3.format(',.f'),
+            showLabels: false
         };
         return this;
     };
@@ -411,6 +402,8 @@ brandseye.charts = function() {
                             .attr('height', _(yScale.range()).first());
 
                         that.arrangeTicks();
+                        console.log("Yes??");
+                        that.arrangeLabels(selection);
 
                         setupDispatcher(that.dispatch(), container, nvChart.multibar.dispatch, nvChart.dispatch, that.data(), '.nv-bar');
                     }
@@ -424,8 +417,8 @@ brandseye.charts = function() {
         setup: function() {
             if (!this.attributes.hasBeenSetup) {
                 this.attributes.nvChart = this.createChart();
-                console.log("----Creating chart: ", this.attributes.nvChart);
-                this.attributes.legend = namespace.chartLegend()
+                this.attributes.legend = namespace.chartLegend();
+                this.attributes.labels = namespace.chartLabel();
             }
             this.attributes.hasBeenSetup = true;
         },
@@ -438,6 +431,26 @@ brandseye.charts = function() {
 
         // Override to supply code that will arrange the axis bar ticks.
         arrangeTicks: function() { },
+
+        arrangeLabels: function(selection) {
+            console.log("Arranging labels", this.labels());
+            var nvChart = this.nvChart(),
+                labels = this.labels()
+
+            labels
+                .x(this.x())
+                .y(this.y())
+                .width(this.width() - nvChart.margin().left - nvChart.margin().right)
+                .height(this.height())
+                .xScale(nvChart.multibar.xScale())
+                .yScale(nvChart.multibar.yScale())
+                .delay(nvChart.delay())
+                .format(this.labelFormat())
+                .position("columns")
+                .determineCompression(this.labelCompression())
+                .showLabels(this.showLabels());
+            labels(selection);
+        },
 
         //----------------------------------------
         // ## Getters and Setters
@@ -502,19 +515,25 @@ brandseye.charts = function() {
         },
 
         labelFormat: function(_) {
+            if (!arguments.length) return this.attributes.labelFormat;
+            this.attributes.labelFormat = _;
             return this;
         },
 
         labelCompression: function(_) {
+            if (!arguments.length) return this.attributes.labelCompression;
+            this.attributes.labelCompression = _;
             return this;
         },
 
         showLabels: function(_) {
+            if (!arguments.length) return this.attributes.showLabels;
+            this.attributes.showLabels = _;
             return this;
         },
 
         labels: function() {
-            return labels;
+            return this.attributes.labels;
         },
 
         tooltip: function(_) {
@@ -702,7 +721,20 @@ brandseye.charts = function() {
                             .value();
                     });
             });
-    }
+
+        if (that.data()) {
+            if (xScale.rangeBand() < 12) {
+                xTicks.selectAll('text')
+                    .classed('smaller-text', true);
+            }
+            if (xScale.rangeBand() < 10) {
+                xTicks.selectAll('.standard-day')
+                    .style('opacity', 0);
+            }
+        }
+
+        xTicks.selectAll('.tick').style('opacity', 0);
+    };
 
     //--------------------------------------------------------------
     // # Bar charts
