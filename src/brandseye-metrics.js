@@ -289,15 +289,12 @@ brandseye.charts = function() {
 
                     // Returns true if we should format this date long, rather than just
                     // with the date.
+                    // TODO Refactor
                     var longFormat = function(m, i) {
                         return i === 0 || m.date() === 1;
                     };
 
                     var dateRegex = /^\d+-\d+-\d+$/;
-
-                    var isMonday = function(m) {
-                        return m.day() === 1;
-                    };
 
                     var maxLabelLength = 0;
                     selection.each(function(data) {
@@ -399,39 +396,22 @@ brandseye.charts = function() {
 
                     nvChart(selection);
 
-                    // Here, if there are comparisons, we want to map label dates to lists of comparison dates.
-//                    var comparisons = {};
-//                    if (that.data() && that.data().length > 1) {
-//                        _(that.data()).each(function(s) {
-//                            _(s.values).each(function(d) {
-//                                if (d.originalPublished) {
-//                                    var dates = comparisons[d.published] || [];
-//                                    dates.push(d.originalPublished);
-//                                    comparisons[d.published] = dates;
-//                                }
-//                            });
-//                        });
-//                    }
-
-//                    // We don't want to include any duplicate dates.
-//                    _(comparisons).each(function(dates, key) {
-//                        comparisons[key] = _(dates).uniq();
-//                    });
-//
-//                    var xScale = nvChart.multibar.xScale();
-//                    var yScale = nvChart.multibar.yScale();
-                    var container = d3.select(nvChart.container);
-//
-//                    container.classed('bm', true);
-//
-//                    container.selectAll('.chart-background').remove();
-//                    container.select('.nv-wrap').insert('rect', ':first-child')
-//                        .attr('class', 'chart-background')
-//                        .attr('fill', backgroundColour)
-//                        .attr('width', _(xScale.rangeExtent()).last())
-//                        .attr('height', _(yScale.range()).first());
-//
                     if (nvChart.multibar) {
+                        var xScale = nvChart.multibar.xScale();
+                        var yScale = nvChart.multibar.yScale();
+                        var container = d3.select(nvChart.container);
+
+                        container.classed('bm', true);
+
+                        container.selectAll('.chart-background').remove();
+                        container.select('.nv-wrap').insert('rect', ':first-child')
+                            .attr('class', 'chart-background')
+                            .attr('fill', backgroundColour)
+                            .attr('width', _(xScale.rangeExtent()).last())
+                            .attr('height', _(yScale.range()).first());
+
+                        that.arrangeTicks();
+
                         setupDispatcher(that.dispatch(), container, nvChart.multibar.dispatch, nvChart.dispatch, that.data(), '.nv-bar');
                     }
 
@@ -455,6 +435,9 @@ brandseye.charts = function() {
         createChart: function() {
             throw new Error("createChart not implemented");
         },
+
+        // Override to supply code that will arrange the axis bar ticks.
+        arrangeTicks: function() { },
 
         //----------------------------------------
         // ## Getters and Setters
@@ -622,6 +605,104 @@ brandseye.charts = function() {
 
     namespace.Histogram.prototype = new namespace.Graph();
     namespace.Histogram.prototype.createChart = function() { console.log("Histogram!!"); return nv.models.multiBarChart(); };
+
+    namespace.Histogram.prototype.arrangeTicks = function() {
+        console.log("Arranging the ticks!");
+        var seen = false;
+        var that = this;
+
+        var container = d3.select(this.nvChart().container);
+        var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
+        var xScale = this.nvChart().multibar.xScale();
+
+        var longFormat = function(m, i) {
+            return i === 0 || m.date() === 1;
+        };
+
+        var isMonday = function(m) {
+            return m.day() === 1;
+        };
+
+        // Here, if there are comparisons, we want to map label dates to lists of comparison dates.
+        var comparisons = {};
+        if (that.data() && that.data().length > 1) {
+            _(that.data()).each(function(s) {
+                _(s.values).each(function(d) {
+                    if (d.originalPublished) {
+                        var dates = comparisons[d.published] || [];
+                        dates.push(d.originalPublished);
+                        comparisons[d.published] = dates;
+                    }
+                });
+            });
+        }
+
+        // We don't want to include any duplicate dates.
+        _(comparisons).each(function(dates, key) {
+            comparisons[key] = _(dates).uniq();
+        });
+
+        xTicks
+            .selectAll('text')
+            .classed('x-axis-label', true)
+            .each(function(data, position) {
+                var m = new moment(data);
+                var formatString = 'dddd, MMMM D, YYYY';
+
+                // TODO There is a bug that makes the data and text elements repeat itself with position always
+                // equal to 0. When this begins, data will be null.
+                if (!data || seen) {
+                    seen = true;
+                    return;
+                }
+
+                // TODO sometimes we should rotate nothing, if the rangeBand is large enough.
+                var rotate = xScale.rangeBand() / that.data().length < 20 ||
+                    longFormat(m, position) || isMonday(m) ||
+                    _(that.data()).any(function(d) { return d.values[0].published === data;});
+                var angle = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? -30 : -90;
+                var yOffset = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? 0 : 5;
+
+                d3.select(this)
+                    .style('text-anchor', rotate ? 'end' : 'middle')
+                    .attr('class', function(d) {
+                        if (!d || that.coarseness() !== 'daily') return "";
+
+                        // Here we want to see if this is the beginning of a month
+                        if (m.month() === 0 && m.date() === 1) return "year-begin";
+                        if (m.date() == 1) return "month-begin";
+                        if (m.day() == 1) return "week-begin";
+                        return "standard-day";
+                    })
+                    .attr('transform', rotate ? 'translate (-10, ' + yOffset + ') rotate(' + angle + ' 0,0)' : '')
+                    .append('title')
+                    .text(function(d) {
+                        if (_(comparisons).isEmpty() || !comparisons[d]) {
+                            switch (that.coarseness()) {
+                                case 'weekly':
+                                    return 'The week of ' + m.format(formatString) + ', to '
+                                        + m.clone().add('days', 6).format(formatString);
+                                case 'monthly':
+                                    return 'The month of ' + m.format('MMMM');
+                                case 'yearly':
+                                    return 'The year ' + m.format('YYYY');
+                                case 'daily':
+                                default:
+                                    return m.format(formatString);
+                            }
+                        }
+                        var dates = comparisons[d];
+                        var format = 'ddd MMM D, YYYY';
+                        var first = new moment(dates[0]).format(format);
+                        return _(comparisons[d]).chain()
+                            .drop(1)
+                            .reduce(function(memo, date) {
+                                return memo + "\nvs\n" + new moment(date).format(format);
+                            }, first)
+                            .value();
+                    });
+            });
+    }
 
     //--------------------------------------------------------------
     // # Bar charts
