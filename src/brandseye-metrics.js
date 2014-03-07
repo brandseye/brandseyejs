@@ -293,13 +293,13 @@ brandseye.charts = function() {
                     that.arrangeLegend(selection);
                     var margins = that.calculateMargins(selection);
 
-                    if (that.dataAxisLabel()) {
+                    if (that.dataAxisLabel() && (that.labelPosition == "rows" || that.labelPosition == "columns")) {
                         var dataAxisLabelOffset = that.drawAxisDataLabel(selection, margins);
                         console.log("OFFSETTTT ", dataAxisLabelOffset);
 //                        console.log("Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height(), 'column'));
 //                        console.log("not Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height()));
                         if (that.labelPosition == "columns") margins.left = (margins.left || 0) + dataAxisLabelOffset;
-                        if (that.labelPosition == "rows") margins.bottoms = (margins.bottom || 0) + dataAxisLabelOffset;
+                        if (that.labelPosition == "rows") margins.bottom = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
 
                     console.log("That: ", that);
@@ -470,7 +470,7 @@ brandseye.charts = function() {
                         x = bbox.height;
                         y = margins.top + (height - margins.bottom - margins.top) / 2 + bbox.width / 2;
                     }
-                    else throw new Error('Unrecognised orientation [' + orientation + ']')
+                    else throw new Error('Unrecognised orientation [' + orientation + ']');
 
                     labelSelection
                         .attr('transform', function() {
@@ -888,10 +888,6 @@ brandseye.charts = function() {
             margins.left = maxLabelLength * 8; // Budgeting a set pixel width per letter (innacurate because not-fixed width font in use)
         }
 
-        if (this.dataAxisLabel()) {
-            margins.bottom += drawAxisDataLabel(selection, this.dataAxisLabel(), margins, this.width(), this.height());
-        }
-
         margins.left += padding.left;
         margins.right += padding.right;
         margins.bottom += padding.bottom;
@@ -921,6 +917,7 @@ brandseye.charts = function() {
 
     namespace.PieChart.prototype = new namespace.Graph();
     namespace.PieChart.prototype.createChart = function() { console.log("piechart!!"); return nv.models.pieChart(); };
+    namespace.PieChart.prototype.labelPosition = "circle";
 
     //--------------------------------------------------------------
     // # Line charts
