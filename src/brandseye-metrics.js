@@ -291,7 +291,8 @@ brandseye.charts = function() {
                         if (that.labelPosition == "rows") margins.bottom = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
 
-                    console.log("That: ", that);
+                    console.log("Margins are ", margins);
+
                     nvChart
                         .margin(margins)
                         .width(that.width())
@@ -930,19 +931,22 @@ brandseye.charts = function() {
     namespace.ColumnChart.prototype.createChart = function() { console.log("columnchart!!"); return nv.models.multiBarChart(); };
 
     namespace.ColumnChart.prototype.initialiseData = function() {
-        if (data) {
+        var data = this.data();
 
-            var data = this.data(),
-                xAxisOverride = this.xAxisOverride(),
+        if (data) {
+            var xAxisOverride = this.xAxisOverride(),
                 x = this.x(),
+                y = this.y(),
                 tickFormat = this.tickFormat(),
                 maxXLabelLength = 0,
                 maxYLabelLength = 0;
 
+            console.log("initialise DATA?", data);
             _(data).each(function(s, i) {
                 _(s.values).each(function(d) {
                     // Store an index for legends.
                     d.legendKey = i;
+                    console.log("TEST TEST TEST TEST");
 
                     // Determine length for x axis
                     var item = x(d);
@@ -954,7 +958,7 @@ brandseye.charts = function() {
 
                     // Determine length for y axis
                     item = tickFormat(y(d));
-                    length = item.toString().length
+                    length = item.toString().length;
                     if (length > maxYLabelLength) {
                         maxYLabelLength = length;
                     }
@@ -988,8 +992,16 @@ brandseye.charts = function() {
     namespace.ColumnChart.prototype.calculateMargins = function() {
         var margins = nv.models.multiBarChart().margin(),
             padding = this.padding();
+        margins = {
+            top: margins.top,
+            bottom: margins.bottom,
+            left: margins.left,
+            right: margins.right
+        };
         var maxXLabelLength = this.attributes.maxXLabelLength || 0,
             maxYLabelLength = this.attributes.maxYLabelLength || 0;
+
+        console.log("MaxXLabel", maxXLabelLength, "maxY", maxYLabelLength);
 
         margins.bottom = (margins.bottom || 0) + this.attributes.legend.finalHeight();
 
