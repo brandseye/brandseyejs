@@ -62,6 +62,7 @@
 
 .bm .data-label {
     font-style: italic;
+    cursor: default;
 }
 
 .bm .legend-entry {
@@ -82,4 +83,12 @@
 
 .bm .bar-fade {
     fill-opacity: 0.15;
+}
+
+.bm .x-axis-label {
+    cursor: default;
+}
+
+.bm .y-axis-label {
+    cursor: default;
 }

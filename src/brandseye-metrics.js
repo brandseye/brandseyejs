@@ -147,6 +147,7 @@ brandseye.charts = function() {
 
     var backgroundColour = '#f8f8f8';
     var defaultLabelRestriction = 15;
+    var xAxisRestriction = 25;
     var loadingText = '';
 
     /**
@@ -280,24 +281,12 @@ brandseye.charts = function() {
                 .duration(100)
                 .call(function(selection) {
 
-                    // Returns true if we should format this date long, rather than just
-                    // with the date.
-                    // TODO Refactor
-                    var longFormat = function(m, i) {
-                        return i === 0 || m.date() === 1;
-                    };
-
-                    var dateRegex = /^\d+-\d+-\d+$/;
-
                     that.initialiseData();
                     that.arrangeLegend(selection);
                     var margins = that.calculateMargins(selection);
 
                     if (that.dataAxisLabel() && (that.labelPosition == "rows" || that.labelPosition == "columns")) {
                         var dataAxisLabelOffset = that.drawAxisDataLabel(selection, margins);
-                        console.log("OFFSETTTT ", dataAxisLabelOffset);
-//                        console.log("Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height(), 'column'));
-//                        console.log("not Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height()));
                         if (that.labelPosition == "columns") margins.left = (margins.left || 0) + dataAxisLabelOffset;
                         if (that.labelPosition == "rows") margins.bottom = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
@@ -317,48 +306,15 @@ brandseye.charts = function() {
                     if (nvChart.reduceXTicks) nvChart.reduceXTicks(false);
                     if (nvChart.showControls) nvChart.showControls(false);
 
-
-
                     if (that.attributes.forceMaxY) {
                         if (nvChart.forceY) nvChart.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
                         else if (nvChart.multibar) nvChart.multibar.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
                     }
 
-                    if (nvChart.xAxis) {
-                        nvChart.xAxis.tickFormat(xAxisTickFormat);
-
-                        nvChart.xAxis.tickFormat(function(d, i) {
-                            if (!dateRegex.test(d)) return d;
-                            var m = new moment(d);
-
-                            switch (that.coarseness()) {
-                                case 'daily':
-                                    if (longFormat(m, i)) return m.format("MMM DD");
-                                    if (m.day() === 1) return m.format("ddd DD");
-
-                                    return m.format("DD");
-                                case 'weekly':
-                                    var next = m.clone().add('days', 6),
-                                        label = m.format("MMM DD") + '→';
-                                    if (next.months() === m.months()) label += next.format("DD");
-                                    else label += next.format("MMM DD");
-                                    return label;
-                                case 'monthly':
-                                    if (m.month() == 0) return m.format("MMMM ’YY");
-                                    return m.format("MMMM");
-                                case 'yearly':
-                                    return m.format("YYYY");
-                            }
-                        });
-                    }
-
-                    if (nvChart.yAxis) {
-                        nvChart.yAxis
-                            .tickFormat(tickFormat)
-                            .showMaxMin(false);
-                    }
-
                     nvChart(selection);
+
+                    that.formatXAxisTicks();
+                    that.formatYAxisTicks();
 
                     if (nvChart.multibar) {
                         var xScale = nvChart.multibar.xScale();
@@ -375,10 +331,10 @@ brandseye.charts = function() {
                             .attr('height', _(yScale.range()).first());
 
                         that.arrangeTicks();
-                        console.log("Yes??");
                         that.arrangeLabels(selection);
 
                         setupDispatcher(that.dispatch(), container, nvChart.multibar.dispatch, nvChart.dispatch, that.data(), '.nv-bar');
+                        markUnknownAndOthers(selection, that.x());
                     }
 
                     console.log("FINISHED RENDERING");
@@ -489,6 +445,37 @@ brandseye.charts = function() {
             return finalHeight;
         },
 
+        formatXAxisTicks: function() {
+            console.log("Formatting x axis!!!");
+            var nvChart = this.nvChart();
+            if (nvChart.xAxis) {
+                nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
+            }
+
+            var container = d3.select(nvChart.container);
+            console.log("Container ", container);
+            var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
+            console.log("xTicks", xTicks);
+            xTicks.selectAll('text').classed('x-axis-label', true);
+
+            overrideAxisLabels(xTicks, this.xAxisOverride());
+            addTooltips(xTicks, this.xAxisTooltips());
+        },
+
+        formatYAxisTicks: function() {
+            var nvChart = this.nvChart();
+            if (nvChart.yAxis) {
+                nvChart.yAxis
+                    .tickFormat(this.tickFormat())
+                    .showMaxMin(false);
+            }
+
+            var container = d3.select(nvChart.container);
+            var yTicks = container.select('.nv-y.nv-axis > g').selectAll('g');
+            yTicks.selectAll('text').classed('y-axis-label', true);
+            addTooltips(yTicks, this.tickFormat());
+        },
+
         calculateLegendMargin: function() {
             return {top: 0, left: 60, right: this.width()};
         },
@@ -528,7 +515,10 @@ brandseye.charts = function() {
         },
 
         // Override to supply code that will arrange the axis bar ticks.
-        arrangeTicks: function() { },
+        arrangeTicks: function() {
+            var xTicks = d3.select(this.nvChart().container).select('.nv-x.nv-axis > g').selectAll('g');
+            xTicks.selectAll('.tick').style('opacity', 0);
+        },
 
         arrangeLabels: function(selection) {
             var nvChart = this.nvChart(),
@@ -653,6 +643,8 @@ brandseye.charts = function() {
         },
 
         xAxisTooltips: function(_) {
+            if (!arguments.length) return this.attributes.xAxisTooltips;
+            this.attributes.xAxisTooltips = _;
             return this;
         },
 
@@ -734,10 +726,6 @@ brandseye.charts = function() {
         var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
         var xScale = this.nvChart().multibar.xScale();
 
-        var longFormat = function(m, i) {
-            return i === 0 || m.date() === 1;
-        };
-
         var isMonday = function(m) {
             return m.day() === 1;
         };
@@ -777,7 +765,7 @@ brandseye.charts = function() {
 
                 // TODO sometimes we should rotate nothing, if the rangeBand is large enough.
                 var rotate = xScale.rangeBand() / that.data().length < 20 ||
-                    longFormat(m, position) || isMonday(m) ||
+                    that.longFormat(m, position) || isMonday(m) ||
                     _(that.data()).any(function(d) { return d.values[0].published === data;});
                 var angle = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? -30 : -90;
                 var yOffset = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? 0 : 5;
@@ -835,6 +823,42 @@ brandseye.charts = function() {
 
         xTicks.selectAll('.tick').style('opacity', 0);
     };
+
+    namespace.Histogram.prototype.formatXAxisTicks = function() {
+        var nvChart = this.nvChart();
+        var that = this;
+
+        if (nvChart.xAxis) {
+            nvChart.xAxis.tickFormat(function(d, i) {
+                if (!that.dateRegex.test(d)) return d;
+                var m = new moment(d);
+
+                switch (that.coarseness()) {
+                    case 'daily':
+                        if (that.longFormat(m, i)) return m.format("MMM DD");
+                        if (m.day() === 1) return m.format("ddd DD");
+
+                        return m.format("DD");
+                    case 'weekly':
+                        var next = m.clone().add('days', 6),
+                            label = m.format("MMM DD") + '→';
+                        if (next.months() === m.months()) label += next.format("DD");
+                        else label += next.format("MMM DD");
+                        return label;
+                    case 'monthly':
+                        if (m.month() == 0) return m.format("MMMM ’YY");
+                        return m.format("MMMM");
+                    case 'yearly':
+                        return m.format("YYYY");
+                }
+            });
+        }
+    };
+
+    // Returns true if we should format this date long, rather than just
+    // with the date.
+    namespace.Histogram.prototype.longFormat = function(m, i) { return i === 0 || m.date() === 1; };
+    namespace.Histogram.prototype.dateRegex = /^\d+-\d+-\d+$/;
 
     //--------------------------------------------------------------
     // # Bar charts
@@ -1914,7 +1938,7 @@ brandseye.charts = function() {
 
             xTicks.selectAll('text').classed('x-axis-label', true);
 
-            overrideAxisLabels(xTicks, xAxisOverride)
+            overrideAxisLabels(xTicks, xAxisOverride);
             addTooltips(xTicks, xAxisTooltips);
             addTooltips(yTicks, tickFormat);
 
