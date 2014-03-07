@@ -446,16 +446,13 @@ brandseye.charts = function() {
         },
 
         formatXAxisTicks: function() {
-            console.log("Formatting x axis!!!");
             var nvChart = this.nvChart();
             if (nvChart.xAxis) {
                 nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
             }
 
             var container = d3.select(nvChart.container);
-            console.log("Container ", container);
             var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
-            console.log("xTicks", xTicks);
             xTicks.selectAll('text').classed('x-axis-label', true);
 
             overrideAxisLabels(xTicks, this.xAxisOverride());
@@ -931,6 +928,88 @@ brandseye.charts = function() {
 
     namespace.ColumnChart.prototype = new namespace.Graph();
     namespace.ColumnChart.prototype.createChart = function() { console.log("columnchart!!"); return nv.models.multiBarChart(); };
+
+    namespace.ColumnChart.prototype.initialiseData = function() {
+        if (data) {
+
+            var data = this.data(),
+                xAxisOverride = this.xAxisOverride(),
+                x = this.x(),
+                tickFormat = this.tickFormat(),
+                maxXLabelLength = 0,
+                maxYLabelLength = 0;
+
+            _(data).each(function(s, i) {
+                _(s.values).each(function(d) {
+                    // Store an index for legends.
+                    d.legendKey = i;
+
+                    // Determine length for x axis
+                    var item = x(d);
+                    if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
+                    var length = xAxisTickFormat(defaultLabelRestriction, item.toString()).length;
+                    if (length > maxXLabelLength) {
+                        maxXLabelLength = length;
+                    }
+
+                    // Determine length for y axis
+                    item = tickFormat(y(d));
+                    length = item.toString().length
+                    if (length > maxYLabelLength) {
+                        maxYLabelLength = length;
+                    }
+                });
+            });
+
+            this.attributes.maxXLabelLength = maxXLabelLength;
+            this.attributes.maxYLabelLength = maxYLabelLength;
+        }
+    };
+
+    namespace.ColumnChart.prototype.formatXAxisTicks = function() {
+        namespace.Graph.prototype.formatXAxisTicks.apply(this);
+
+        var nvChart = this.nvChart(),
+            xAxisOverride = this.xAxisOverride();
+
+        var container = d3.select(nvChart.container);
+        container.select('.nv-x.nv-axis > g').selectAll('g').selectAll('text')
+            .filter(function(d) {
+                return d != null && ((xAxisOverride && xAxisOverride[d] && xAxisOverride[d].length > 2) || d.toString().length > 2 )
+            })
+            .style('text-anchor', 'end')
+            .attr('transform', 'rotate(-30 0,0)');
+    };
+
+    namespace.ColumnChart.prototype.calculateLegendMargin = function() {
+        return { top: 0, left: this.nvChart().margin().left, right: this.width() };
+    };
+
+    namespace.ColumnChart.prototype.calculateMargins = function() {
+        var margins = nv.models.multiBarChart().margin(),
+            padding = this.padding();
+        var maxXLabelLength = this.attributes.maxXLabelLength || 0,
+            maxYLabelLength = this.attributes.maxYLabelLength || 0;
+
+        margins.bottom = (margins.bottom || 0) + this.attributes.legend.finalHeight();
+
+        if (maxXLabelLength) {
+            // Budgeting a set pixel width per letter (innacurate because not-fixed width font in use)
+            // This may be an odd number because the labels are rotated.
+            margins.bottom = (margins.bottom || 0) + maxXLabelLength * 3;
+        }
+
+        if (maxYLabelLength) {
+            margins.left = (margins.left || 0) + maxYLabelLength * 3;
+        }
+
+        margins.left += padding.left;
+        margins.right += padding.right;
+        margins.bottom += padding.bottom;
+        margins.top += padding.top;
+
+        return margins;
+    };
 
     //--------------------------------------------------------------
     // # Pie charts
@@ -2210,7 +2289,6 @@ brandseye.charts = function() {
                     });
                 }
             });
-
 
             legend
                 .colours(colours)
