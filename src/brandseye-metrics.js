@@ -84,6 +84,7 @@ brandseye.charts = function() {
             });
     }
 
+    // TOOD Delete this
     function drawAxisDataLabel(selection, label, margins, width, height, orientation) {
         var finalHeight = 0;
         if (!orientation) orientation = "row";
@@ -114,6 +115,7 @@ brandseye.charts = function() {
                 var x = 0,
                     y = 0;
                 var buffer = orientation == "column" ? 5 : 0;
+                console.log("old buffer is ", buffer, orientation);
 
                 if (orientation == "row") {
                     x = margins.left + (width - margins.left - margins.right) / 2 - bbox.width / 2;
@@ -287,46 +289,17 @@ brandseye.charts = function() {
 
                     var dateRegex = /^\d+-\d+-\d+$/;
 
-                    var maxLabelLength = 0;
-                    selection.each(function(data) {
-                        if (data) {
-                            _(data).each(function(s, i) {
-                                _(s.values).each(function(d) {
-                                    d.legendKey = i;
-                                    var length = tickFormat(d).length;
-                                    if (length > maxLabelLength) {
-                                        maxLabelLength = length;
-                                    }
-                                });
-                            });
-                        }
-                    });
-
-                    var margins = {
-                        top:    30,
-                        bottom: (that.coarseness() === 'weekly' ? 45 : 40),
-                        left:   40,
-                        right:  20
-                    };
-
-                    if (maxLabelLength) margins.left = (margins.left || 0) + maxLabelLength * 10;
-
-                    margins.left += padding.left;
-                    margins.right += padding.right;
-                    margins.bottom += padding.bottom;
-                    margins.top += padding.top;
-
-                    that.attributes.legend
-                        .colours(that.colours())
-                        .margin({top: 0, left: 60, right: that.width()})
-                        .height(that.height())
-                        .width(that.width())
-                        .showLegend(that.showLegend());
-                    selection.call(that.attributes.legend);
-                    margins.bottom = margins.bottom + that.attributes.legend.finalHeight() + 20;
+                    that.initialiseData();
+                    that.arrangeLegend(selection);
+                    var margins = that.calculateMargins(selection);
 
                     if (that.dataAxisLabel()) {
-                        margins.left = (margins.left || 0) + drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height(), 'column');
+                        var dataAxisLabelOffset = that.drawAxisDataLabel(selection, margins);
+                        console.log("OFFSETTTT ", dataAxisLabelOffset);
+//                        console.log("Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height(), 'column'));
+//                        console.log("not Column", drawAxisDataLabel(selection, that.dataAxisLabel(), margins, that.width(), that.height()));
+                        if (that.labelPosition == "columns") margins.left = (margins.left || 0) + dataAxisLabelOffset;
+                        if (that.labelPosition == "rows") margins.bottoms = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
 
                     console.log("That: ", that);
@@ -429,6 +402,131 @@ brandseye.charts = function() {
             throw new Error("createChart not implemented");
         },
 
+        // This method is meant to run through the data set and initialise any extra
+        // values that might be needed, as well as determining the maximum length
+        // of the labels.
+        initialiseData: function() {
+            var data = this.data();
+            var maxLabelLength = 0;
+            var tickFormat = this.tickFormat();
+
+            if (data) {
+                _(data).each(function(s, i) {
+                    _(s.values).each(function(d) {
+                        d.legendKey = i;
+                        var length = tickFormat(d).length;
+                        if (length > maxLabelLength) {
+                            maxLabelLength = length;
+                        }
+                    });
+                });
+            }
+
+            this.attributes.maxLabelLength = maxLabelLength;
+        },
+
+        drawAxisDataLabel: function(selection, margins) {
+            var finalHeight = 0,
+                orientation = this.labelPosition,
+                label = this.dataAxisLabel(),
+                width = this.width(),
+                height = this.height();
+
+
+            margins = _.extend({
+                left: 0,
+                top: 0,
+                bottom: 0,
+                right: 0
+            }, margins || {});
+
+            var data = this.data();
+            if (data) {
+                selection.each(function() {
+                    var labelSelection = d3.select(this).selectAll('.data-label').data([label]);
+                    labelSelection.enter()
+                        .append('text')
+                        .style('opacity', 0)
+                        .classed('data-label', true);
+
+                    labelSelection.text(label.long);
+                    var bbox = labelSelection.node().getBBox();
+
+                    if (bbox.width > (orientation === 'rows' ? (width - margins.left - margins.right) * 3/4 : (height - margins.bottom - margins.top) * 3/4)) {
+                        labelSelection.text(label.short);
+                        bbox = labelSelection.node().getBBox();
+                    }
+
+                    var x = 0,
+                        y = 0;
+                    var buffer = orientation == "columns" ? 5 : 0;
+                    console.log("New Buffer is ", buffer, orientation);
+
+                    if (orientation == "rows") {
+                        x = margins.left + (width - margins.left - margins.right) / 2 - bbox.width / 2;
+                        y = height - margins.bottom + bbox.height;
+                    }
+                    else if (orientation == "columns") {
+                        x = bbox.height;
+                        y = margins.top + (height - margins.bottom - margins.top) / 2 + bbox.width / 2;
+                    }
+                    else throw new Error('Unrecognised orientation [' + orientation + ']')
+
+                    labelSelection
+                        .attr('transform', function() {
+                            var translate = "translate(" + [x + buffer, y] + ")";
+                            if (orientation == "columns") return translate + " rotate(-90)";
+                            return translate;
+                        })
+                        .transition()
+                        .duration(750)
+                        .style('opacity', 1);
+
+                    finalHeight = bbox.height + buffer;
+                })
+            }
+
+            return finalHeight;
+        },
+
+        calculateLegendMargin: function() {
+            return {top: 0, left: 60, right: this.width()};
+        },
+
+        arrangeLegend: function(selection) {
+            this.attributes.legend
+                .colours(this.colours())
+                .margin(this.calculateLegendMargin())
+                .height(this.height())
+                .width(this.width())
+                .showLegend(this.showLegend());
+            selection.call(this.attributes.legend);
+        },
+
+        calculateMargins: function(selection) {
+            var maxLabelLength = this.attributes.maxLabelLength || 0;
+
+            var margins = {
+                top:    30,
+                bottom: (this.coarseness() === 'weekly' ? 45 : 40),
+                left:   40,
+                right:  20
+            };
+
+            var padding = this.padding();
+
+            if (maxLabelLength) margins.left = (margins.left || 0) + maxLabelLength * 10;
+
+            margins.left += padding.left;
+            margins.right += padding.right;
+            margins.bottom += padding.bottom;
+            margins.top += padding.top;
+
+            margins.bottom = margins.bottom + this.attributes.legend.finalHeight() + 20;
+
+            return margins;
+        },
+
         // Override to supply code that will arrange the axis bar ticks.
         arrangeTicks: function() { },
 
@@ -445,11 +543,13 @@ brandseye.charts = function() {
                 .yScale(nvChart.multibar.yScale())
                 .delay(nvChart.delay())
                 .format(this.labelFormat())
-                .position("columns")
+                .position(this.labelPosition)
                 .determineCompression(this.labelCompression())
                 .showLabels(this.showLabels());
             labels(selection);
         },
+
+        labelPosition: "columns",
 
         //----------------------------------------
         // ## Getters and Setters
@@ -557,6 +657,8 @@ brandseye.charts = function() {
         },
 
         xAxisOverride: function(_) {
+            if (!arguments.length) return this.attributes.xAxisOverride;
+            this.attributes.xAxisOverride = _;
             return this;
         },
 
@@ -625,7 +727,6 @@ brandseye.charts = function() {
     namespace.Histogram.prototype.createChart = function() { console.log("Histogram!!"); return nv.models.multiBarChart(); };
 
     namespace.Histogram.prototype.arrangeTicks = function() {
-        console.log("Arranging the ticks!");
         var seen = false;
         var that = this;
 
@@ -746,6 +847,58 @@ brandseye.charts = function() {
 
     namespace.BarChart.prototype = new namespace.Graph();
     namespace.BarChart.prototype.createChart = function() { console.log("barchart!!"); return nv.models.multiBarHorizontalChart(); };
+    namespace.BarChart.prototype.labelPosition = "rows";
+
+    namespace.BarChart.prototype.initialiseData = function() {
+        var data = this.data(),
+            xAxisOverride = this.xAxisOverride(),
+            xAxisRestriction = 25,
+            maxLabelLength = 0,
+            x = this.x();
+
+        if (data) {
+            _(data).each(function(s, i) {
+                _(s.values).each(function(d) {
+                    d.legendKey = i;
+                    var item = x(d);
+                    if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
+                    var length = xAxisTickFormat(xAxisRestriction, item.toString()).length;
+                    if (length > maxLabelLength) {
+                        maxLabelLength = length;
+                    }
+                });
+            });
+        }
+
+        this.attributes.maxLabelLength = maxLabelLength;
+    };
+
+    namespace.BarChart.prototype.calculateLegendMargin = function() {
+        return {top: 0, left: 30, right: this.width()};
+    };
+
+    namespace.BarChart.prototype.calculateMargins = function(selection) {
+        var margins = {left: 30, right: 30, top: 20, bottom: 20},
+            padding = this.padding();
+        var maxLabelLength = this.attributes.maxLabelLength || 0;
+
+        margins.bottom = (margins.bottom || 0) + this.attributes.legend.finalHeight() + 20;
+
+        if (maxLabelLength) {
+            margins.left = maxLabelLength * 8; // Budgeting a set pixel width per letter (innacurate because not-fixed width font in use)
+        }
+
+        if (this.dataAxisLabel()) {
+            margins.bottom += drawAxisDataLabel(selection, this.dataAxisLabel(), margins, this.width(), this.height());
+        }
+
+        margins.left += padding.left;
+        margins.right += padding.right;
+        margins.bottom += padding.bottom;
+        margins.top += padding.top;
+
+        return margins;
+    };
 
     //--------------------------------------------------------------
     // # Column charts
