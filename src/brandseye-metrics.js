@@ -54,6 +54,45 @@ brandseye.colours = {
     ]
 };
 
+brandseye.utilities = function() {
+    return {
+
+        // Restricts the length of a string to the given size. This should cut text
+        // at word boundaries, and provide ellipses.
+        restrictStringToLength: function(text, length) {
+            console.log("===string length thingy", text, "with length", length);
+            if (text.length <= length) return text.toString();
+
+            var result = [];
+            var word = [];
+            for (var i = 0; i < length - 1; i++) {
+                var character = text.charAt(i);
+                if (character == ' ' || character == '\n') {
+                    if (result.length == 0) result = result.concat(word);
+                    else {
+                        result.push(' ');
+                        result = result.concat(word);
+                    }
+                    word = [];
+                } else {
+                    word.push(character)
+                }
+            }
+
+            if (text.length != 0 && result.length == 0) result = text; /* Can happen if the string is a single word longer than length. */
+            else result.push('…');
+
+            if (result.length > length) {
+                console.log("forceably shortened result returned", result.substring(0, length - 1) + '…');
+                return result.substring(0, length - 1) + '…';
+            }
+
+            console.log("ellipsed result returned", result.join(''));
+            return result.join('');
+        }
+    }
+}();
+
 brandseye.charts = function() {
 
     var namespace = {
@@ -157,6 +196,7 @@ brandseye.charts = function() {
      * information from twitter and facebook, or web urls).
      */
     function xAxisTickFormat(restriction, text) {
+        console.log("Restricting ", text, restriction, text);
         text = text.toString();
         if (!restriction) restriction = defaultLabelRestriction;
         if (text.length <= restriction) return text;
@@ -176,7 +216,8 @@ brandseye.charts = function() {
             text = match[1] + '…';
         }
 
-        return text.restrictToLength(restriction);
+        console.log("Here?");
+        return brandseye.utilities.restrictStringToLength(text, restriction);
     }
 
     /**
@@ -291,8 +332,6 @@ brandseye.charts = function() {
                         if (that.labelPosition == "rows") margins.bottom = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
 
-                    console.log("Margins are ", margins);
-
                     nvChart
                         .margin(margins)
                         .width(that.width())
@@ -312,10 +351,13 @@ brandseye.charts = function() {
                         else if (nvChart.multibar) nvChart.multibar.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
                     }
 
+                    that.preRenderXAxisTicks();
+                    that.preRenderYAxisTicks();
+
                     nvChart(selection);
 
-                    that.formatXAxisTicks();
-                    that.formatYAxisTicks();
+                    that.postRenderXAxisTicks();
+                    that.postRenderYAxisTicks();
 
                     if (nvChart.multibar) {
                         var xScale = nvChart.multibar.xScale();
@@ -446,12 +488,16 @@ brandseye.charts = function() {
             return finalHeight;
         },
 
-        formatXAxisTicks: function() {
+        preRenderXAxisTicks: function() {
             var nvChart = this.nvChart();
             if (nvChart.xAxis) {
+                console.log("++++++++setting tick format");
                 nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
             }
+        },
 
+        postRenderXAxisTicks: function() {
+            var nvChart = this.nvChart();
             var container = d3.select(nvChart.container);
             var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
             xTicks.selectAll('text').classed('x-axis-label', true);
@@ -460,14 +506,17 @@ brandseye.charts = function() {
             addTooltips(xTicks, this.xAxisTooltips());
         },
 
-        formatYAxisTicks: function() {
+        preRenderYAxisTicks: function() {
             var nvChart = this.nvChart();
             if (nvChart.yAxis) {
                 nvChart.yAxis
                     .tickFormat(this.tickFormat())
                     .showMaxMin(false);
             }
+        },
 
+        postRenderYAxisTicks: function() {
+            var nvChart = this.nvChart();
             var container = d3.select(nvChart.container);
             var yTicks = container.select('.nv-y.nv-axis > g').selectAll('g');
             yTicks.selectAll('text').classed('y-axis-label', true);
@@ -520,7 +569,7 @@ brandseye.charts = function() {
 
         arrangeLabels: function(selection) {
             var nvChart = this.nvChart(),
-                labels = this.labels()
+                labels = this.labels();
 
             labels
                 .x(this.x())
@@ -822,7 +871,7 @@ brandseye.charts = function() {
         xTicks.selectAll('.tick').style('opacity', 0);
     };
 
-    namespace.Histogram.prototype.formatXAxisTicks = function() {
+    namespace.Histogram.prototype.preRenderXAxisTicks = function() {
         var nvChart = this.nvChart();
         var that = this;
 
@@ -852,6 +901,8 @@ brandseye.charts = function() {
             });
         }
     };
+
+    namespace.Histogram.prototype.postRenderXAxisTicks = function() { };
 
     // Returns true if we should format this date long, rather than just
     // with the date.
@@ -951,7 +1002,7 @@ brandseye.charts = function() {
                     // Determine length for x axis
                     var item = x(d);
                     if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
-                    var length = xAxisTickFormat(defaultLabelRestriction, item.toString()).length;
+                    var length = xAxisTickFormat(xAxisRestriction, item.toString()).length;
                     if (length > maxXLabelLength) {
                         maxXLabelLength = length;
                     }
@@ -970,19 +1021,21 @@ brandseye.charts = function() {
         }
     };
 
-    namespace.ColumnChart.prototype.formatXAxisTicks = function() {
-        namespace.Graph.prototype.formatXAxisTicks.apply(this);
-
+    namespace.ColumnChart.prototype.postRenderXAxisTicks = function() {
         var nvChart = this.nvChart(),
-            xAxisOverride = this.xAxisOverride();
+            xAxisOverride = this.xAxisOverride(),
+            container = d3.select(nvChart.container),
+            xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
 
-        var container = d3.select(nvChart.container);
         container.select('.nv-x.nv-axis > g').selectAll('g').selectAll('text')
             .filter(function(d) {
                 return d != null && ((xAxisOverride && xAxisOverride[d] && xAxisOverride[d].length > 2) || d.toString().length > 2 )
             })
             .style('text-anchor', 'end')
             .attr('transform', 'rotate(-30 0,0)');
+
+        overrideAxisLabels(xTicks, this.xAxisOverride());
+        addTooltips(xTicks, this.xAxisTooltips());
     };
 
     namespace.ColumnChart.prototype.calculateLegendMargin = function() {
@@ -2397,7 +2450,7 @@ brandseye.charts = function() {
             xTicks.selectAll('.tick').style('opacity', 0);
 
             // Add some tooltips
-            overrideAxisLabels(xTicks, xAxisOverride)
+            overrideAxisLabels(xTicks, xAxisOverride);
             addTooltips(xTicks, xAxisTooltips);
             addTooltips(yTicks, tickFormat);
 
