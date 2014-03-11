@@ -345,6 +345,8 @@ brandseye.charts = function() {
 
                     if (nvChart.reduceXTicks) nvChart.reduceXTicks(false);
                     if (nvChart.showControls) nvChart.showControls(false);
+                    // For piecharts.
+                    if (nvChart.showLabels) nvChart.showLabels(false);
 
                     if (that.attributes.forceMaxY) {
                         if (nvChart.forceY) nvChart.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
@@ -359,24 +361,16 @@ brandseye.charts = function() {
                     that.postRenderXAxisTicks();
                     that.postRenderYAxisTicks();
 
+                    that.setupContainer();
+                    that.arrangeTicks();
+                    that.arrangeLabels(selection);
+
+                    var container = d3.select(nvChart.container);
+                    setupDispatcher(that.dispatch(), container, that.graphDispatch(), nvChart.dispatch, that.data(), that.interactiveClass(), that.dataTransform);
+
                     if (nvChart.multibar) {
-                        var xScale = nvChart.multibar.xScale();
-                        var yScale = nvChart.multibar.yScale();
-                        var container = d3.select(nvChart.container);
 
-                        container.classed('bm', true);
 
-                        container.selectAll('.chart-background').remove();
-                        container.select('.nv-wrap').insert('rect', ':first-child')
-                            .attr('class', 'chart-background')
-                            .attr('fill', backgroundColour)
-                            .attr('width', _(xScale.rangeExtent()).last())
-                            .attr('height', _(yScale.range()).first());
-
-                        that.arrangeTicks();
-                        that.arrangeLabels(selection);
-
-                        setupDispatcher(that.dispatch(), container, nvChart.multibar.dispatch, nvChart.dispatch, that.data(), '.nv-bar');
                         markUnknownAndOthers(selection, that.x());
                     }
 
@@ -521,6 +515,22 @@ brandseye.charts = function() {
             var yTicks = container.select('.nv-y.nv-axis > g').selectAll('g');
             yTicks.selectAll('text').classed('y-axis-label', true);
             addTooltips(yTicks, this.tickFormat());
+        },
+
+        setupContainer: function() {
+            var nvChart = this.nvChart();
+            var xScale = nvChart.multibar.xScale();
+            var yScale = nvChart.multibar.yScale();
+            var container = d3.select(nvChart.container);
+
+            container.classed('bm', true);
+
+            container.selectAll('.chart-background').remove();
+            container.select('.nv-wrap').insert('rect', ':first-child')
+                .attr('class', 'chart-background')
+                .attr('fill', backgroundColour)
+                .attr('width', _(xScale.rangeExtent()).last())
+                .attr('height', _(yScale.range()).first());
         },
 
         calculateLegendMargin: function() {
@@ -750,6 +760,24 @@ brandseye.charts = function() {
         // - *tooltipHide*. Fired when a tooltip should be hidden.
         dispatch: function() {
             return this.attributes.dispatch;
+        },
+
+        // Returns the [d3 dispatch](https://github.com/mbostock/d3/wiki/Internals#wiki-events) associated with
+        // the underlying graph element
+        graphDispatch: function() {
+            var nvChart = this.nvChart();
+            if (nvChart.multibar) return nvChart.multibar.dispatch;
+            if (nvChart.pie) return nvChart.pie.dispatch;
+            throw new Error("Unable to determine graph dispatch");
+        },
+
+        // This is the class of the item that should be interactive in the graph, such as bars or pie slices.
+        interactiveClass: function() {
+            return '.nv-bar';
+        },
+
+        dataTransform: function(data) {
+            return data;
         }
     };
 
@@ -1086,6 +1114,66 @@ brandseye.charts = function() {
     namespace.PieChart.prototype = new namespace.Graph();
     namespace.PieChart.prototype.createChart = function() { console.log("piechart!!"); return nv.models.pieChart(); };
     namespace.PieChart.prototype.labelPosition = "circle";
+
+    namespace.PieChart.prototype.initialiseData = function() {
+        var data = this.data(),
+            xAxisOverride = this.xAxisOverride(),
+            x = this.x();
+
+        if (data) {
+            _(data).each(function(d) {
+                _(d.values).each(function(d, i) {
+                    d.legendKey = i;
+                })
+            });
+
+            this.attributes.labelItems = _(data[0].values).map(function(d) {
+                var item = x(d);
+                if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
+                return { key: item };
+            });
+        }
+    };
+
+    namespace.PieChart.prototype.arrangeLegend = function(selection) {
+        this.attributes.legend
+            .data(this.attributes.labelItems)
+            .colours(this.colours())
+            .margin({top: 0, left: 30, right: this.width()})
+            .height(this.height())
+            .width(this.width())
+            .showLegend(this.showLegend())
+            .forceLegend(true);
+        selection.call(this.attributes.legend);
+    };
+
+    namespace.PieChart.prototype.setupContainer = function(selection) {
+        d3.select(this.nvChart().container)
+            .classed('bm', true);
+    };
+
+    namespace.PieChart.prototype.arrangeLabels = function(selection) {
+        var labels = this.labels(),
+            nvChart = this.nvChart();
+
+        labels.x(this.x())
+            .y(this.y())
+            .width(this.width() - nvChart.margin().left - nvChart.margin().right)
+            .height(this.height() - nvChart.margin().top - nvChart.margin().bottom)
+            .format(this.labelFormat())
+            .position("circle")
+            .determineCompression(this.labelCompression())
+            .showLabels(this.showLabels());
+        labels(selection);
+    };
+
+    namespace.PieChart.prototype.interactiveClass = function() {
+        return '.nv-slice';
+    };
+
+    namespace.PieChart.prototype.dataTransform = function(data) {
+        return data.data;
+    };
 
     //--------------------------------------------------------------
     // # Line charts
