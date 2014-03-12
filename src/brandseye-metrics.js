@@ -547,16 +547,18 @@ brandseye.charts = function() {
             selection.call(this.attributes.legend);
         },
 
-        calculateMargins: function(selection) {
-            var maxLabelLength = this.attributes.maxLabelLength || 0;
-
-            var margins = {
+        defaultMargins: function() {
+            return {
                 top:    30,
                 bottom: (this.coarseness() === 'weekly' ? 45 : 40),
                 left:   40,
                 right:  20
             };
+        },
 
+        calculateMargins: function(selection) {
+            var maxLabelLength = this.attributes.maxLabelLength || 0;
+            var margins = this.defaultMargins();
             var padding = this.padding();
 
             if (maxLabelLength) margins.left = (margins.left || 0) + maxLabelLength * 10;
@@ -1134,6 +1136,10 @@ brandseye.charts = function() {
             });
         }
     };
+
+    namespace.PieChart.prototype.defaultMargins = function() {
+        return { top: 0, bottom: 0, left: 0, right: 0 }
+    }
 
     namespace.PieChart.prototype.arrangeLegend = function(selection) {
         this.attributes.legend
