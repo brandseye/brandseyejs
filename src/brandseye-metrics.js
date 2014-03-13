@@ -770,6 +770,7 @@ brandseye.charts = function() {
             var nvChart = this.nvChart();
             if (nvChart.multibar) return nvChart.multibar.dispatch;
             if (nvChart.pie) return nvChart.pie.dispatch;
+            if (nvChart.lines) return nvChart.lines.dispatch;
             throw new Error("Unable to determine graph dispatch");
         },
 
@@ -1190,6 +1191,9 @@ brandseye.charts = function() {
 
     namespace.LineChart.prototype = new namespace.Graph();
     namespace.LineChart.prototype.createChart = function() { console.log("linechart!!"); return nv.models.lineChart(); };
+
+    namespace.LineChart.prototype.setupContainer = function() { };
+    namespace.LineChart.prototype.arrangeLabels = function() { };
 
     //--------------------------------------------------------------
 
