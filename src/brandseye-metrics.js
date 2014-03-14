@@ -188,6 +188,7 @@ brandseye.charts = function() {
     var defaultLabelRestriction = 15;
     var xAxisRestriction = 25;
     var loadingText = '';
+    var dateRegex = /^\d+-\d+-\d+$/;
 
     /**
      * Attempts to limit the text of x-axis labels to an appropriate length.
@@ -332,21 +333,7 @@ brandseye.charts = function() {
                         if (that.labelPosition == "rows") margins.bottom = (margins.bottom || 0) + dataAxisLabelOffset;
                     }
 
-                    nvChart
-                        .margin(margins)
-                        .width(that.width())
-                        .height(that.height())
-                        .showLegend(false)
-                        .x(that.x())
-                        .y(that.y())
-                        .noData(loadingText)
-                        .tooltips(false)
-                        .color(that.colours());
-
-                    if (nvChart.reduceXTicks) nvChart.reduceXTicks(false);
-                    if (nvChart.showControls) nvChart.showControls(false);
-                    // For piecharts.
-                    if (nvChart.showLabels) nvChart.showLabels(false);
+                    that.setupChart(margins);
 
                     if (that.attributes.forceMaxY) {
                         if (nvChart.forceY) nvChart.forceY([that.attributes.forceMinY, that.attributes.forceMaxY]);
@@ -480,6 +467,26 @@ brandseye.charts = function() {
             }
 
             return finalHeight;
+        },
+
+        setupChart: function(margins) {
+            var nvChart = this.nvChart();
+
+            nvChart
+                .margin(margins)
+                .width(this.width())
+                .height(this.height())
+                .showLegend(false)
+                .x(this.x())
+                .y(this.y())
+                .noData(loadingText)
+                .tooltips(false)
+                .color(this.colours());
+
+            if (nvChart.reduceXTicks) nvChart.reduceXTicks(false);
+            if (nvChart.showControls) nvChart.showControls(false);
+            // For piecharts.
+            if (nvChart.showLabels) nvChart.showLabels(false);
         },
 
         preRenderXAxisTicks: function() {
@@ -908,7 +915,7 @@ brandseye.charts = function() {
 
         if (nvChart.xAxis) {
             nvChart.xAxis.tickFormat(function(d, i) {
-                if (!that.dateRegex.test(d)) return d;
+                if (!dateRegex.test(d)) return d;
                 var m = new moment(d);
 
                 switch (that.coarseness()) {
@@ -938,7 +945,6 @@ brandseye.charts = function() {
     // Returns true if we should format this date long, rather than just
     // with the date.
     namespace.Histogram.prototype.longFormat = function(m, i) { return i === 0 || m.date() === 1; };
-    namespace.Histogram.prototype.dateRegex = /^\d+-\d+-\d+$/;
 
     //--------------------------------------------------------------
     // # Bar charts
@@ -1184,6 +1190,7 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // # Line charts
+    // This shows timeseries data. Expects the x-axis to show dates.
 
     namespace.LineChart = function() {
         return this;
@@ -1194,6 +1201,132 @@ brandseye.charts = function() {
 
     namespace.LineChart.prototype.setupContainer = function() { };
     namespace.LineChart.prototype.arrangeLabels = function() { };
+
+    namespace.LineChart.prototype.initialiseData = function() {
+        namespace.Graph.prototype.initialiseData.apply(this);
+        var data = this.data();
+        var chartX = this.x();
+
+        _(data).each(function(s) {
+            _(s.values).each(function(d) {
+                if (_(d.published).isString() || _(d.date).isString()) {
+                    d.publishedStamp =  new moment(d.published ? d.published : d.date).unix();
+                    chartX = null;
+                }
+            })
+        });
+
+        if (chartX === null) {
+            chartX = function(d) {
+                return d.publishedStamp;
+            }
+        }
+
+        this.attributes.chartX = chartX;
+    };
+
+    namespace.LineChart.prototype.setupChart = function(margins) {
+        this.nvChart()
+            .margin(margins)
+            .width(this.width())
+            .height(this.height())
+            .showLegend(false)
+            .x(this.attributes.chartX)
+            .y(this.y())
+            .noData(loadingText)
+            .tooltips(false)
+            .color(this.colours());
+
+        this.nvChart().xScale(d3.time.scale());
+    };
+
+    namespace.LineChart.prototype.preRenderXAxisTicks = function() {
+        var chartX = this.attributes.chartX,
+            x = this.x();
+
+        this.nvChart().xAxis.tickFormat(function(d, i) {
+            if (!dateRegex.test(d) && chartX === x) return d;
+            var m = chartX === x ? new moment(d) : moment.unix(d);
+            return m.format("MMM DD");
+        });
+    };
+    namespace.LineChart.prototype.postRenderXAxisTicks = function() {};
+
+    namespace.LineChart.prototype.arrangeTicks = function() {
+        var data = this.data(),
+            nvChart = this.nvChart(),
+            chartX = this.attributes.chartX,
+            x = this.x();
+
+        var comparisons = {};
+        if (data && data.length > 1) {
+            _(data).each(function(s) {
+                _(s.values).each(function(d) {
+                    if (d.originalPublished) {
+                        var dates = comparisons[d.published] || [];
+                        dates.push(d.originalPublished);
+                        comparisons[d.published] = dates;
+                    }
+                });
+            });
+        }
+
+        // We don't want to include any duplicate dates.
+        _(comparisons).each(function(dates, key) {
+            comparisons[key] = _(dates).uniq();
+        });
+
+        // Now we want to rotate and translate the labels appropriately.
+        var seen = false;
+        var container = d3.select(nvChart.container);
+
+        var xTicks = container.select('.nv-x.nv-axis > g').selectAll('g');
+        xTicks
+            .selectAll('text')
+            .classed('x-axis-label', true)
+            .each(function(data, position) {
+                var m = chartX === x ? new moment(data) : moment.unix(data);
+                var formatString = 'dddd, MMMM D, YYYY';
+
+                // TODO There is a bug that makes the data and text elements repeat itself with position always
+                // equal to 0. When this begins, data will be null.
+                if (!data || seen) {
+                    seen = true;
+                    return;
+                }
+
+                // TODO sometimes we should rotate nothing, if the rangeBand is large enough.
+                var angle = -30;
+                var yOffset = 0;
+
+                d3.select(this)
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate (-20, ' + yOffset + ') rotate(' + angle + ' 0,0)')
+                    .append('title')
+                    .text(function(d) {
+                        if (_(comparisons).isEmpty() || !comparisons[d]) {
+                            return m.format(formatString);
+                        }
+                        var dates = comparisons[d];
+                        var format = 'ddd MMM D, YYYY';
+                        var first = new moment(dates[0]).format(format);
+                        return _(comparisons[d]).chain()
+                            .drop(1)
+                            .reduce(function(memo, date) {
+                                return memo + "\nvs\n" + new moment(date).format(format);
+                            }, first)
+                            .value();
+                    });
+            });
+
+        xTicks.selectAll('.tick').style('opacity', 0);
+
+        container.selectAll('.nv-axisMaxMin text').each(function (data, position) {
+            d3.select(this)
+                .style('text-anchor', 'end')
+                .attr('transform', 'rotate(-30, 0,0)');
+        });
+    };
 
     //--------------------------------------------------------------
 
