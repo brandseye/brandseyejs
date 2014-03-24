@@ -7,8 +7,10 @@
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="http://underscorejs.org/underscore.js"></script>
+    <script src="https://raw.github.com/novus/nvd3/master/nv.d3.js"></script>
     <script src="../src/brandseye-metrics.js"></script>
     <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
+    <link href="https://raw.github.com/novus/nvd3/master/src/nv.d3.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
@@ -21,6 +23,26 @@
 
 </div>
 
+
+<script>
+    $(function() {
+        var data = [
+            { x: "apples", y: 10 },
+            { x: "oranges", y: 5},
+            { x: "pears", y: 7},
+            { x: "bananas", y: 11}
+        ];
+
+        var graph = new brandseye.charts.columnChart();
+
+        graph
+            .data(data)
+            .element($('.container')[0])
+            .x(function(d) { return d.x; })
+            .y(function(d) { return d.y; })
+            .render();
+    });
+</script>
 
 
 </body>
