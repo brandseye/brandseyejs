@@ -19,25 +19,33 @@
     Loading a basic chart
 </h1>
 
-<div class="container">
+<div class="container" style="width: 100px; height: 100px;">
 
 </div>
 
 
 <script>
     $(function() {
-        var data = [
-            { x: "apples", y: 10 },
-            { x: "oranges", y: 5},
-            { x: "pears", y: 7},
-            { x: "bananas", y: 11}
-        ];
+        var data = {
+            key: "A demonstration",
+            values: [
+                { x: "apples", y: 10 },
+                { x: "oranges", y: 5},
+                { x: "pears", y: 7},
+                { x: "bananas", y: 11}
+            ]
+        };
 
-        var graph = new brandseye.charts.columnChart();
+        var graph = new brandseye.charts.ColumnChart();
+
 
         graph
             .data(data)
             .element($('.container')[0])
+            .width(100)
+            .height(100)
+                .showLabels(false)
+                .showLegend(false)
             .x(function(d) { return d.x; })
             .y(function(d) { return d.y; })
             .render();
