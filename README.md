@@ -8,6 +8,10 @@ A JavaScript library for displaying data.
 - D3
 - NVd3
 
+## Documentation
+
+Documentation can be produced with [docco](http://jashkenas.github.io/docco/).
+
 ## License
 
 Copyright (C) 2013-2014 BrandsEye (PTY) LTD

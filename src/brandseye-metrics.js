@@ -620,7 +620,40 @@ brandseye.charts = function() {
         //            .data(data)
         //            .element($('.graph')[0]);
 
-        // Sets the data to be displayed.
+        // ### Setting the data
+        // **data()** sets the data to be displayed. The data can be provided in a number of formats.
+        // The simplest is to provide an array of objects with x / y values, like so:
+        //
+        //        var data = [
+        //            { x: "orange", y: "10" },
+        //            { x: "apple", y: "11" },
+        //            { x: "banana", y: "12" },
+        //        ];
+        //        graph.data(data);
+        //
+        // It is also possible to provide a series of comparison data, which are labeled, like so:
+        //
+        //        var data = [{
+        //                key: "Fruit",
+        //                values: [
+        //                    { x: "apples", y: 10 },
+        //                    { x: "oranges", y: 5},
+        //                    { x: "pears", y: 7},
+        //                    { x: "bananas", y: 11}
+        //                ]
+        //            },
+        //            {
+        //                key: "Herb",
+        //                values: [
+        //                    { x: "Thyme", y: 10 },
+        //                    { x: "Rosemary", y: 5},
+        //                    { x: "Sage", y: 7},
+        //                    { x: "Taragon", y: 11}
+        //                ]
+        //            }
+        //        ];
+        //        graph.data(data);
+
         data: function(_) {
             if (!arguments.length) return this.attributes.data;
             this.attributes.data = _;
