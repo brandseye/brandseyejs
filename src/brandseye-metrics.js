@@ -239,6 +239,7 @@ brandseye.charts = function() {
         render: function() {
             this.setup();
 
+            // TODO We already have parent, which is likely the same as container used everywhere.
             var parent = d3.select(this.element());
 
             if (parent.selectAll('svg').empty()) {
@@ -254,6 +255,8 @@ brandseye.charts = function() {
             console.log("Data", this.data());
             var that = this;
             svg
+                .attr('width', this.width() + "px")
+                .attr('height', this.height() + "px")
                 .datum(this.data())
                 .transition()
                 .duration(100)
