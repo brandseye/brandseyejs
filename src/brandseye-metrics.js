@@ -123,67 +123,6 @@ brandseye.charts = function() {
             });
     }
 
-    // TODO Delete this
-    function drawAxisDataLabel(selection, label, margins, width, height, orientation) {
-        var finalHeight = 0;
-        if (!orientation) orientation = "row";
-
-        margins = _.extend({
-            left: 0,
-            top: 0,
-            bottom: 0,
-            right: 0
-        }, margins || {});
-
-        selection.each(function (data) {
-            if (data) {
-                var labelSelection = d3.select(this).selectAll('.data-label').data([label]);
-                labelSelection.enter()
-                    .append('text')
-                    .style('opacity', 0)
-                    .classed('data-label', true);
-
-                labelSelection.text(label.long);
-                var bbox = labelSelection.node().getBBox();
-
-                if (bbox.width > (orientation === 'row' ? (width - margins.left - margins.right) * 3/4 : (height - margins.bottom - margins.top) * 3/4)) {
-                    labelSelection.text(label.short);
-                    bbox = labelSelection.node().getBBox();
-                }
-
-                var x = 0,
-                    y = 0;
-                var buffer = orientation == "column" ? 5 : 0;
-                console.log("old buffer is ", buffer, orientation);
-
-                if (orientation == "row") {
-                    x = margins.left + (width - margins.left - margins.right) / 2 - bbox.width / 2;
-                    y = height - margins.bottom + bbox.height;
-                }
-                else if (orientation == "column") {
-                    x = bbox.height;
-                    y = margins.top + (height - margins.bottom - margins.top) / 2 + bbox.width / 2;
-                }
-                else throw new Error('Unrecognised orientation [' + orientation + ']')
-
-                labelSelection
-                    .attr('transform', function() {
-                        var translate = "translate(" + [x + buffer, y] + ")";
-                        if (orientation == "column") return translate + " rotate(-90)";
-                        return translate;
-                    })
-                    .transition()
-                    .duration(750)
-                    .style('opacity', 1);
-
-                finalHeight = bbox.height + buffer;
-            }
-        });
-
-        return finalHeight;
-    }
-
-
     var backgroundColour = '#f8f8f8';
     var defaultLabelRestriction = 15;
     var xAxisRestriction = 25;
