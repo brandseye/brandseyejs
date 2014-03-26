@@ -123,7 +123,7 @@ brandseye.charts = function() {
             });
     }
 
-    // TOOD Delete this
+    // TODO Delete this
     function drawAxisDataLabel(selection, label, margins, width, height, orientation) {
         var finalHeight = 0;
         if (!orientation) orientation = "row";
