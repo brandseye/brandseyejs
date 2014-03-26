@@ -733,12 +733,6 @@ brandseye.charts = function() {
             return this;
         },
 
-        colourIndex: function(index) {
-            // TODO this should probably be removed. To closely tied with beef.
-            throw new Error("This has not been implemented ey");
-            return this;
-        },
-
         colours: function(_) {
             if (!arguments.length) return this.attributes.colours;
             this.attributes.colours = _.concat(brandseye.colours.allColours);
