@@ -16,6 +16,10 @@ Documentation can be produced with [docco](http://jashkenas.github.io/docco/) li
 
 and can then be found in the doc directory.
 
+## Examples
+
+Distributed with nvd3 in the lib directory. The license is available there, as well.
+
 ## License
 
 Copyright (C) 2013-2014 BrandsEye (PTY) LTD
