@@ -82,11 +82,9 @@ brandseye.utilities = function() {
             else result.push('…');
 
             if (result.length > length) {
-                console.log("forceably shortened result returned", result.substring(0, length - 1) + '…');
                 return result.substring(0, length - 1) + '…';
             }
 
-            console.log("ellipsed result returned", result.join(''));
             return result.join('');
         }
     }
