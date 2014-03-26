@@ -539,9 +539,13 @@ brandseye.charts = function() {
             margins.bottom += padding.bottom;
             margins.top += padding.top;
 
-            margins.bottom = margins.bottom + this.attributes.legend.finalHeight() + 20;
+            margins.bottom = margins.bottom + this.attributes.legend.finalHeight() + this.defaultMarginBottom();
 
             return margins;
+        },
+
+        defaultMarginBottom: function() {
+            return 20;
         },
 
         // Override to supply code that will arrange the axis bar ticks.
@@ -1154,7 +1158,11 @@ brandseye.charts = function() {
 
     namespace.PieChart.prototype.defaultMargins = function() {
         return { top: 0, bottom: 0, left: 0, right: 0 }
-    }
+    };
+
+    namespace.PieChart.prototype.defaultMarginBottom = function() {
+        return 0;
+    };
 
     namespace.PieChart.prototype.arrangeLegend = function(selection) {
         this.attributes.legend
