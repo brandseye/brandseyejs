@@ -60,7 +60,6 @@ brandseye.utilities = function() {
         // Restricts the length of a string to the given size. This should cut text
         // at word boundaries, and provide ellipses.
         restrictStringToLength: function(text, length) {
-            console.log("===string length thingy", text, "with length", length);
             if (text.length <= length) return text.toString();
 
             var result = [];
