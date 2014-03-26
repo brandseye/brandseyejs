@@ -656,7 +656,15 @@ brandseye.charts = function() {
 
         data: function(_) {
             if (!arguments.length) return this.attributes.data;
-            this.attributes.data = _;
+            var data = _;
+            if (data && !data.length) data = [data];
+            if (data && data[0].key === undefined) {
+                data = [{
+                    key: "series 1",
+                    values: data
+                }];
+            }
+            this.attributes.data = data;
             return this;
         },
 
