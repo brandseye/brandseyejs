@@ -65,8 +65,30 @@ brandseye.colours = {
 };
 
 brandseye.utilities = function() {
-    return {
 
+    var attrs = {
+        text: ['font-family', 'font-size', 'font-weight', 'color', 'text-anchor', 'fill',
+            'stroke', 'stroke-width', 'stroke-opacity', 'line-height'],
+        path: ['stroke', 'stroke-width', 'stroke-opacity', 'shape-rendering', 'fill', 'fill-opacity'],
+        rect: ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity'],
+        g: ['opacity'],
+        line: ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'shape-rendering']
+    };
+
+    var inlineSvgCss = function(e) {
+        var todo = attrs[e.prop("tagName")];
+        if (todo) {
+            for (var i = 0; i < todo.length; i++) {
+                var attr = todo[i];
+                var v = e.css(attr);
+                if (v) e.css(attr, v);
+            }
+        }
+        var list = e.children();
+        for (i = 0; i < list.length; i++) inlineSvgCss($(list[i]));
+    };
+
+    return {
         // Restricts the length of a string to the given size. This should cut text
         // at word boundaries, and provide ellipses.
         restrictStringToLength: function(text, length) {
@@ -96,6 +118,32 @@ brandseye.utilities = function() {
             }
 
             return result.join('');
+        },
+
+        // Given an svg element, this will return an xml representation of that
+        // element, including have CSS styles embedded in to the xml.
+        convertSvgElementToXml: function(svg) {
+            var width = svg.width();
+            var height = svg.height();
+
+            // add namespace and size to the svg so it will render properly
+            svg.attr('xmlns', "http://www.w3.org/2000/svg");
+            svg.attr('width', width);
+            svg.attr('height', height);
+            svg.attr('version', "1.1");
+
+            // put in computed styles for lots of things so css is not needed
+            inlineSvgCss(svg);
+
+            var xml = svg.parent().html().trim();
+            xml = xml.replace(/ class="[^"]+"/g, '');
+            // the extra space after some of the translate's breaks canvg and maybe some other stuff
+            xml = xml.replace(/ transform="translate \(/g, ' transform="translate(');
+            // Remove empty clip-path specifications, which batik does not like
+            xml = xml.replace(/clip-path=""/g, '');
+            // Some paths are degenerate, and we remove their d value. Batik complains otherwise
+            xml = xml.replace(/d="MZ"/g, '');
+            return xml;
         }
     }
 }();
