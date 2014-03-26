@@ -217,12 +217,37 @@ brandseye.charts = function() {
     // # Basic graph functionality
 
     // This defines the parent object from which most of the graphs descend.
+    //
+    // The simplest way of displaying a graph (in this case, a bar chart),
+    // is like this:
+    //
+    //     // First we define an array of x / y data points.
+    //     var data = [
+    //         { x: "apples", y: 10 },
+    //         { x: "oranges", y: 5},
+    //         { x: "pears", y: 7},
+    //         { x: "bananas", y: 11}
+    //     ];
+    //
+    //     // Then we create a chart of our choice.
+    //     var graph = new brandseye.charts.BarChart();
+    //
+    //     // Then set the data and specify a dom element
+    //     // on which to render the data.
+    //     graph
+    //         .data(data)
+    //         .element($('.container')[0])
+    //         .render();
     namespace.Graph = function() {
         // Javascript does not have a great way to provide member data
         // encapsulation. Here we're placing the member data in set called attributes.
         // Since we want the member data to be unique to each instance, we create it here
         // in the constructor, rather than below in the prototype.
         this.attributes = {
+            width: 250,
+            height: 250,
+            x: function(d) { return d.x; },
+            y: function(d) { return d.y; },
             colours: brandseye.colours.scheme,
             showLegend: true,
             coarseness: 'daily',
@@ -630,6 +655,15 @@ brandseye.charts = function() {
             return this;
         },
 
+        // **x()** and **y()** specify how to obtain the *x* and *y* components
+        // from the individual data values. They default to returning the values for keys
+        // names x (or similarly y) from the data. The default implementations are equivalent to this:
+        //
+        //        graph
+        //            .x(function(d) { return d.x; })
+        //            .y(function(d) { return d.y; });
+        //
+        // These should be set to obtain the appropriate data from your own data set.
         x: function(_) {
             if (!arguments.length) return this.attributes.x;
             this.attributes.x = _;
