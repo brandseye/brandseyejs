@@ -93,7 +93,7 @@ brandseye.utilities = function() {
 brandseye.charts = function() {
 
     var namespace = {
-        version: "0.0.1"
+        version: "0.0.2"
     };
 
     /*
