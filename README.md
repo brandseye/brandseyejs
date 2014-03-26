@@ -10,7 +10,11 @@ A JavaScript library for displaying data.
 
 ## Documentation
 
-Documentation can be produced with [docco](http://jashkenas.github.io/docco/).
+Documentation can be produced with [docco](http://jashkenas.github.io/docco/) like so:
+
+    docco src/*.js
+
+and can then be found in the doc directory.
 
 ## License
 
