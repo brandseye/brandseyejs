@@ -457,7 +457,7 @@ brandseye.charts = function() {
             var nvChart = this.nvChart();
             if (nvChart.xAxis) {
                 console.log("++++++++setting tick format");
-                nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
+                // nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
             }
         },
 
