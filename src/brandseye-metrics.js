@@ -19,6 +19,16 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// BrandsEye Metrics is a simple library to help with two things:
+// 1. Charting. It does this by building on top of [D3](http://www.d3js.org) and [nvd3](http://nvd3.org/).
+// 2. Pulling data from a BrandsEye account.
+//
+// BrandsEye is an online platform for social media analysis.
+// It provides an API for accessing the data programmatically, and this library is well suited
+// for displaying that data. Indeed, most of the charts in the BrandsEye application are built on top of this
+// library.
+
+// The namespace does it all. All contained within.
 var brandseye = {};
 
 // A basic colour scheme that we use throughout the library.
@@ -216,7 +226,8 @@ brandseye.charts = function() {
     //--------------------------------------------------------------
     // # Basic graph functionality
 
-    // This defines the parent object from which most of the graphs descend.
+    // Most of the graphs are built by extending the **Graph** object, which
+    // defines much of the basic graphing functionality.
     //
     // The simplest way of displaying a graph (in this case, a bar chart),
     // is like this:
