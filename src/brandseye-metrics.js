@@ -654,9 +654,8 @@ brandseye.charts = function() {
         //        ];
         //        graph.data(data);
 
-        data: function(_) {
+        data: function(data) {
             if (!arguments.length) return this.attributes.data;
-            var data = _;
             if (data && !data.length) data = [data];
             if (data && data[0].key === undefined) {
                 data = [{
