@@ -317,7 +317,8 @@ brandseye.charts = function() {
             padding: {left: 0, right: 0, bottom: 0, top: 0},
             dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide'),
             labelFormat: d3.format(',.f'),
-            showLabels: false
+            showLabels: false,
+            zeroOpacity: 0
         };
         return this;
     };
@@ -437,7 +438,8 @@ brandseye.charts = function() {
                 orientation = this.labelPosition,
                 label = this.dataAxisLabel(),
                 width = this.width(),
-                height = this.height();
+                height = this.height(),
+                zeroOpacity = this.zeroOpacity();
 
 
             margins = _.extend({
@@ -453,7 +455,7 @@ brandseye.charts = function() {
                     var labelSelection = d3.select(this).selectAll('.data-label').data([label]);
                     labelSelection.enter()
                         .append('text')
-                        .style('opacity', 0)
+                        .style('opacity', zeroOpacity)
                         .classed('data-label', true);
 
                     labelSelection.text(label.long);
@@ -614,7 +616,7 @@ brandseye.charts = function() {
         // Override to supply code that will arrange the axis bar ticks.
         arrangeTicks: function() {
             var xTicks = d3.select(this.nvChart().container).select('.nv-x.nv-axis > g').selectAll('g');
-            xTicks.selectAll('.tick').style('opacity', 0);
+            xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
         },
 
         arrangeLabels: function(selection) {
@@ -632,6 +634,7 @@ brandseye.charts = function() {
                 .format(this.labelFormat())
                 .position(this.labelPosition)
                 .determineCompression(this.labelCompression())
+                .zeroOpacity(this.zeroOpacity())
                 .showLabels(this.showLabels());
             labels(selection);
         },
@@ -824,6 +827,16 @@ brandseye.charts = function() {
             return this;
         },
 
+        // By default, the library will use an opacity of zero to make things
+        // invisible. Unfortunately, in some situations (for instance, when
+        // using this library in jsdom) this opacity value is not always applied properly.
+        // In that case, you can choose a custom value to use here.
+        zeroOpacity: function(_) {
+            if (!arguments.length) return this.attributes.zeroOpacity;
+            this.attributes.zeroOpacity = _;
+            return this;
+        },
+
         padding: function(_) {
             if (!arguments.length) return this.attributes.padding;
             this.attributes.padding = {
@@ -977,11 +990,11 @@ brandseye.charts = function() {
             }
             if (xScale.rangeBand() < 10) {
                 xTicks.selectAll('.standard-day')
-                    .style('opacity', 0);
+                    .style('opacity', that.zeroOpacity());
             }
         }
 
-        xTicks.selectAll('.tick').style('opacity', 0);
+        xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
     };
 
     namespace.Histogram.prototype.preRenderXAxisTicks = function() {
@@ -1255,6 +1268,7 @@ brandseye.charts = function() {
             .format(this.labelFormat())
             .position("circle")
             .determineCompression(this.labelCompression())
+            .zeroOpacity(this.zeroOpacity())
             .showLabels(this.showLabels());
         labels(selection);
     };
@@ -1398,7 +1412,7 @@ brandseye.charts = function() {
                     });
             });
 
-        xTicks.selectAll('.tick').style('opacity', 0);
+        xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
 
         container.selectAll('.nv-axisMaxMin text').each(function (data, position) {
             d3.select(this)
@@ -1429,7 +1443,8 @@ brandseye.charts = function() {
             determineCompression,
             showLabels = true,
             duration = 500,
-            originalSelection;
+            originalSelection,
+            zeroOpacity = 0;
 
         //-------------------------------------
 
@@ -1443,7 +1458,7 @@ brandseye.charts = function() {
             selection.each(function(data) {
                 var length = data ? data.length : 1;
 
-                var yDiff = -8             // Space between label and bar.
+                var yDiff = -8;             // Space between label and bar.
                 var slideDiff = -15;        // The space that new labels slide in over.
                 var anchor = 'middle';      // Where text is anchored to relative to its length.
                 var baseline = 'auto';      // Where text is anchored relative to its height.
@@ -1484,13 +1499,13 @@ brandseye.charts = function() {
                     labels.exit().remove();
 
                     // Add new 'blank' labels.
-                    labels.style('opacity', 0);
+                    labels.style('opacity', zeroOpacity);
                     labels.enter().append('text')
                         .classed('chart-label', true)
                         .attr('text-anchor', anchor)
                         .attr('dx', slideDiff)
                         .attr('dominant-baseline', baseline)
-                        .style('opacity', 0)
+                        .style('opacity', zeroOpacity)
                         .transition()
                         .delay(500)
                         .duration(duration)
@@ -1504,7 +1519,7 @@ brandseye.charts = function() {
                         .transition()
                         .delay(750)
                         .duration(duration)
-                        .style('opacity', showLabels ? 1 : 0);
+                        .style('opacity', showLabels ? 1 : zeroOpacity);
                 }
             });
 
@@ -1560,7 +1575,7 @@ brandseye.charts = function() {
          */
         function calculateRangeBuffer(length) {
             return length > 1 ? 0.95 : 1.05;
-        };
+        }
 
         function setupBarLabels(labels, length, getX, getY, anchor, yDiff) {
             var rangeBuffer = calculateRangeBuffer(length);
@@ -1643,7 +1658,7 @@ brandseye.charts = function() {
                 d3.select(this).selectAll('.chart-label')
                     .transition()
                     .duration(time)
-                    .style('opacity', 0);
+                    .style('opacity', zeroOpacity);
             })
         };
 
@@ -1714,6 +1729,12 @@ brandseye.charts = function() {
             return draw;
         };
 
+        draw.zeroOpacity = function(_) {
+            if (!arguments.length) return zeroOpacity;
+            zeroOpacity = _;
+            return draw;
+        };
+
         /**
          * Passes two possible arguments. The first is the data that should be formatted. The second
          * is an indiciation of the amount of compression that should occur, as determined by the
@@ -1769,7 +1790,8 @@ brandseye.charts = function() {
             height,
             data,
             forceLegend,
-            showLegend = true;
+            showLegend = true,
+            zeroOpacity = 0;
 
 
         function draw(selection) {
@@ -1848,7 +1870,7 @@ brandseye.charts = function() {
                                     .classed('bar-fade', false);
                             })
                         })
-                        .style('opacity', 0)
+                        .style('opacity', zeroOpacity)
                         .transition()
                         .duration(750)
                         .style('opacity', 1);
@@ -1947,7 +1969,7 @@ brandseye.charts = function() {
             if (!arguments.length) return data;
             data = _;
             return draw;
-        }
+        };
 
         draw.showLegend = function(_) {
             if (!arguments.length) return showLegend;
@@ -1958,6 +1980,12 @@ brandseye.charts = function() {
         draw.forceLegend = function(_) {
             if (!arguments.length) return forceLegend;
             forceLegend = _;
+            return draw;
+        };
+
+        draw.zeroOpacity = function(_) {
+            if (!arguments.length) return zeroOpacity;
+            zeroOpacity = _;
             return draw;
         };
 
