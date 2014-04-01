@@ -1603,7 +1603,7 @@ brandseye.charts = function() {
                     }
                 });
                 if (remove) labels.remove();
-            })
+            });
 
             if (scale) {
                 _.delay(function(){
