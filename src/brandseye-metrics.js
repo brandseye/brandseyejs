@@ -317,6 +317,7 @@ brandseye.charts = function() {
             padding: {left: 0, right: 0, bottom: 0, top: 0},
             dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide'),
             labelFormat: d3.format(',.f'),
+            tickFormat: d3.format(',.f'),
             showLabels: false,
             zeroOpacity: 0
         };
@@ -348,7 +349,7 @@ brandseye.charts = function() {
                 .attr('height', this.height() + "px")
                 .datum(this.data())
                 .transition()
-                .duration(100)
+                .duration(250)
                 .call(function(selection) {
 
                     that.initialiseData();
