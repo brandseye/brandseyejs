@@ -1844,6 +1844,7 @@ brandseye.charts = function() {
             var x = 0;
             var y = 0;
 
+            console.log("=========original selection", selection);
 
             selection.each(function(d) {
                 if (d) {
@@ -1866,6 +1867,36 @@ brandseye.charts = function() {
                     var newEntries = entries.enter();
                     newEntries.append('g')
                         .classed('legend-entry', true)
+                        .on('mouseover', function(d, i) {  // This highlights the item that we are mousing over.
+                            // The selection object seems to have been damaged here. If we only use the original
+                            // selection, then d3 begins to complain about undefined functions. So we reselect
+                            // the element that it was pointing to.
+                            var s = d3.select(selection.node());
+                            s.selectAll('.nv-slice')
+                                .classed('bar-fade', function(d) { console.log("MOUSE", d); return d.data.legendKey != i; });
+
+                            s.selectAll('.nv-bar')
+                                .classed('bar-fade', function(d) { return d.legendKey != i; })
+                                .classed('bar-highlight', function(d) { return d.legendKey == i; });
+
+                            s.selectAll('.chart-label')
+                                .classed('bar-fade', function(d) {
+                                    console.log("chart-label?", d);
+                                    if (d.data) return d.data.legendKey != i;
+                                    return d.legendKey != i;
+                                });
+                        })
+                        .on('mouseout', function(d, i) {
+                            var s = d3.select(selection.node());
+                            s.selectAll('.nv-slice')
+                                .classed('bar-highlight', false)
+                                .classed('bar-fade', false);
+                            s.selectAll('.nv-bar')
+                                .classed('bar-highlight', false)
+                                .classed('bar-fade', false);
+                            s.selectAll('.chart-label')
+                                .classed('bar-fade', false);
+                        })
                         .each(function() {
                             var item = d3.select(this);
                             item
@@ -1880,34 +1911,6 @@ brandseye.charts = function() {
                                 .attr('dy', 10);
                             item
                                 .append('title');
-                        })
-                        .on('mouseover', function(d, i) {  // This highlights the item that we are mousing over.
-                            selection.each(function() {
-                                d3.select(this).selectAll('.nv-slice')
-                                    .classed('bar-fade', function(d) { return d.data.legendKey != i; });
-
-                                d3.select(this).selectAll('.nv-bar')
-                                    .classed('bar-fade', function(d) { return d.legendKey != i; })
-                                    .classed('bar-highlight', function(d) { return d.legendKey == i; });
-
-                                d3.select(this).selectAll('.chart-label')
-                                    .classed('bar-fade', function(d) {
-                                        if (d.data) return d.data.legendKey != i;
-                                        return d.legendKey != i;
-                                    });
-                            })
-                        })
-                        .on('mouseout', function(d, i) {
-                            selection.each(function() {
-                                d3.select(this).selectAll('.nv-slice')
-                                    .classed('bar-highlight', false)
-                                    .classed('bar-fade', false);
-                                d3.select(this).selectAll('.nv-bar')
-                                    .classed('bar-highlight', false)
-                                    .classed('bar-fade', false);
-                                d3.select(this).selectAll('.chart-label')
-                                    .classed('bar-fade', false);
-                            })
                         })
                         .style('opacity', zeroOpacity)
                         .transition()
