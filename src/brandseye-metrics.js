@@ -1461,7 +1461,7 @@ brandseye.charts = function() {
                     });
             });
 
-        xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
+        xTicks.selectAll('.tick > line').style('opacity', this.zeroOpacity());
 
         container.selectAll('.nv-axisMaxMin text').each(function (data, position) {
             d3.select(this)
