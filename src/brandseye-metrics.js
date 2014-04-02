@@ -148,6 +148,34 @@ brandseye.utilities = function() {
             // Some paths are degenerate, and we remove their d value. Batik complains otherwise
             xml = xml.replace(/d="MZ"/g, '');
             return xml;
+        },
+
+
+        // This removes either single or double quotes from a string.
+        // If quoteChar is not specified and the first character of the string is a ' or " then this is used.
+        // It will also unescape things that have been escaped inside of the string. Strings that are not quoted are
+        // returned as-is.
+        removeQuotes: function(text, quoteChar) {
+            var n = text.length - 1;
+            if (n <= 0) return text;
+
+            if (!quoteChar) {
+                quoteChar = text.charAt(0);
+                if (quoteChar != '"' && quoteChar != "'") return text;
+            } else if (text.charAt(0) != quoteChar) {
+                return text;
+            }
+            if (text.charAt(n) != quoteChar) return text;
+
+            var i = text.indexOf("\\", 1);
+            if (i < 0) return text.substring(1, n);
+            var o = text.substring(1, i);
+            for (; i < n; ) {
+                var c = text.charAt(i++);
+                if (c == '\\') c = text.charAt(i++);
+                o += c;
+            }
+            return o;
         }
     }
 }();
@@ -337,8 +365,6 @@ brandseye.charts = function() {
             }
 
             var svg = parent.select('svg');
-            var tickFormat = this.tickFormat();
-            var padding = this.padding();
             var nvChart = this.attributes.nvChart;
 
             // Here we set up basic
@@ -347,7 +373,7 @@ brandseye.charts = function() {
             svg
                 .attr('width', this.width() + "px")
                 .attr('height', this.height() + "px")
-                .datum(this.data())
+                .datum(this.getDataToSet())
                 .transition()
                 .duration(250)
                 .call(function(selection) {
@@ -432,6 +458,14 @@ brandseye.charts = function() {
             }
 
             this.attributes.maxLabelLength = maxLabelLength;
+        },
+
+        // Most of the charts will want to set data in the default format.
+        // Some, like the piechart, expect the data formatted slightly
+        // differently. This is a great way to do whatever work needs to be done in
+        // formatting and setting the data on the chart.
+        getDataToSet: function() {
+            return this.data();
         },
 
         drawAxisDataLabel: function(selection, margins) {
@@ -688,7 +722,6 @@ brandseye.charts = function() {
         //            }
         //        ];
         //        graph.data(data);
-
         data: function(data) {
             if (!arguments.length) return this.attributes.data;
             if (data && !data.length) data = [data];
@@ -1213,6 +1246,10 @@ brandseye.charts = function() {
     namespace.PieChart.prototype.createChart = function() { console.log("piechart!!"); return nv.models.pieChart(); };
     namespace.PieChart.prototype.labelPosition = "circle";
 
+    namespace.PieChart.prototype.getDataToSet = function() {
+        return this.data()[0].values;
+    };
+
     namespace.PieChart.prototype.initialiseData = function() {
         var data = this.data(),
             xAxisOverride = this.xAxisOverride(),
@@ -1457,6 +1494,7 @@ brandseye.charts = function() {
             originalSelection = selection;
 
             selection.each(function(data) {
+                if (data && !data[0].values) data = [ {values: data} ];
                 var length = data ? data.length : 1;
 
                 var yDiff = -8;             // Space between label and bar.
@@ -1889,11 +1927,11 @@ brandseye.charts = function() {
                     // properly updated the data for these subelements.
                     var index = 0;
                     entries.selectAll('text')
-                        .text(function() { return xAxisTickFormat(30, (data || d)[index++].key.toString().removeQuotes()); })
+                        .text(function() { return xAxisTickFormat(30, brandseye.utilities.removeQuotes((data || d)[index++].key.toString())); });
 
-                    index = 0
+                    index = 0;
                     entries.selectAll('title')
-                        .text(function() { return (data || d)[index++].key.toString().removeQuotes() });
+                        .text(function() { return brandseye.utilities.removeQuotes((data || d)[index++].key.toString()); });
 
                     // Now we want to lay out the legend in columns. So we will
                     // first determine the longest entry.
