@@ -268,7 +268,6 @@ brandseye.charts = function() {
 
     function setupDispatcher(dispatch, container, originalDispatch, tooltipDispatch, originalData, selector, transformData) {
         if (_(transformData).isUndefined()) transformData = _.identity;
-        console.log("originalDispatch", originalDispatch);
         originalDispatch.on('elementClick', function(data) {
             dispatch.elementClick(data);
         });
@@ -367,7 +366,6 @@ brandseye.charts = function() {
             var nvChart = this.attributes.nvChart;
 
             // Here we set up basic
-            console.log("Data", this.data());
             var that = this;
             svg
                 .attr('width', this.width() + "px")
@@ -503,7 +501,6 @@ brandseye.charts = function() {
                     var x = 0,
                         y = 0;
                     var buffer = orientation == "columns" ? 5 : 0;
-                    console.log("New Buffer is ", buffer, orientation);
 
                     if (orientation == "rows") {
                         x = margins.left + (width - margins.left - margins.right) / 2 - bbox.width / 2;
@@ -555,7 +552,6 @@ brandseye.charts = function() {
         preRenderXAxisTicks: function() {
             var nvChart = this.nvChart();
             if (nvChart.xAxis) {
-                console.log("++++++++setting tick format");
                 // nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
             }
         },
@@ -592,6 +588,16 @@ brandseye.charts = function() {
             var xScale = nvChart.multibar.xScale();
             var yScale = nvChart.multibar.yScale();
             var container = d3.select(nvChart.container);
+            var height = Math.max.apply(Math.max, yScale.range()),
+                width = _(xScale.rangeExtent()).last();
+
+            // In this case, our width and height values have been swapped.
+            // This happens, for instance, when rendering bar charts.
+            if (yScale.range()[0] == 0) {
+                var tmp = height;
+                height = width;
+                width = tmp;
+            }
 
             container.classed('bm', true);
 
@@ -599,8 +605,8 @@ brandseye.charts = function() {
             container.select('.nv-wrap').insert('rect', ':first-child')
                 .attr('class', 'chart-background')
                 .attr('fill', backgroundColour)
-                .attr('width', _(xScale.rangeExtent()).last())
-                .attr('height', _(yScale.range()).first());
+                .attr('width', width)
+                .attr('height', height);
         },
 
         calculateLegendMargin: function() {
@@ -732,7 +738,6 @@ brandseye.charts = function() {
             }
 
             this.attributes.data = data || [];
-            console.log("================= Setting data ", this.attributes.data);
             return this;
         },
 
@@ -1152,12 +1157,10 @@ brandseye.charts = function() {
                 maxXLabelLength = 0,
                 maxYLabelLength = 0;
 
-            console.log("initialise DATA?", data);
             _(data).each(function(s, i) {
                 _(s.values).each(function(d) {
                     // Store an index for legends.
                     d.legendKey = i;
-                    console.log("TEST TEST TEST TEST");
 
                     // Determine length for x axis
                     var item = x(d);
@@ -1213,8 +1216,6 @@ brandseye.charts = function() {
         };
         var maxXLabelLength = this.attributes.maxXLabelLength || 0,
             maxYLabelLength = this.attributes.maxYLabelLength || 0;
-
-        console.log("MaxXLabel", maxXLabelLength, "maxY", maxYLabelLength);
 
         margins.bottom = (margins.bottom || 0) + this.attributes.legend.finalHeight();
 
