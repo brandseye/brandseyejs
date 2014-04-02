@@ -223,7 +223,6 @@ brandseye.charts = function() {
      * information from twitter and facebook, or web urls).
      */
     function xAxisTickFormat(restriction, text) {
-        console.log("Restricting ", text, restriction, text);
         text = text.toString();
         if (!restriction) restriction = defaultLabelRestriction;
         if (text.length <= restriction) return text;
@@ -243,7 +242,6 @@ brandseye.charts = function() {
             text = match[1] + '…';
         }
 
-        console.log("Here?");
         return brandseye.utilities.restrictStringToLength(text, restriction);
     }
 
@@ -335,6 +333,7 @@ brandseye.charts = function() {
         // Since we want the member data to be unique to each instance, we create it here
         // in the constructor, rather than below in the prototype.
         this.attributes = {
+            data: [],
             width: 250,
             height: 250,
             x: function(d) { return d.x; },
@@ -731,7 +730,9 @@ brandseye.charts = function() {
                     values: data
                 }];
             }
-            this.attributes.data = data;
+
+            this.attributes.data = data || [];
+            console.log("================= Setting data ", this.attributes.data);
             return this;
         },
 
@@ -1247,7 +1248,9 @@ brandseye.charts = function() {
     namespace.PieChart.prototype.labelPosition = "circle";
 
     namespace.PieChart.prototype.getDataToSet = function() {
-        return this.data()[0].values;
+        var data = this.data();
+        if (data && data.length) return this.data()[0].values;
+        else return data;
     };
 
     namespace.PieChart.prototype.initialiseData = function() {
@@ -1262,11 +1265,15 @@ brandseye.charts = function() {
                 })
             });
 
-            this.attributes.labelItems = _(data[0].values).map(function(d) {
-                var item = x(d);
-                if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
-                return { key: item };
-            });
+            if (data && data.length) {
+                this.attributes.labelItems = _(data[0].values).map(function(d) {
+                    var item = x(d);
+                    if (xAxisOverride && xAxisOverride[item]) item = xAxisOverride[item];
+                    return { key: item };
+                });
+            }
+            else this.attributes.labelItems = [];
+
         }
     };
 
@@ -1494,7 +1501,7 @@ brandseye.charts = function() {
             originalSelection = selection;
 
             selection.each(function(data) {
-                if (data && !data[0].values) data = [ {values: data} ];
+                if (data && data.length && !data[0].values) data = [ {values: data} ];
                 var length = data ? data.length : 1;
 
                 var yDiff = -8;             // Space between label and bar.
@@ -1844,8 +1851,6 @@ brandseye.charts = function() {
             var x = 0;
             var y = 0;
 
-            console.log("=========original selection", selection);
-
             selection.each(function(d) {
                 if (d) {
                     var legend = d3.select(this).selectAll('.legend').data([data || d]);
@@ -1873,7 +1878,7 @@ brandseye.charts = function() {
                             // the element that it was pointing to.
                             var s = d3.select(selection.node());
                             s.selectAll('.nv-slice')
-                                .classed('bar-fade', function(d) { console.log("MOUSE", d); return d.data.legendKey != i; });
+                                .classed('bar-fade', function(d) { return d.data.legendKey != i; });
 
                             s.selectAll('.nv-bar')
                                 .classed('bar-fade', function(d) { return d.legendKey != i; })
@@ -1881,7 +1886,6 @@ brandseye.charts = function() {
 
                             s.selectAll('.chart-label')
                                 .classed('bar-fade', function(d) {
-                                    console.log("chart-label?", d);
                                     if (d.data) return d.data.legendKey != i;
                                     return d.legendKey != i;
                                 });
