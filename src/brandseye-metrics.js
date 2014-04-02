@@ -1348,17 +1348,18 @@ brandseye.charts = function() {
         namespace.Graph.prototype.initialiseData.apply(this);
         var data = this.data();
         var chartX = this.x();
+        var rewriteX = false;
 
         _(data).each(function(s) {
             _(s.values).each(function(d) {
-                if (_(d.published).isString() || _(d.date).isString()) {
-                    d.publishedStamp =  new moment(d.published ? d.published : d.date).unix();
-                    chartX = null;
+                if (_(chartX(d)).isString()) {
+                    d.publishedStamp =  new moment(chartX(d)).unix();
+                    rewriteX = true;
                 }
             })
         });
 
-        if (chartX === null) {
+        if (rewriteX) {
             chartX = function(d) {
                 return d.publishedStamp;
             }
