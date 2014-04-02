@@ -655,8 +655,11 @@ brandseye.charts = function() {
 
         // Override to supply code that will arrange the axis bar ticks.
         arrangeTicks: function() {
-            var xTicks = d3.select(this.nvChart().container).select('.nv-x.nv-axis > g').selectAll('g');
-            xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
+            d3.select(this.nvChart().container)
+                .select('.nv-x.nv-axis > g')
+                .selectAll('g')
+                .selectAll('.tick > line')
+                .style('opacity', this.zeroOpacity());
         },
 
         arrangeLabels: function(selection) {
@@ -1034,7 +1037,7 @@ brandseye.charts = function() {
             }
         }
 
-        xTicks.selectAll('.tick').style('opacity', this.zeroOpacity());
+        xTicks.selectAll('.tick > line').style('opacity', this.zeroOpacity());
     };
 
     namespace.Histogram.prototype.preRenderXAxisTicks = function() {
