@@ -1694,22 +1694,21 @@ brandseye.charts = function() {
         //-------------------------------------
 
         draw.show = function() {
-            originalSelection.each(function(data) {
-                d3.select(this).selectAll('.chart-label')
-                    .transition()
-                    .duration(duration)
-                    .style('opacity', 1);
-            })
+            d3.select(originalSelection.node())
+                .selectAll('.chart-label')
+                .transition()
+                .duration(duration)
+                .style('opacity', 1);
+
         };
 
         draw.hide = function(time) {
             if (_(time).isUndefined()) time = duration;
-            originalSelection.each(function(data) {
-                d3.select(this).selectAll('.chart-label')
-                    .transition()
-                    .duration(time)
-                    .style('opacity', zeroOpacity);
-            })
+            d3.select(originalSelection.node())
+                .selectAll('.chart-label')
+                .transition()
+                .duration(time)
+                .style('opacity', zeroOpacity);
         };
 
         draw.isSpaceForLabels = function() {
