@@ -7,6 +7,7 @@
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="http://underscorejs.org/underscore.js"></script>
     <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+    <script src="http://momentjs.com/downloads/moment.js" charset="utf-8"></script>
     <script src="../lib/nv-d3.js"></script>
     <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
 
@@ -65,6 +66,11 @@
     <div class="comparison-chart"></div>
 </div>
 
+<div class="chart">
+    <h2>A histogram</h2>
+    <div class="histogram-chart"></div>
+</div>
+
 
 <script>
     $(function() {
@@ -96,6 +102,14 @@
             }
         ];
 
+        var dateData = [
+            { x: "2014-01-01", y: 10 },
+            { x: "2014-01-02", y: 12 },
+            { x: "2014-01-03", y: 14 },
+            { x: "2014-01-04", y: 18 },
+            { x: "2014-01-06", y: 26 }
+        ];
+
         var setupData = [
             { constructor: brandseye.charts.ColumnChart, element: $('.column-chart')[0] },
             { constructor: brandseye.charts.BarChart, element: $('.bar-chart')[0] },
@@ -121,6 +135,19 @@
                 .showLabels(true)
                 .width(350)
                 .render();
+
+        var setupDateData = [
+            { constructor: brandseye.charts.Histogram, element: $('.histogram-chart')[0] },
+        ];
+
+        for (i = 0; i < setupDateData.length; i++) {
+            map = setupDateData[i];
+            chart = new map.constructor();
+            chart
+                    .data(dateData)
+                    .element(map.element)
+                    .render();
+        }
 
 
     });
