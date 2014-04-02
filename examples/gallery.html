@@ -1,0 +1,90 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>The various charts in the library</title>
+
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://underscorejs.org/underscore.js"></script>
+    <script src="../lib/nv-d3.js"></script>
+    <script src="../src/brandseye-metrics.js"></script>
+    <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
+    <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
+
+    <style>
+        .chart {
+            width: 250px;
+            height: 300px;
+            float: left;
+            padding: 40px;
+        }
+
+        .chart:not(:first-of-type) {
+            border-left: thin solid #000000;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>
+    A collection of charts
+</h1>
+
+<div class="chart">
+    <h2>A bar chart</h2>
+    <div class="bar-chart"></div>
+</div>
+
+<div class="chart">
+    <h2>A column chart</h2>
+    <div class="column-chart"></div>
+</div>
+
+<div class="chart">
+    <h2>A pie chart</h2>
+    <div class="pie-chart"></div>
+</div>
+
+
+<script>
+    $(function() {
+        var data = [
+            { x: "apples", y: 10 },
+            { x: "oranges", y: 5},
+            { x: "pears", y: 7},
+            { x: "bananas", y: 11}
+        ];
+
+        var setupData = [
+            { constructor: brandseye.charts.ColumnChart, element: $('.column-chart')[0] },
+            { constructor: brandseye.charts.BarChart, element: $('.bar-chart')[0] }
+//            { constructor: brandseye.charts.PieChart, element: $('.pie-chart')[0] }
+        ];
+
+        console.log(setupData);
+        var chart;
+        var map;
+        for (var i = 0; i < setupData.length; i++) {
+            map = setupData[i];
+            chart = new map.constructor();
+            console.log("Creating ", map, chart);
+            chart
+                .data(data)
+                .element(map.element)
+                .render();
+        }
+
+
+    });
+</script>
+
+
+</body>
+
+</html>
