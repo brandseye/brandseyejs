@@ -19,20 +19,30 @@
     <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
 
     <style>
+
+        .graphs {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
         .chart {
             width: 250px;
             height: 300px;
-            float: left;
             padding: 40px;
+            border: solid thin grey;
+            margin: 10px;
+            border-radius: 5px;
         }
 
-        .chart.comparison {
+
+
+        .chart.longer {
             width: 400px;
         }
 
-        .chart:not(:first-of-type) {
-            border-left: thin solid #000000;
-        }
+        /*.chart:not(:first-of-type) {*/
+            /*border-left: thin solid #000000;*/
+        /*}*/
 
         h2 {
             text-align: center;
@@ -46,35 +56,38 @@
     A collection of charts
 </h1>
 
-<div class="chart">
-    <h2>A bar chart</h2>
-    <div class="bar-chart"></div>
+<div class="graphs">
+    <div class="chart">
+        <h2>A bar chart</h2>
+        <div class="bar-chart"></div>
+    </div>
+
+    <div class="chart">
+        <h2>A column chart</h2>
+        <div class="column-chart"></div>
+    </div>
+
+    <div class="chart">
+        <h2>A pie chart</h2>
+        <div class="pie-chart"></div>
+    </div>
+
+    <div class="chart longer">
+        <h2>Comparison</h2>
+        <div class="comparison-chart"></div>
+    </div>
+
+    <div class="chart">
+        <h2>A histogram</h2>
+        <div class="histogram-chart"></div>
+    </div>
+
+    <div class="chart">
+        <h2>A line chart</h2>
+        <div class="line-chart"></div>
+    </div>
 </div>
 
-<div class="chart">
-    <h2>A column chart</h2>
-    <div class="column-chart"></div>
-</div>
-
-<div class="chart">
-    <h2>A pie chart</h2>
-    <div class="pie-chart"></div>
-</div>
-
-<div class="chart comparison">
-    <h2>Comparison</h2>
-    <div class="comparison-chart"></div>
-</div>
-
-<div class="chart">
-    <h2>A histogram</h2>
-    <div class="histogram-chart"></div>
-</div>
-
-<div class="chart">
-    <h2>A line chart</h2>
-    <div class="line-chart"></div>
-</div>
 
 
 <script>
