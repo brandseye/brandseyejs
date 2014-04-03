@@ -356,6 +356,7 @@ brandseye.charts = function() {
         },
 
         render: function() {
+            console.log("BEGINNING TO RENDER!!!!", this.constructor);
             this.setup();
 
             // TODO We already have parent, which is likely the same as container used everywhere.
@@ -373,8 +374,6 @@ brandseye.charts = function() {
             // Here we set up basic
             var that = this;
             svg
-                .attr('width', this.width() + "px")
-                .attr('height', this.height() + "px")
                 .datum(this.getDataToSet())
                 .transition()
                 .duration(250)
