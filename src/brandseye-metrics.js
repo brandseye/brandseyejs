@@ -341,6 +341,7 @@ brandseye.charts = function() {
                 data: [],
                 width: 250,
                 height: 250,
+                duration: 250,
                 x: function(d) { return d.x; },
                 y: function(d) { return d.y; },
                 colours: brandseye.colours.scheme,
@@ -376,7 +377,7 @@ brandseye.charts = function() {
             svg
                 .datum(this.getDataToSet())
                 .transition()
-                .duration(250)
+                .duration(this.duration())
                 .call(function(selection) {
 
                     that.initialiseData();
@@ -884,6 +885,12 @@ brandseye.charts = function() {
         zeroOpacity: function(_) {
             if (!arguments.length) return this.attributes.zeroOpacity;
             this.attributes.zeroOpacity = _;
+            return this;
+        },
+
+        duration: function(_) {
+            if (!arguments.length) return this.attributes.duration;
+            this.attributes.duration = _;
             return this;
         },
 

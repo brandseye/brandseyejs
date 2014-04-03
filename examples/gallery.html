@@ -34,15 +34,9 @@
             border-radius: 5px;
         }
 
-
-
         .chart.longer {
             width: 400px;
         }
-
-        /*.chart:not(:first-of-type) {*/
-            /*border-left: thin solid #000000;*/
-        /*}*/
 
         h2 {
             text-align: center;
@@ -134,7 +128,6 @@
             { constructor: brandseye.charts.PieChart, element: $('.pie-chart')[0] }
         ];
 
-        console.log(setupData);
         var chart;
         var map;
         for (var i = 0; i < setupData.length; i++) {
@@ -148,7 +141,7 @@
 
         chart = new brandseye.charts.ColumnChart();
         chart
-                .data(data)
+                .data(comparisonData)
                 .element($('.comparison-chart')[0])
                 .showLabels(true)
                 .width(400)
