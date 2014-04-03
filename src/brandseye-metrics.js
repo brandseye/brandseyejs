@@ -400,7 +400,6 @@ brandseye.charts = function() {
                     that.preRenderXAxisTicks();
                     that.preRenderYAxisTicks();
 
-                    console.log("The random is", that.attributes.random);
                     nvChart(selection);
 
                     that.postRenderXAxisTicks();
@@ -937,7 +936,7 @@ brandseye.charts = function() {
     // such as for showing the number of mentions appearing over time.
 
     namespace.Histogram = function() {
-        namespace.Graph.prototype.createAttributes();
+        namespace.Graph.prototype.createAttributes.call(this);
         return this;
     };
 
@@ -1093,7 +1092,7 @@ brandseye.charts = function() {
     // are rendered horizontally: if you would like vertical bars, see the *ColumnChart*.
 
     namespace.BarChart = function() {
-        namespace.Graph.prototype.createAttributes();
+        namespace.Graph.prototype.createAttributes.call(this);
         return this;
     };
 
@@ -1154,7 +1153,7 @@ brandseye.charts = function() {
     // are rendered vertically: if you would like horizontal bars, see the *BarChart*.
 
     namespace.ColumnChart = function() {
-        namespace.Graph.prototype.createAttributes();
+        namespace.Graph.prototype.createAttributes.call(this);
         return this;
     };
 
@@ -1256,7 +1255,7 @@ brandseye.charts = function() {
     // # Pie charts
 
     namespace.PieChart = function() {
-        namespace.Graph.prototype.createAttributes();
+        namespace.Graph.prototype.createAttributes.call(this);
         return this;
     };
 
@@ -1348,7 +1347,7 @@ brandseye.charts = function() {
     // This shows timeseries data. Expects the x-axis to show dates.
 
     namespace.LineChart = function() {
-        namespace.Graph.prototype.createAttributes();
+        namespace.Graph.prototype.createAttributes.call(this);
         return this;
     };
 
