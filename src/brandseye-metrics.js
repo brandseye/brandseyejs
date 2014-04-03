@@ -327,42 +327,47 @@ brandseye.charts = function() {
     //         .element($('.container')[0])
     //         .render();
     namespace.Graph = function() {
-        // Javascript does not have a great way to provide member data
-        // encapsulation. Here we're placing the member data in set called attributes.
-        // Since we want the member data to be unique to each instance, we create it here
-        // in the constructor, rather than below in the prototype.
-        this.attributes = {
-            data: [],
-            width: 250,
-            height: 250,
-            x: function(d) { return d.x; },
-            y: function(d) { return d.y; },
-            colours: brandseye.colours.scheme,
-            showLegend: true,
-            coarseness: 'daily',
-            padding: {left: 0, right: 0, bottom: 0, top: 0},
-            dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide'),
-            labelFormat: d3.format(',.f'),
-            tickFormat: d3.format(',.f'),
-            showLabels: false,
-            zeroOpacity: 0
-        };
         return this;
     };
 
     namespace.Graph.prototype = {
+
+        // Javascript does not have a great way to provide member data
+        // encapsulation. Here we're placing the member data in set called attributes.
+        // Since we want the member data to be unique to each instance, we create it here
+        // in the constructor, rather than below in the prototype.
+        createAttributes: function() {
+            this.attributes = {
+                data: [],
+                width: 250,
+                height: 250,
+                x: function(d) { return d.x; },
+                y: function(d) { return d.y; },
+                colours: brandseye.colours.scheme,
+                showLegend: true,
+                coarseness: 'daily',
+                padding: {left: 0, right: 0, bottom: 0, top: 0},
+                dispatch: d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick', 'tooltipShow', 'tooltipHide'),
+                labelFormat: d3.format(',.f'),
+                tickFormat: d3.format(',.f'),
+                showLabels: false,
+                zeroOpacity: 0
+            };
+        },
 
         render: function() {
             this.setup();
 
             // TODO We already have parent, which is likely the same as container used everywhere.
             var parent = d3.select(this.element());
+            console.log("The parent is", parent);
 
             if (parent.selectAll('svg').empty()) {
                 parent.append('svg');
             }
 
             var svg = parent.select('svg');
+            console.log("SVG is", svg);
             var nvChart = this.attributes.nvChart;
 
             // Here we set up basic
@@ -395,6 +400,7 @@ brandseye.charts = function() {
                     that.preRenderXAxisTicks();
                     that.preRenderYAxisTicks();
 
+                    console.log("The random is", that.attributes.random);
                     nvChart(selection);
 
                     that.postRenderXAxisTicks();
@@ -532,6 +538,8 @@ brandseye.charts = function() {
         setupChart: function(margins) {
             var nvChart = this.nvChart();
 
+            console.log("Setting width", this.width(), "height", this.height());
+            console.log("Setting margins", margins);
             nvChart
                 .margin(margins)
                 .width(this.width())
@@ -765,6 +773,7 @@ brandseye.charts = function() {
         height: function(_) {
             if (!arguments.length) return this.attributes.height;
             this.attributes.height = _;
+            console.log("Height has been set to ", this.attributes.height);
             return this;
         },
 
@@ -928,6 +937,7 @@ brandseye.charts = function() {
     // such as for showing the number of mentions appearing over time.
 
     namespace.Histogram = function() {
+        namespace.Graph.prototype.createAttributes();
         return this;
     };
 
@@ -1083,6 +1093,7 @@ brandseye.charts = function() {
     // are rendered horizontally: if you would like vertical bars, see the *ColumnChart*.
 
     namespace.BarChart = function() {
+        namespace.Graph.prototype.createAttributes();
         return this;
     };
 
@@ -1143,6 +1154,7 @@ brandseye.charts = function() {
     // are rendered vertically: if you would like horizontal bars, see the *BarChart*.
 
     namespace.ColumnChart = function() {
+        namespace.Graph.prototype.createAttributes();
         return this;
     };
 
@@ -1244,6 +1256,7 @@ brandseye.charts = function() {
     // # Pie charts
 
     namespace.PieChart = function() {
+        namespace.Graph.prototype.createAttributes();
         return this;
     };
 
@@ -1335,6 +1348,7 @@ brandseye.charts = function() {
     // This shows timeseries data. Expects the x-axis to show dates.
 
     namespace.LineChart = function() {
+        namespace.Graph.prototype.createAttributes();
         return this;
     };
 
