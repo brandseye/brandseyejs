@@ -1,0 +1,49 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Example of displaying basic data</title>
+
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://underscorejs.org/underscore.js"></script>
+    <script src="../lib/nv-d3.js"></script>
+    <script src="../src/brandseye-metrics.js"></script>
+    <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
+    <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<h1>
+    Reading data from the BrandsEye API
+</h1>
+
+<div class="container">
+    &nbsp;
+</div>
+
+
+<script>
+    $(function() {
+        brandseye.charts.loadFromApi({
+            key: '74c0643twmugtfqwo72n7sfai',
+            account: "QUIR01BA",
+            success: function(data) {
+                console.log(data);
+            }
+        });
+
+//        var graph = new brandseye.charts.ColumnChart();
+//
+//        graph
+//            .data(data)
+//            .element($('.container')[0])
+//            .render();
+    });
+</script>
+
+
+</body>
+
+</html>

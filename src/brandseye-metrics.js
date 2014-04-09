@@ -2150,5 +2150,46 @@ brandseye.charts = function() {
         areas.attr('d', area);
     };
 
+    // # Getting data to show
+
+    // The address of the BrandsEye API server is https://api.brandseye.com. This is a restful,
+    // json api. You can visit the page to view the documentation on the api. When asked for a username / password,
+    // you can use your, you can use the username API_KEY and use your api key as the password.
+    namespace.brandsEyeApi = "https://api.brandseye.com";
+
+    // This is a helper function to load data from the api. You very likely would want
+    // to only use this when testing the library, as it will expose your api key in your
+    // client side code.
+    //
+    // The function takes two arguments.
+    // - username: username for accessing the data server
+    // - password: password for accessing the data server
+    // - server: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
+    // - key: An api key to use instead of a username/password pair
+    namespace.loadFromApi = function(options) {
+        if (!options.account && !options.fragment) {
+            throw new Error("Please specify an account");
+        }
+
+        var username = options.username || "API_KEY",
+            password = options.password || options.key,
+            server = options.server || namespace.brandsEyeApi,
+            callback = options.success,
+            authorisation = "Basic " + btoa(username + ":" + password),
+            fragment = options.fragment || "rest/accounts/" + options.account + "/mentions/count";
+
+        var url = server + "/" + fragment + "?Authorization=" + authorisation;
+
+        return $.ajax({
+            url: url,
+            contentType: "application/json",
+            dataType: 'jsonp',
+            success: callback,
+            error: function() {
+                alert("ERROR");
+            }
+        });
+    };
+
     return namespace;
 }();
