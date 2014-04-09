@@ -73,9 +73,7 @@
     fill: green;
 }
 
-.nv-bar, .nv-slice {
-    cursor: pointer;
-}
+.nv-bar, .nv-slice { }
 
 .bm .bar-highlight {
     fill-opacity: 1;
