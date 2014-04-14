@@ -31,32 +31,22 @@
 
 <script>
     $(function() {
-        brandseye.charts.loadFromApi({
-            key: '74c0643twmugtfqwo72n7sfai',
+        var graph = new brandseye.charts.VolumeMetric({
             account: "QUIR01BA",
-            groupby: "published",
-            filter: "published inthelast fortnight",
-            success: function(data) {
-                console.log(data);
-
-                var graph = new brandseye.charts.Histogram();
-
-                graph
-                        .data(data)
-                        .width(850)
-                        .height(350)
-                        .showLabels(true)
-                        .x(function(d) { return d.published; } )
-                        .y(function(d) { return d.count; })
-                        .element($('.container')[0])
-                        .render();
-            }
+            filter: "published inthelast week",
+            key: '74c0643twmugtfqwo72n7sfai'
         });
 
-
+        graph.run(function(graph) {
+            graph
+                    .width(850)
+                    .height(350)
+                    .showLabels(true)
+                    .element($('.container')[0])
+                    .render();
+        });
     });
 </script>
-
 
 </body>
 

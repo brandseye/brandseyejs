@@ -1492,6 +1492,54 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
 
+    namespace.BrandsEyeMetric = function(options) {
+        this.query = options.query;
+        this.type = options.type;
+        this.__proto__ = new this.type();
+
+        this.run = function(callback) {
+            var chart = this;
+
+            brandseye.charts.loadFromApi({
+                key: options.query.key,
+                account: options.query.account,
+                filter: options.query.filter,
+                groupby: options.query.groupby,
+                orderby: options.query.orderby,
+                include: options.query.include,
+
+                success: function(data) {
+                    console.log(data);
+
+                    chart.data(data);
+                    callback(chart);
+                }
+            });
+        };
+
+        return this;
+    };
+
+    namespace.VolumeMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                groupby: "published"
+            },
+            type: options.type || namespace.Histogram
+        });
+
+        this
+            .x(function(d) { return d.published; })
+            .y(function(d) { return d.count; });
+
+        return this;
+    };
+
+    //--------------------------------------------------------------
+
     /**
      * Places labels on a chart. Currently this supports row and column charts, by
      * setting the position() field to be 'rows' or 'columns'. You can also format
@@ -2192,7 +2240,12 @@ brandseye.charts = function() {
             url: url,
             contentType: "application/json",
             dataType: 'jsonp',
-            success: callback,
+            success: function(data){
+                if (data.status === 401) {
+                    throw new Error("You are not authorised to access this endpoint");
+                }
+                callback(data);
+            },
             error: function() {
                 alert("ERROR");
             }
