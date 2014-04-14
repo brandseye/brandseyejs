@@ -8,6 +8,7 @@
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="http://underscorejs.org/underscore.js"></script>
     <script src="../lib/nv-d3.js"></script>
+    <script src="http://momentjs.com/downloads/moment.js"></script>
     <script src="../src/brandseye-metrics.js"></script>
     <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
     <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
@@ -19,6 +20,10 @@
     Reading data from the BrandsEye API
 </h1>
 
+<p>
+    This example pulls the last month of data from an account and displays it in a histogram.
+</p>
+
 <div class="container">
     &nbsp;
 </div>
@@ -29,17 +34,26 @@
         brandseye.charts.loadFromApi({
             key: '74c0643twmugtfqwo72n7sfai',
             account: "QUIR01BA",
+            groupby: "published",
+            filter: "published inthelast fortnight",
             success: function(data) {
                 console.log(data);
+
+                var graph = new brandseye.charts.Histogram();
+
+                graph
+                        .data(data)
+                        .width(850)
+                        .height(350)
+                        .showLabels(true)
+                        .x(function(d) { return d.published; } )
+                        .y(function(d) { return d.count; })
+                        .element($('.container')[0])
+                        .render();
             }
         });
 
-//        var graph = new brandseye.charts.ColumnChart();
-//
-//        graph
-//            .data(data)
-//            .element($('.container')[0])
-//            .render();
+
     });
 </script>
 

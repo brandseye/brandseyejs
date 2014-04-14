@@ -2178,7 +2178,15 @@ brandseye.charts = function() {
             authorisation = "Basic " + btoa(username + ":" + password),
             fragment = options.fragment || "rest/accounts/" + options.account + "/mentions/count";
 
-        var url = server + "/" + fragment + "?Authorization=" + authorisation;
+        var arguments = [];
+        arguments.push("Authorization=" + authorisation);
+
+        if (options.groupby) arguments.push("groupby=" + encodeURIComponent(options.groupby));
+        if (options.filter) arguments.push("filter=" + encodeURIComponent(options.filter));
+        if (options.orderby) arguments.push("orderby=" + encodeURIComponent(options.orderby));
+        if (options.include) arguments.push("include=" + encodeURIComponent(options.include));
+
+        var url = server + "/" + fragment + "?" + arguments.join('&');
 
         return $.ajax({
             url: url,
