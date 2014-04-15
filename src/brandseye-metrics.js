@@ -176,6 +176,14 @@ brandseye.utilities = function() {
                 o += c;
             }
             return o;
+        },
+
+        // Often a value will be a floating point representation of a percentage, which needs
+        // to be rounded and given the percentage symbol. This function does that.
+        formatPercentage: function(value, round) {
+            if (round === undefined) round = 2;
+            var base = Math.pow(10, round);
+            return (Math.round(value / base) * base).toString() + '%';
         }
     }
 }();
@@ -369,6 +377,7 @@ brandseye.charts = function() {
             }
 
             var svg = parent.select('svg');
+            console.log("Element is ", this.element());
             console.log("SVG is", svg);
             var nvChart = this.attributes.nvChart;
 
@@ -872,9 +881,15 @@ brandseye.charts = function() {
             return this;
         },
 
-        dataAxisLabel: function(_) {
+        // Use this to provide a label for the numerical data axis of the chart. This can
+        // either be a string, or it could be a map providing an option of a longer or shorter
+        // string depending on the amount of available space:
+        //
+        //     { long: "Percentage of global fruit output by country", short: "% output" }
+        dataAxisLabel: function(label) {
             if (!arguments.length) return this.attributes.dataAxisLabel;
-            this.attributes.dataAxisLabel = _;
+            if (_(label).isString()) label = { long: label, short: label };
+            this.attributes.dataAxisLabel = label;
             return this;
         },
 
@@ -1495,10 +1510,11 @@ brandseye.charts = function() {
     namespace.BrandsEyeMetric = function(options) {
         this.query = options.query;
         this.type = options.type;
-        this.__proto__ = new this.type();
+        this.__proto__ = new this.type;
+
+        var chart = this;
 
         this.run = function(callback) {
-            var chart = this;
 
             brandseye.charts.loadFromApi({
                 key: options.query.key,
@@ -1507,11 +1523,13 @@ brandseye.charts = function() {
                 groupby: options.query.groupby,
                 orderby: options.query.orderby,
                 include: options.query.include,
+                max: options.query.max,
 
                 success: function(data) {
                     console.log(data);
 
                     chart.data(data);
+                    console.log("Chart: ", options);
                     callback(chart);
                 }
             });
@@ -1534,6 +1552,147 @@ brandseye.charts = function() {
         this
             .x(function(d) { return d.published; })
             .y(function(d) { return d.count; });
+
+        return this;
+    };
+
+    namespace.CategoryMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                groupby: "media",
+                include: "percentages",
+                orderby: "count desc"
+            },
+            type: options.type || namespace.ColumnChart
+        });
+
+        this
+            .x(function(d) { return d.media; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by category");
+
+        return this;
+    };
+
+    namespace.CountryMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "country",
+                orderby: "count desc",
+                max: 8
+            },
+            type: options.type || namespace.BarChart
+        });
+
+        this
+            .x(function(d) { return d.country; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by country");
+
+        return this;
+    };
+
+    namespace.LanguageMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "language",
+                orderby: "count desc",
+                max: 8
+            },
+            type: options.type || namespace.BarChart
+        });
+
+        this
+            .x(function(d) { return d.language; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by language");
+
+        return this;
+    };
+
+    namespace.GenderMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "gender",
+                orderby: "count desc"
+            },
+            type: options.type || namespace.BarChart
+        });
+
+        this
+            .x(function(d) { return d.gender; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by gender");
+
+        return this;
+    };
+
+    namespace.SentimentMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "sentiment",
+                orderby: "sentiment"
+            },
+            type: options.type || namespace.BarChart
+        });
+
+        this
+            .x(function(d) { return d.sentiment; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by sentiment");
+
+        return this;
+    };
+
+    namespace.SourceMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "site",
+                orderby: "count desc",
+                max: 6
+            },
+            type: options.type || namespace.PieChart
+        });
+
+        this
+            .x(function(d) { return d.site; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by source");
 
         return this;
     };
@@ -2244,6 +2403,8 @@ brandseye.charts = function() {
                 if (data.status === 401) {
                     throw new Error("You are not authorised to access this endpoint");
                 }
+                console.log("Maximum amount", options.max);
+                if (options.max) data = _(data).take(options.max);
                 callback(data);
             },
             error: function() {

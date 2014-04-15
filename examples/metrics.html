@@ -1,0 +1,136 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>The various default metrics in the library</title>
+
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://underscorejs.org/underscore.js"></script>
+    <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+    <script src="http://momentjs.com/downloads/moment.js" charset="utf-8"></script>
+    <script src="../lib/nv-d3.js"></script>
+    <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
+    <script src="../src/brandseye-metrics.js"></script>
+    <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
+
+    <style>
+        .graphs {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .chart {
+            width: 512px;
+            height: 400px;
+            padding: 40px;
+            border: solid thin grey;
+            margin: 10px;
+            border-radius: 5px;
+        }
+
+        .chart.longer {
+            width: 400px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>
+    A collection of metrics
+</h1>
+
+<p>
+    These are the default metrics implemented in the library.
+</p>
+
+<form>
+    <input type="text" placeholder="account">
+    <input type="text" placeholder="filter">
+    <input type="text" placeholder="key">
+    <button>Draw graphs</button>
+</form>
+
+<div class="graphs">
+    <div class="chart">
+        <h2>Volume</h2>
+        <div class="volume-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Category breakdown</h2>
+        <div class="category-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Country breakdown</h2>
+        <div class="country-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Language breakdown</h2>
+        <div class="language-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Gender breakdown</h2>
+        <div class="gender-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Sentiment</h2>
+        <div class="sentiment-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Source</h2>
+        <div class="source-metric"></div>
+    </div>
+</div>
+
+
+
+<script>
+    $(function() {
+        var query = {
+            account: "QUIR01BA",
+            key: '74c0643twmugtfqwo72n7sfai',
+            filter: "published inthelast week"
+        };
+
+        var setupData = [
+            { constructor: brandseye.charts.VolumeMetric, element: $('.volume-metric')[0] },
+            { constructor: brandseye.charts.CategoryMetric, element: $('.category-metric')[0] },
+            { constructor: brandseye.charts.CountryMetric, element: $('.country-metric')[0] },
+            { constructor: brandseye.charts.LanguageMetric, element: $('.language-metric')[0] },
+            { constructor: brandseye.charts.GenderMetric, element: $('.gender-metric')[0] },
+            { constructor: brandseye.charts.SentimentMetric, element: $('.sentiment-metric')[0] },
+            { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] }
+        ];
+
+        var chart;
+        var map;
+        for (var i = 0; i < setupData.length; i++) {
+            map = setupData[i];
+            chart = new map.constructor(query);
+            chart.run(function(element) {
+                return function(chart) {
+                    chart
+                            .element(element)
+                            .width(512)
+                            .height(350)
+                            .render();
+                };
+            }(map.element));
+        }
+    });
+</script>
+
+
+</body>
+
+</html>
