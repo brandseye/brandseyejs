@@ -62,6 +62,16 @@
     </div>
 
     <div class="chart">
+        <h2>Opportunity to see</h2>
+        <div class="ots-metric"></div>
+    </div>
+
+    <div class="chart">
+        <h2>Ad-value equivalent</h2>
+        <div class="ave-metric"></div>
+    </div>
+
+    <div class="chart">
         <h2>Category breakdown</h2>
         <div class="category-metric"></div>
     </div>
@@ -104,6 +114,8 @@
 
         var setupData = [
             { constructor: brandseye.charts.VolumeMetric, element: $('.volume-metric')[0] },
+            { constructor: brandseye.charts.OtsMetric, element: $('.ots-metric')[0] },
+            { constructor: brandseye.charts.AveMetric, element: $('.ave-metric')[0] },
             { constructor: brandseye.charts.CategoryMetric, element: $('.category-metric')[0] },
             { constructor: brandseye.charts.CountryMetric, element: $('.country-metric')[0] },
             { constructor: brandseye.charts.LanguageMetric, element: $('.language-metric')[0] },

@@ -1551,7 +1551,48 @@ brandseye.charts = function() {
 
         this
             .x(function(d) { return d.published; })
-            .y(function(d) { return d.count; });
+            .y(function(d) { return d.count; })
+            .dataAxisLabel("Volume");
+
+        return this;
+    };
+
+    namespace.OtsMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                include: 'ots',
+                key: options.key,
+                groupby: "published"
+            },
+            type: options.type || namespace.Histogram
+        });
+
+        this
+            .x(function(d) { return d.published; })
+            .y(function(d) { return d.ots; })
+            .dataAxisLabel({long: "Opportunity to see", short: "OTS"});
+
+        return this;
+    };
+
+    namespace.AveMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                include: 'ave',
+                key: options.key,
+                groupby: "published"
+            },
+            type: options.type || namespace.Histogram
+        });
+
+        this
+            .x(function(d) { return d.published; })
+            .y(function(d) { return d.ave; })
+            .dataAxisLabel({long: "Ad-value equivalent", short: "AVE"});
 
         return this;
     };
