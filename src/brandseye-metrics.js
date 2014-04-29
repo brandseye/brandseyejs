@@ -183,7 +183,7 @@ brandseye.utilities = function() {
         formatPercentage: function(value, round) {
             if (round === undefined) round = 2;
             var base = Math.pow(10, round);
-            return (Math.round(value / base) * base).toString() + '%';
+            return (Math.round(value * base) / base).toString() + '%';
         }
     }
 }();
