@@ -1635,7 +1635,7 @@ brandseye.charts = function() {
         });
 
         this
-            .x(function(d) { return d.country; })
+            .x(function(d) { return d.countryName || d.country; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
             .labelFormat(brandseye.utilities.formatPercentage)
@@ -1659,7 +1659,7 @@ brandseye.charts = function() {
         });
 
         this
-            .x(function(d) { return d.language; })
+            .x(function(d) { return d.languageName || d.language; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
             .labelFormat(brandseye.utilities.formatPercentage)
@@ -1705,7 +1705,7 @@ brandseye.charts = function() {
         });
 
         this
-            .x(function(d) { return d.sentiment; })
+            .x(function(d) { return d.sentimentName || d.sentiment; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
             .labelFormat(brandseye.utilities.formatPercentage)
