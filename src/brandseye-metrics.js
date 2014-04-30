@@ -24,12 +24,13 @@
 // 2. Pulling data from a BrandsEye account.
 //
 // BrandsEye is an online platform for social media analysis.
-// It provides an API for accessing the data programmatically, and this library is well suited
+// It provides an [API][api] for accessing the data programmatically, and this library is well suited
 // for displaying that data. Indeed, most of the charts in the BrandsEye application are built on top of this
 // library.
 //
 // [d3]: http://www.d3js.org
 // [nvd3]: http://nvd3.org/
+// [api]: https://api.brandseye.com
 
 
 // The namespace does it all. All contained within.
@@ -1506,7 +1507,16 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+    // # Example Metrics
+    // This section creates various example metrics. All of these can be used in your application,
+    // or can be used to show how to pull appropriate data from the [BrandsEye API][api].
 
+    // ## Support objects: BrandsEyeMetric
+    // This provides a way of easily defining graphs that query the [BrandsEye API][api] and hence
+    // have a lot of shared boilerplate code in terms of setting up the call to the API and then displaying
+    // the data. This function has a way to set up a query on a particular account, initialises the graph
+    // with the appropriate type, and then provides easy access to the graph in order to customise it.
+    // There are various examples below of this happening.
     namespace.BrandsEyeMetric = function(options) {
         this.query = options.query;
         this.type = options.type;
@@ -1526,11 +1536,8 @@ brandseye.charts = function() {
                 max: options.query.max,
 
                 success: function(data) {
-                    console.log(data);
-
                     chart.data(data);
-                    console.log("Chart: ", options);
-                    callback(chart);
+                    callback(chart, data);
                 }
             });
         };
@@ -1685,6 +1692,16 @@ brandseye.charts = function() {
             .x(function(d) { return d.gender; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
+            // The API doesn't return very displayed names for the gender options.
+            // Here we override how they should be displayed, just to neaten them up
+            // somewhat.
+            .xAxisOverride({
+                "FEMALE": "Female",
+                "MALE": "Male",
+                "OTHER": "Other",
+                "UNKNOWN": "Unknown"
+
+            })
             .labelFormat(brandseye.utilities.formatPercentage)
             .dataAxisLabel("% of mentions by gender");
 
@@ -1715,6 +1732,30 @@ brandseye.charts = function() {
     };
 
     namespace.SourceMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                key: options.key,
+                include: "percentages",
+                groupby: "site",
+                orderby: "count desc",
+                max: 6
+            },
+            type: options.type || namespace.PieChart
+        });
+
+        this
+            .x(function(d) { return d.site; })
+            .y(function(d) { return d.percentage; })
+            .showLabels(true)
+            .labelFormat(brandseye.utilities.formatPercentage)
+            .dataAxisLabel("% of mentions by source");
+
+        return this;
+    };
+
+    namespace.AuthorMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
                 filter: options.filter,
