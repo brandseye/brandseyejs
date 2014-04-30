@@ -100,6 +100,11 @@
         <h2>Source</h2>
         <div class="source-metric"></div>
     </div>
+
+    <div class="chart">
+        <h2>Volume by author</h2>
+        <div class="author-metric"></div>
+    </div>
 </div>
 
 
@@ -121,7 +126,8 @@
             { constructor: brandseye.charts.LanguageMetric, element: $('.language-metric')[0] },
             { constructor: brandseye.charts.GenderMetric, element: $('.gender-metric')[0] },
             { constructor: brandseye.charts.SentimentMetric, element: $('.sentiment-metric')[0] },
-            { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] }
+            { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] },
+            { constructor: brandseye.charts.AuthorMetric, element: $('.author-metric')[0] }
         ];
 
         var chart;

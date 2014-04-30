@@ -1762,17 +1762,23 @@ brandseye.charts = function() {
                 account: options.account,
                 key: options.key,
                 include: "percentages",
-                groupby: "site",
+                groupby: "authorName",
                 orderby: "count desc",
                 max: 6
             },
-            type: options.type || namespace.PieChart
+            type: options.type || namespace.ColumnChart
         });
 
         this
-            .x(function(d) { return d.site; })
+            .x(function(d) { return d.authorName; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
+            // Here we only override a single option: the UNKNOWN
+            // author is made to print prettier. Notice that you don't
+            // need to override everything, but can selectively do so.
+            .xAxisOverride({
+                "UNKNOWN": "Unknown"
+            })
             .labelFormat(brandseye.utilities.formatPercentage)
             .dataAxisLabel("% of mentions by source");
 
