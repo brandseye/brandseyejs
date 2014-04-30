@@ -1509,10 +1509,10 @@ brandseye.charts = function() {
     //--------------------------------------------------------------
     // # Example Metrics
     // This section creates various example metrics. All of these can be used in your application,
-    // or can be used to show how to pull appropriate data from the [BrandsEye API][api].
+    // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
 
     // ## Support objects: BrandsEyeMetric
-    // This provides a way of easily defining graphs that query the [BrandsEye API][api] and hence
+    // This provides a way of easily defining graphs that query the [BrandsEye API](https://api.brandseye.com) and hence
     // have a lot of shared boilerplate code in terms of setting up the call to the API and then displaying
     // the data. This function has a way to set up a query on a particular account, initialises the graph
     // with the appropriate type, and then provides easy access to the graph in order to customise it.
@@ -2456,11 +2456,14 @@ brandseye.charts = function() {
     // to only use this when testing the library, as it will expose your api key in your
     // client side code.
     //
-    // The function takes two arguments.
-    // - username: username for accessing the data server
-    // - password: password for accessing the data server
+    // The function takes a number of possible arguments.
+    // - username: username for accessing the data server (see the **key** option below).
+    // - password: password for accessing the data server (see the **key** option below).
     // - server: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
-    // - key: An api key to use instead of a username/password pair
+    // - key: An api key to use instead of a username/password pair.
+    // - max: An integer giving the maximum number of items to show (optional).
+    // - showOthers: A boolean, default true, used in conjunction with max above. If true, those items
+    //               not shown because they exceed the max field will be rolled in to an *Other* field.
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
             throw new Error("Please specify an account");
