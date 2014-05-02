@@ -1534,6 +1534,7 @@ brandseye.charts = function() {
                 orderby: options.query.orderby,
                 include: options.query.include,
                 max: options.query.max,
+                xFieldName: options.query.xFieldName,
 
                 success: function(data) {
                     chart.data(data);
@@ -1636,7 +1637,8 @@ brandseye.charts = function() {
                 include: "percentages",
                 groupby: "country",
                 orderby: "count desc",
-                max: 8
+                max: 8,
+                xFieldName: "countryName"
             },
             type: options.type || namespace.BarChart
         });
@@ -1660,7 +1662,8 @@ brandseye.charts = function() {
                 include: "percentages",
                 groupby: "language",
                 orderby: "count desc",
-                max: 8
+                max: 8,
+                xFieldName: "languageName"
             },
             type: options.type || namespace.BarChart
         });
@@ -1740,7 +1743,8 @@ brandseye.charts = function() {
                 include: "percentages",
                 groupby: "site",
                 orderby: "count desc",
-                max: 6
+                max: 6,
+                xFieldName: "site"
             },
             type: options.type || namespace.PieChart
         });
@@ -1764,7 +1768,8 @@ brandseye.charts = function() {
                 include: "percentages",
                 groupby: "authorName",
                 orderby: "count desc",
-                max: 6
+                max: 6,
+                xFieldName: "authorName"
             },
             type: options.type || namespace.ColumnChart
         });
@@ -2463,7 +2468,8 @@ brandseye.charts = function() {
     // - key: An api key to use instead of a username/password pair.
     // - max: An integer giving the maximum number of items to show (optional).
     // - showOthers: A boolean, default true, used in conjunction with max above. If true, those items
-    //               not shown because they exceed the max field will be rolled in to an *Other* field.
+    //   not shown because they exceed the max field will be rolled in to an *Other* field.
+    // - xFieldName: The name of the field in which the x value is stored. This is needed when showing others.
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
             throw new Error("Please specify an account");
@@ -2475,6 +2481,11 @@ brandseye.charts = function() {
             callback = options.success,
             authorisation = "Basic " + btoa(username + ":" + password),
             fragment = options.fragment || "rest/accounts/" + options.account + "/mentions/count";
+
+        if (options.showOthers === undefined) options.showOthers = true;
+        if (options.max && options.showOthers) options.max = options.max - 1;
+        if (options.max && options.showOthers && !options.xFieldName) throw new Error("xFieldName must be set when showing Other values");
+
 
         var arguments = [];
         arguments.push("Authorization=" + authorisation);
@@ -2494,8 +2505,28 @@ brandseye.charts = function() {
                 if (data.status === 401) {
                     throw new Error("You are not authorised to access this endpoint");
                 }
-                console.log("Maximum amount", options.max);
-                if (options.max) data = _(data).take(options.max);
+                if (options.max) {
+                    var originalData = data;
+                    data = _(data).take(options.max);
+                    if (options.showOthers) {
+                        var others = _.chain(originalData)
+                            .rest(options.max)
+                            .reduce(function(memo, num) {
+                                console.log("Summing", memo, num);
+                                return {
+                                    count: memo.count + (num.count || 0),
+                                    ave: memo.ave + (num.ave || 0),
+                                    ots: memo.ots + (num.ots || 0),
+                                    percentage: memo.percentage + (num.percentage || 0),
+                                    credibility: memo.credibility + (num.credibility || 0)
+                                };
+                            }, {count: 0, ave: 0, ots: 0, percentage: 0, credibility: 0, reach: 0, engagement: 0})
+                            .value();
+                        others[options.xFieldName] = "Others";
+                        console.log("+++++ Others after", others);
+                        data.push(others);
+                    }
+                }
                 callback(data);
             },
             error: function() {
