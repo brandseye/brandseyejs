@@ -18,7 +18,12 @@ and can then be found in the doc directory.
 
 ## Examples
 
-Distributed with nvd3 in the lib directory. The license is available there, as well.
+## Distributed code
+
+The following libraries are distributed in the lib directory, along with their associated licenses:
+
+- nvd3 http://nvd3.org/
+- D3 Word Cloud Layout https://github.com/jasondavies/d3-cloud
 
 ## License
 
