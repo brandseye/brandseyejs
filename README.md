@@ -23,7 +23,8 @@ and can then be found in the doc directory.
 The following libraries are distributed in the lib directory, along with their associated licenses:
 
 - nvd3 http://nvd3.org/
-- D3 Word Cloud Layout https://github.com/jasondavies/d3-cloud
+- D3 Word Cloud Layout https://github.com/jasondavies/d3-cloud This has been patched to provide
+  support for repeatable random number generation (hence, repeatable layouts).
 
 ## License
 
