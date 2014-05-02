@@ -1622,6 +1622,13 @@ brandseye.charts = function() {
             .x(function(d) { return d.media; })
             .y(function(d) { return d.percentage; })
             .showLabels(true)
+            .xAxisOverride({
+                "PRESS": "Press",
+                "CONSUMER": "Consumer",
+                "ENTERPRISE": "Enterprise",
+                "DIRECTORY": "Directory",
+                "UNKNOWN": "Unknown"
+            })
             .labelFormat(brandseye.utilities.formatPercentage)
             .dataAxisLabel("% of mentions by category");
 
