@@ -1605,6 +1605,26 @@ brandseye.charts = function() {
         return this;
     };
 
+    namespace.EngagementMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                account: options.account,
+                include: 'engagement',
+                key: options.key,
+                groupby: "published"
+            },
+            type: options.type || namespace.Histogram
+        });
+
+        this
+            .x(function(d) { return d.published; })
+            .y(function(d) { return d.engagement; })
+            .dataAxisLabel({long: "Engagement", short: "Engagement"});
+
+        return this;
+    };
+
     namespace.CategoryMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
