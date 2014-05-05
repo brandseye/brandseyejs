@@ -1523,6 +1523,7 @@ brandseye.charts = function() {
         this.__proto__ = new this.type;
 
         var chart = this;
+        var dataTransform = options.dataTransform || _.identity;
 
         this.run = function(callback) {
 
@@ -1535,8 +1536,11 @@ brandseye.charts = function() {
                 include: options.query.include,
                 max: options.query.max,
                 xFieldName: options.query.xFieldName,
+                fragment: options.query.fragment,
+                arguments: options.query.arguments,
 
                 success: function(data) {
+                    data = dataTransform(data);
                     chart.data(data);
                     callback(chart, data);
                 }
@@ -1813,6 +1817,43 @@ brandseye.charts = function() {
             })
             .labelFormat(brandseye.utilities.formatPercentage)
             .dataAxisLabel("% of mentions by source");
+
+        return this;
+    };
+
+    namespace.ReputationMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                key: options.key,
+                fragment: "rest/accounts/" + options.account + "/score",
+                arguments: {
+                    rootsOnly: true
+                }
+            },
+            type: options.type || namespace.LineChart,
+            dataTransform: function(data) {
+                data = _(data).chain()
+                    .groupBy('brandId')
+                    .values()
+                    .filter(function(data) {
+                        return true;
+                    })
+                    .map(function(data) {
+                        return {
+                            key: data[0].brand,
+                            values: data
+                        }
+                    })
+                    .value();
+                return data;
+            }
+        });
+
+        this
+            .x(function(d) { return d.date; })
+            .y(function(d) { return d.score; })
+            .showLabels(true);
 
         return this;
     };
@@ -2497,6 +2538,9 @@ brandseye.charts = function() {
     // - showOthers: A boolean, default true, used in conjunction with max above. If true, those items
     //   not shown because they exceed the max field will be rolled in to an *Other* field.
     // - xFieldName: The name of the field in which the x value is stored. This is needed when showing others.
+    // - fragment: Optional string. Apart from providing an account code, you may provide a whole fragment string
+    //   representing the API endpoint that you wish to access. For example, rest/accounts/QUIR01BA/mentions/ots
+    // - arguments: An optional map of extra arguments to append to the url.
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
             throw new Error("Please specify an account");
@@ -2513,9 +2557,13 @@ brandseye.charts = function() {
         if (options.max && options.showOthers) options.max = options.max - 1;
         if (options.max && options.showOthers && !options.xFieldName) throw new Error("xFieldName must be set when showing Other values");
 
-
         var arguments = [];
         arguments.push("Authorization=" + authorisation);
+        if (options.arguments) {
+            for (var key in options.arguments) {
+                arguments.push(key + "=" + encodeURIComponent(options.arguments[key]));
+            }
+        }
 
         if (options.groupby) arguments.push("groupby=" + encodeURIComponent(options.groupby));
         if (options.filter) arguments.push("filter=" + encodeURIComponent(options.filter));
@@ -2539,7 +2587,6 @@ brandseye.charts = function() {
                         var others = _.chain(originalData)
                             .rest(options.max)
                             .reduce(function(memo, num) {
-                                console.log("Summing", memo, num);
                                 return {
                                     count: memo.count + (num.count || 0),
                                     ave: memo.ave + (num.ave || 0),
