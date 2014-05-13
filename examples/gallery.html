@@ -7,6 +7,7 @@
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="http://underscorejs.org/underscore.js"></script>
     <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+    <script src="../lib/d3.layout.cloud.js" charset="utf-8"></script>
     <script src="http://momentjs.com/downloads/moment.js" charset="utf-8"></script>
     <script src="../lib/nv-d3.js"></script>
     <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
@@ -79,6 +80,11 @@
     <div class="chart">
         <h2>A line chart</h2>
         <div class="line-chart"></div>
+    </div>
+
+    <div class="chart">
+        <h2>A word cloud</h2>
+        <div class="word-chart"></div>
     </div>
 </div>
 
@@ -160,6 +166,38 @@
                     .element(map.element)
                     .render();
         }
+
+        chart = new brandseye.charts.WordCloudChart();
+        chart
+                .data([{
+                        "word": "Red",
+                        "count": 200
+                    },
+                    {
+                        "word": "Green",
+                        "count": 100
+
+                    },
+                    {
+                        "word": "Blue",
+                        "count": 25
+                    },
+                    {
+                        "word": "A colour",
+                        "count": 12
+                    },
+                    {
+                        "word": "Some colour",
+                        "count": 6
+                    },
+                    {
+                        "word": "No colour",
+                        "count": 3
+                    }
+                ])
+                .element($('.word-chart')[0])
+                .width(400)
+                .render();
 
 
     });

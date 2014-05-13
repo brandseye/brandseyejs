@@ -1507,6 +1507,42 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+    // # Word Clouds
+    // While this chart uses a similar interface to the previous charts, its expected data format is different,
+    // as is the kind of data that it displays.
+
+    namespace.WordCloudChart = function() {
+        namespace.Graph.prototype.createAttributes.call(this);
+        return this;
+    };
+
+    namespace.WordCloudChart.prototype = new namespace.Graph();
+    namespace.WordCloudChart.prototype.createChart = function() { console.log("word cloud!!"); return d3.layout.cloud(); };
+
+    namespace.WordCloudChart.prototype.setupContainer = function() { };
+    namespace.WordCloudChart.prototype.arrangeLabels = function() { };
+
+    namespace.WordCloudChart.prototype.data = function(data) {
+        if (!arguments.length) return this.attributes.data;
+        this.attributes.data = data || [];
+        return this;
+    };
+
+    namespace.WordCloudChart.prototype.render = function() {
+        this.setup();
+
+        var parent = d3.select(this.element());
+
+        if (parent.selectAll('svg').empty()) {
+            parent.append('svg');
+        }
+
+        var svg = parent.select('svg');
+        console.log("SVG is", svg);
+        var cloud = this.attributes.nvChart;
+    };
+
+    //--------------------------------------------------------------
     // # Example Metrics
     // This section creates various example metrics. All of these can be used in your application,
     // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
