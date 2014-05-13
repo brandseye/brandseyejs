@@ -1837,7 +1837,7 @@ brandseye.charts = function() {
                     .groupBy('brandId')
                     .values()
                     .filter(function(data) {
-                        return true;
+                        return !data[0].deleted;
                     })
                     .map(function(data) {
                         return {
