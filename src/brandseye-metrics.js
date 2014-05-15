@@ -1527,13 +1527,24 @@ brandseye.charts = function() {
 
     namespace.WordCloudChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
+        this.attributes.seed = Math.floor(Math.random() * 10000);
+        // Unlike the other graphs, the default fields for retrieving data for word clouds
+        // is *word* and *count*.
+        this.attributes.x = function(d) { return d.word; };
+        this.attributes.y = function(d) { return d.count; };
+        this.attributes.font = 'sans-serif';
+        this.attributes.layout = 'archimedean';
+        this.attributes.minFont = 9;
+        this.attributes.maxFont = 70;
         return this;
     };
 
     namespace.WordCloudChart.prototype = new namespace.Graph();
     namespace.WordCloudChart.prototype.createChart = function() { console.log("word cloud!!"); return d3.layout.cloud(); };
 
-    namespace.WordCloudChart.prototype.setupContainer = function() { };
+    namespace.WordCloudChart.prototype.setupContainer = function() {
+        this.attributes.parent.classed('bm', true)
+    };
     namespace.WordCloudChart.prototype.arrangeLabels = function() { };
 
     namespace.WordCloudChart.prototype.data = function(data) {
@@ -1544,26 +1555,73 @@ brandseye.charts = function() {
 
     namespace.WordCloudChart.prototype.render = function() {
         this.setup();
-
-        var parent = d3.select(this.element());
+        var parent = this.attributes.parent = d3.select(this.element());
+        this.setupContainer();
 
         if (parent.selectAll('svg').empty()) {
-            parent.append('svg');
+            parent.append('svg').append('g');
         }
 
-        var svg = parent.select('svg');
+        var x = this.x(),
+            y = this.y(),
+            width = this.width(),
+            height = this.height();
+
+        var svg = this.attributes.svg = parent.select('svg');
+
+        svg
+            .select("g")
+            .attr("transform", "translate(" + [ Math.floor(width / 2), Math.floor(height / 2) ] + ")");
+
         console.log("SVG is", svg);
+        console.log("==========data is", this.getDataToSet())
         var cloud = this.attributes.nvChart;
 
+        var fontSize;
+        switch(this.attributes.scale) {
+            case 'linear':
+                fontSize = d3.scale.linear(); break;
+            case 'square':
+                fontSize = d3.scale.sqrt(); break;
+            case 'log':
+            default:
+                fontSize = d3.scale.log();
+        }
+
+        var words = this.getDataToSet();
+        var min = Infinity,
+            max = -Infinity;
+        _(words).each(function(d) {
+            if (y(d) < min) min = y(d);
+            if (y(d) > max) max = y(d);
+        });
+
+        console.log("Min is, ", min, "max is ", max, "min font", this.attributes.minFont, "max font", this.attributes.maxFont);
+        fontSize.domain([min, max]).range([this.attributes.minFont, this.attributes.maxFont]);
+
+        var font = this.attributes.font;
+
+        console.log("Thingy is ", cloud);
+        console.log("Words are: ", words);
+        console.log(
+            "The valuess are",
+            "seed", this.seed(),
+            "random:", brandseye.utilities.random(this.seed()),
+            "size:", [width, height],
+            "text:", x,
+            "fontSize", fontSize,
+            "font", font,
+            "words", words
+        );
         cloud
-            .random(Beef.Util.random(this.model.get('seed')))
-            .spiral(this.model.get('layout'))
+            .random(brandseye.utilities.random(this.seed()))
+            .spiral(this.attributes.layout)
             .size([width, height])
             .timeInterval(10)
-            .text(function(d) { return d.word; })
-            .fontSize(function (d) { return fontSize(d.count); })
-            .font('sans-serif')
-            .rotate(function(d) { return 0; })
+            .text(x)
+            .fontSize(function (d) { return fontSize(y(d)); })
+            .font(font)
+            .rotate(function() { return 0; })
             .padding(true)
             .on("end", _.bind(this.layoutComplete, this))
             .words(words)
@@ -1571,6 +1629,72 @@ brandseye.charts = function() {
 
     };
 
+    // This is called after the words have been laid out by the layout
+    // algorithm. It places the words in the svg container
+    // and lays them out.
+    namespace.WordCloudChart.prototype.layoutComplete = function(words) {
+        console.log("+++The words at the end are ", words);
+        console.log("There are ", words.length, "words");
+        var wordToCount = {};
+        var data = this.getDataToSet();
+        if (!data.length) return;
+
+        var x = this.x(),
+            y = this.y();
+
+        _(data).each(function(d) {
+            wordToCount[x(d)] = y(d);
+            console.log(x(d), "=", y(d));
+        });
+
+        var that = this;
+        var text = this.attributes.svg.select('g').selectAll("text").data(words);
+        text.exit().remove();
+        text.enter()
+            .append("text")
+            .classed('word', true)
+//            .classed('popup-menu', true)
+            .attr("text-anchor", "middle")
+            .on('click', function(d) {
+                console.log("Word clicked");
+//                that.wordClicked(d, this);
+            });
+
+        text
+            .text(function (d) {
+                return d.text;
+            })
+            .style('font-family', this.font());
+//            .on('mouseover', function(d) {
+//                Beef.Tooltip.show({
+//                    template: 'dashboards/widgets/WordCloudTooltip',
+//                    positions: ['bottom-right', 'bottom-left'],
+//                    offsets: { right: -d.width / 2, top: d.size + 5 },
+//                    target: this,
+//                    model: new Backbone.Model({
+//                        word:   d.text.encloseInDisplayQuotes(),
+//                        count:  Beef.Format.formatNumber(wordToCount[d.text])
+//                    })
+//                })
+//            })
+//            .on('mouseout', function() { Beef.Tooltip.close(); });
+
+        text
+            .transition()
+            .duration(1000)
+            .style("font-size", function (d) {
+                return d.size + "px";
+            })
+            .style("fill", function (d, i) {
+                return brandseye.colours.scheme[i % brandseye.colours.scheme.length];
+            })
+            .attr("transform", function (d) {
+                return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+            })
+
+        console.log("YO YO YO YO");
+
+    };
 
     namespace.WordCloudChart.prototype.layout = function(_) {
         if (!arguments.length) return this.attributes.layout;
@@ -1578,6 +1702,11 @@ brandseye.charts = function() {
         return this;
     };
 
+    // This determines how the different fonts should be scaled to one another.
+    // There are three choices (specified as a string):
+    // - *linear*: word sizes are in a direct linear relationship based on their count.
+    // - *square*: word sizes are related by the square root of their counts.
+    // - *log*: word sizes are related logarithmically by their counts.
     namespace.WordCloudChart.prototype.scale = function(_) {
         if (!arguments.length) return this.attributes.scale;
         this.attributes.scale = _;
@@ -1593,6 +1722,25 @@ brandseye.charts = function() {
     namespace.WordCloudChart.prototype.maxFont = function(_) {
         if (!arguments.length) return this.attributes.maxFont;
         this.attributes.maxFont = _;
+        return this;
+    };
+
+    // Sets the font to be used for sizing information. This defaults
+    // to sans-serif. Please ensure to use the same font as you would when
+    // rendering the cloud, otherwise you will notice rendering problems, such
+    // as overlapping words, large spaces between words, and so on.
+    namespace.WordCloudChart.prototype.font = function(_) {
+        if (!arguments.length) return this.attributes.font;
+        this.attributes.font = _;
+        return this;
+    };
+
+    // This seed value is used to determine the sequence of random values that are used when
+    // laying out the words. If you would like to use the same layout, use the same seed as previously used.
+    // Each new instance of *WordCloudChart* will have a seed initialised to a random value by default.
+    namespace.WordCloudChart.prototype.seed = function(_) {
+        if (!arguments.length) return this.attributes.seed;
+        this.attributes.seed = _;
         return this;
     };
 
