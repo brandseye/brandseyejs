@@ -82,7 +82,7 @@
         <div class="line-chart"></div>
     </div>
 
-    <div class="chart" style="width: 600px">
+    <div class="chart">
         <h2>A word cloud</h2>
         <div class="word-chart"></div>
     </div>
@@ -171,11 +171,11 @@
         chart
                 .data([{
                         "word": "Red",
-                        "count": 200
+                        "count": 150
                     },
                     {
                         "word": "Green",
-                        "count": 100
+                        "count": 50
 
                     },
                     {
@@ -196,7 +196,8 @@
                     }
                 ])
                 .element($('.word-chart')[0])
-                .width(550)
+                .width(250)
+                .height(250)
                 .render();
 
 
