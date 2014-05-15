@@ -1569,6 +1569,7 @@ brandseye.charts = function() {
 
         var svg = this.attributes.svg = parent.select('svg');
 
+        console.log("Determining mid point:", width, "half", width / 2, "floor", Math.floor(width/2));
         svg
             .select("g")
             .attr("transform", "translate(" + [ Math.floor(width / 2), Math.floor(height / 2) ] + ")");
@@ -1690,7 +1691,7 @@ brandseye.charts = function() {
             })
             .attr("transform", function (d) {
                 return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-            })
+            });
 
         console.log("YO YO YO YO");
 
