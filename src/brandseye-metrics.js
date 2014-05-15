@@ -185,6 +185,13 @@ brandseye.utilities = function() {
             if (round === undefined) round = 2;
             var base = Math.pow(10, round);
             return (Math.round(value * base) / base).toString() + '%';
+        },
+
+
+        // Return a pseudo-random number generator function starting with the specified seed.
+        // From: http://jacksondunstan.com/articles/393
+        random: function(seed) {
+            return function() { return (seed = (seed * 9301 + 49297) % 233280) / 233280.0; }
         }
     }
 }();
@@ -423,8 +430,6 @@ brandseye.charts = function() {
                     setupDispatcher(that.dispatch(), container, that.graphDispatch(), nvChart.dispatch, that.data(), that.interactiveClass(), that.dataTransform);
 
                     if (nvChart.multibar) {
-
-
                         markUnknownAndOthers(selection, that.x());
                     }
 
@@ -866,7 +871,7 @@ brandseye.charts = function() {
 
         colours: function(_) {
             if (!arguments.length) return this.attributes.colours;
-            this.attributes.colours = _.concat(brandseye.colours.allColours);
+            this.attributes.colours = (_ && _.length) ? _.concat(brandseye.colours.allColours) : brandseye.colours.allColours;
             return this;
         },
 
@@ -1510,6 +1515,15 @@ brandseye.charts = function() {
     // # Word Clouds
     // While this chart uses a similar interface to the previous charts, its expected data format is different,
     // as is the kind of data that it displays.
+    //
+    // The word cloud is animated and laid out using a layout written for D3 by [Jason Davies][d3.cloud], available
+    // at github under a BSD license. We've supplied our own copy in the lib directory, which we've patched slightly
+    // to support setting a seed for the random number generator. This provides a great feature: if you find a
+    // layout that you like, you can effectively save and replay that.
+    //
+    // If you want to stop the animation, call the *stop* method.
+    //
+    // [d3.cloud]: https://github.com/jasondavies/d3-cloud
 
     namespace.WordCloudChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
@@ -1540,6 +1554,51 @@ brandseye.charts = function() {
         var svg = parent.select('svg');
         console.log("SVG is", svg);
         var cloud = this.attributes.nvChart;
+
+        cloud
+            .random(Beef.Util.random(this.model.get('seed')))
+            .spiral(this.model.get('layout'))
+            .size([width, height])
+            .timeInterval(10)
+            .text(function(d) { return d.word; })
+            .fontSize(function (d) { return fontSize(d.count); })
+            .font('sans-serif')
+            .rotate(function(d) { return 0; })
+            .padding(true)
+            .on("end", _.bind(this.layoutComplete, this))
+            .words(words)
+            .start();
+
+    };
+
+
+    namespace.WordCloudChart.prototype.layout = function(_) {
+        if (!arguments.length) return this.attributes.layout;
+        this.attributes.layout = _;
+        return this;
+    };
+
+    namespace.WordCloudChart.prototype.scale = function(_) {
+        if (!arguments.length) return this.attributes.scale;
+        this.attributes.scale = _;
+        return this;
+    };
+
+    namespace.WordCloudChart.prototype.minFont = function(_) {
+        if (!arguments.length) return this.attributes.minFont;
+        this.attributes.minFont = _;
+        return this;
+    };
+
+    namespace.WordCloudChart.prototype.maxFont = function(_) {
+        if (!arguments.length) return this.attributes.maxFont;
+        this.attributes.maxFont = _;
+        return this;
+    };
+
+    // This stops the animation of the word cloud.
+    namespace.WordCloudChart.prototype.stop = function() {
+        if (this.attributes.nvChart) this.attributes.nvChart.stop();
     };
 
     //--------------------------------------------------------------
