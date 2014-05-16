@@ -2065,6 +2065,26 @@ brandseye.charts = function() {
         return this;
     };
 
+    namespace.WordCloudMetric = function(options) {
+        namespace.BrandsEyeMetric.call(this, {
+            query: {
+                filter: options.filter,
+                key: options.key,
+                fragment: "rest/accounts/" + options.account + "/mentions/words",
+                arguments: {
+                    rootsOnly: true,
+                    limit: 100
+                }
+            },
+            type: options.type || namespace.WordCloudChart,
+            dataTransform: function(data) {
+                return data.data;
+            }
+        });
+
+        return this;
+    };
+
     //--------------------------------------------------------------
 
     /**

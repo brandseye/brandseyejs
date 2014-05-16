@@ -11,6 +11,7 @@
     <script src="../lib/nv-d3.js"></script>
     <link href="../lib/nv-d3.css" rel="stylesheet" type="text/css">
     <script src="../src/brandseye-metrics.js"></script>
+    <script src="../lib/d3.layout.cloud.js"></script>
     <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
 
     <style>
@@ -115,6 +116,11 @@
         <h2>Reputation score</h2>
         <div class="reputation-metric"></div>
     </div>
+
+    <div class="chart">
+        <h2>Word Cloud</h2>
+        <div class="word-cloud-metric"></div>
+    </div>
 </div>
 
 
@@ -139,7 +145,8 @@
             { constructor: brandseye.charts.SentimentMetric, element: $('.sentiment-metric')[0] },
             { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] },
             { constructor: brandseye.charts.AuthorMetric, element: $('.author-metric')[0] },
-            { constructor: brandseye.charts.ReputationMetric, element: $('.reputation-metric')[0] }
+            { constructor: brandseye.charts.ReputationMetric, element: $('.reputation-metric')[0] },
+            { constructor: brandseye.charts.WordCloudMetric, element: $('.word-cloud-metric')[0] }
         ];
 
         var chart;
