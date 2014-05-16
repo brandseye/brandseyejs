@@ -90,3 +90,7 @@
 .bm .y-axis-label {
     cursor: default;
 }
+
+.bm text {
+    cursor: default;
+}
