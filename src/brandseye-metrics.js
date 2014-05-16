@@ -1569,13 +1569,10 @@ brandseye.charts = function() {
 
         var svg = this.attributes.svg = parent.select('svg');
 
-        console.log("Determining mid point:", width, "half", width / 2, "floor", Math.floor(width/2));
         svg
             .select("g")
             .attr("transform", "translate(" + [ Math.floor(width / 2), Math.floor(height / 2) ] + ")");
 
-        console.log("SVG is", svg);
-        console.log("==========data is", this.getDataToSet())
         var cloud = this.attributes.nvChart;
 
         var fontSize;
@@ -1597,23 +1594,10 @@ brandseye.charts = function() {
             if (y(d) > max) max = y(d);
         });
 
-        console.log("Min is, ", min, "max is ", max, "min font", this.attributes.minFont, "max font", this.attributes.maxFont);
         fontSize.domain([min, max]).range([this.attributes.minFont, this.attributes.maxFont]);
 
         var font = this.attributes.font;
 
-        console.log("Thingy is ", cloud);
-        console.log("Words are: ", words);
-        console.log(
-            "The valuess are",
-            "seed", this.seed(),
-            "random:", brandseye.utilities.random(this.seed()),
-            "size:", [width, height],
-            "text:", x,
-            "fontSize", fontSize,
-            "font", font,
-            "words", words
-        );
         cloud
             .random(brandseye.utilities.random(this.seed()))
             .spiral(this.attributes.layout)
@@ -1634,8 +1618,6 @@ brandseye.charts = function() {
     // algorithm. It places the words in the svg container
     // and lays them out.
     namespace.WordCloudChart.prototype.layoutComplete = function(words) {
-        console.log("+++The words at the end are ", words);
-        console.log("There are ", words.length, "words");
         var wordToCount = {};
         var data = this.getDataToSet();
         if (!data.length) return;
@@ -1645,10 +1627,10 @@ brandseye.charts = function() {
 
         _(data).each(function(d) {
             wordToCount[x(d)] = y(d);
-            console.log(x(d), "=", y(d));
         });
 
-        var that = this;
+        var dispatch = this.dispatch();
+
         var text = this.attributes.svg.select('g').selectAll("text").data(words);
         text.exit().remove();
         text.enter()
@@ -1656,29 +1638,13 @@ brandseye.charts = function() {
             .classed('word', true)
 //            .classed('popup-menu', true)
             .attr("text-anchor", "middle")
-            .on('click', function(d) {
-                console.log("Word clicked");
-//                that.wordClicked(d, this);
-            });
+            .on('click', function(d) { dispatch.elementClick(d); });
 
         text
-            .text(function (d) {
-                return d.text;
-            })
-            .style('font-family', this.font());
-//            .on('mouseover', function(d) {
-//                Beef.Tooltip.show({
-//                    template: 'dashboards/widgets/WordCloudTooltip',
-//                    positions: ['bottom-right', 'bottom-left'],
-//                    offsets: { right: -d.width / 2, top: d.size + 5 },
-//                    target: this,
-//                    model: new Backbone.Model({
-//                        word:   d.text.encloseInDisplayQuotes(),
-//                        count:  Beef.Format.formatNumber(wordToCount[d.text])
-//                    })
-//                })
-//            })
-//            .on('mouseout', function() { Beef.Tooltip.close(); });
+            .text(function (d) { return d.text; })
+            .style('font-family', this.font())
+            .on('mouseover', function(d) { dispatch.tooltipShow(d); })
+            .on('mouseout', function(d) { dispatch.tooltipHide(d); });
 
         text
             .transition()
@@ -1692,9 +1658,6 @@ brandseye.charts = function() {
             .attr("transform", function (d) {
                 return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
             });
-
-        console.log("YO YO YO YO");
-
     };
 
     namespace.WordCloudChart.prototype.layout = function(_) {
