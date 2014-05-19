@@ -19,23 +19,52 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// ## Introduction
 // BrandsEye Metrics is a simple library to help with two things:
 // 1. Charting. It does this by building on top of [D3][d3] and [nvd3.js][nvd3].
 // 2. Pulling data from a BrandsEye account.
 //
-// BrandsEye is an online platform for social media analysis.
+// All of the charts are rendered using SVG, animated, and provide events for showing tooltips and
+// mouse interaction.
+//
+// *[BrandsEye][brandseye]* is an online platform for social media analysis.
 // It provides an [API][api] for accessing the data programmatically, and this library is well suited
 // for displaying that data. Indeed, most of the charts in the BrandsEye application are built on top of this
 // library.
 //
+// The library is available in a bitbucket repository at https://bitbucket.org/brandseye/brandseye-metrics
+//
+// This library can be divided in to two broad sections:
+//
+// 1. *The charts*, including bar charts, pie charts, line charts, and word clouds. These can in the most
+//    part be used with arbitrary data.
+// 2. *Metrics*, which use the charts to display data pulled from a BrandsEye account.
+//
+// It's certainly possible to use this library to display arbitrary data visually, although it was
+// built with the intention of displaying data from the BrandsEye [API][api]. Indeed, it's used to
+// create many of the data visualisations you can find in the [BrandsEye application][brandseye].
+//
+// The source contains a directory of examples showing how to use the various charts and metrics.
+//
 // [d3]: http://www.d3js.org
 // [nvd3]: http://nvd3.org/
 // [api]: https://api.brandseye.com
+// [brandseye]: http://www.brandseye.com
 
+// ## First steps
 
-// The namespace does it all. All contained within.
-var brandseye = {};
+// All of this library is contained with the *brandseye* namespace. There are a number of sub-namespaces:
+// - brandseye.colours
+// - brandseye.utilities
+// - brandseye.charts
+//
+// All of these are defined below
+var brandseye = {
+    // The namespace is versioned, and we use [semantic versioning](http://semver.org/).
+    version: "0.0.2"
+};
 
+// ## Colours
 // A basic colour scheme that we use throughout the library.
 brandseye.colours = {
     scheme: [
@@ -69,6 +98,9 @@ brandseye.colours = {
     ]
 };
 
+// ## Utilities
+// This provides some simple functions used throughout the library, such as tools for generating random numbers,
+// exporting charts as SVG, and so on.
 brandseye.utilities = function() {
 
     var attrs = {
@@ -94,8 +126,8 @@ brandseye.utilities = function() {
     };
 
     return {
-        // Restricts the length of a string to the given size. This should cut text
-        // at word boundaries, and provide ellipses.
+        // This restricts the length of a string to the given size. This should cut text
+        // at word boundaries, and provide ellipses when text has been shortened.
         restrictStringToLength: function(text, length) {
             if (text.length <= length) return text.toString();
 
@@ -125,7 +157,7 @@ brandseye.utilities = function() {
             return result.join('');
         },
 
-        // Given an svg element, this will return an xml representation of that
+        // Given an svg dom element, this will return an xml representation of that
         // element, including have CSS styles embedded in to the xml.
         convertSvgElementToXml: function(svg) {
             var width = svg.width();
@@ -188,7 +220,7 @@ brandseye.utilities = function() {
         },
 
 
-        // Return a pseudo-random number generator function starting with the specified seed.
+        // Returns a pseudo-random number generator function starting with the specified seed.
         // From: http://jacksondunstan.com/articles/393
         random: function(seed) {
             return function() { return (seed = (seed * 9301 + 49297) % 233280) / 233280.0; }
@@ -196,11 +228,12 @@ brandseye.utilities = function() {
     }
 }();
 
+// ## The Chart namespace
+
 brandseye.charts = function() {
 
-    var namespace = {
-        version: "0.0.2"
-    };
+    // ### Private methods
+    // None of the following our visible outside of the namespace.
 
     /*
      * Adds tooltips to text items that are children of the selection
@@ -232,7 +265,7 @@ brandseye.charts = function() {
     var loadingText = '';
     var dateRegex = /^\d+-\d+-\d+$/;
 
-    /**
+    /*
      * Attempts to limit the text of x-axis labels to an appropriate length.
      * It tries to do this with some level of aesthetic awareness, by first
      * reducing text from the kinds of labels it recognises (such as unwanted
@@ -261,8 +294,8 @@ brandseye.charts = function() {
         return brandseye.utilities.restrictStringToLength(text, restriction);
     }
 
-    /**
-     * Marks bars with unknown and other classes.
+    /*
+     * Marks bars with .unknown and .other classes.
      */
     function markUnknownAndOthers(selection, x, klass, extractor) {
         if (!klass) klass = '.nv-bar';
@@ -282,6 +315,9 @@ brandseye.charts = function() {
         });
     }
 
+    /*
+     * Sets up the event handlers that fire when tooltips are shown / hidden, and on mouse clicks.
+     */
     function setupDispatcher(dispatch, container, originalDispatch, tooltipDispatch, originalData, selector, transformData) {
         if (_(transformData).isUndefined()) transformData = _.identity;
         originalDispatch.on('elementClick', function(data) {
@@ -307,17 +343,12 @@ brandseye.charts = function() {
         });
     }
 
-    function getOriginalData(selection) {
-        var originalData = null;
-        selection.each(function(d) {
-            originalData = d;
-        });
-
-        return originalData;
-    }
-
     //--------------------------------------------------------------
     // # Basic graph functionality
+
+    // We define all of the public interface in this alias, which we will
+    // later assign to **brandseye.charts**.
+    namespace = {};
 
     // Most of the graphs are built by extending the **Graph** object, which
     // defines much of the basic graphing functionality.
@@ -346,6 +377,8 @@ brandseye.charts = function() {
         return this;
     };
 
+    // **Graph** is defined as a collection of functions that children can override to do things
+    // such as set up axes, display data (as bars, lines, etc.) and so on.
     namespace.Graph.prototype = {
 
         // Javascript does not have a great way to provide member data
@@ -372,24 +405,21 @@ brandseye.charts = function() {
             };
         },
 
+        // This does the bulk of the work in calling the different functions that define a chart at the appropriate
+        // times.
         render: function() {
-            console.log("BEGINNING TO RENDER!!!!", this.constructor);
             this.setup();
 
             // TODO We already have parent, which is likely the same as container used everywhere.
             var parent = d3.select(this.element());
-            console.log("The parent is", parent);
 
             if (parent.selectAll('svg').empty()) {
                 parent.append('svg');
             }
 
             var svg = parent.select('svg');
-            console.log("Element is ", this.element());
-            console.log("SVG is", svg);
             var nvChart = this.attributes.nvChart;
 
-            // Here we set up basic
             var that = this;
             svg
                 .datum(this.getDataToSet())
@@ -432,13 +462,11 @@ brandseye.charts = function() {
                     if (nvChart.multibar) {
                         markUnknownAndOthers(selection, that.x());
                     }
-
-                    console.log("FINISHED RENDERING");
-
                 });
             return this;
         },
 
+        // This performs some initial setup for the first time that the chart is rendered.
         setup: function() {
             if (!this.attributes.hasBeenSetup) {
                 this.attributes.nvChart = this.createChart();
@@ -455,8 +483,8 @@ brandseye.charts = function() {
         },
 
         // This method is meant to run through the data set and initialise any extra
-        // values that might be needed, as well as determining the maximum length
-        // of the labels.
+        // values that might be needed. This default implementation also determines the maximum length
+        // of labels that should be displayed.
         initialiseData: function() {
             var data = this.data();
             var maxLabelLength = 0;
@@ -485,6 +513,7 @@ brandseye.charts = function() {
             return this.data();
         },
 
+        // A helper method for draw labels on the x axis.
         drawAxisDataLabel: function(selection, margins) {
             var finalHeight = 0,
                 orientation = this.labelPosition,
@@ -549,11 +578,11 @@ brandseye.charts = function() {
             return finalHeight;
         },
 
+        // This method sets up basic properties of the chart. For example, it can set up the drawing
+        // extants. The default versions sets up an nvd3 chart.
         setupChart: function(margins) {
             var nvChart = this.nvChart();
 
-            console.log("Setting width", this.width(), "height", this.height());
-            console.log("Setting margins", margins);
             nvChart
                 .margin(margins)
                 .width(this.width())
@@ -571,13 +600,10 @@ brandseye.charts = function() {
             if (nvChart.showLabels) nvChart.showLabels(false);
         },
 
-        preRenderXAxisTicks: function() {
-            var nvChart = this.nvChart();
-            if (nvChart.xAxis) {
-                // nvChart.xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
-            }
-        },
+        // This is used to update the x axis before rendering
+        preRenderXAxisTicks: function() { },
 
+        // And this is used to update the x axis after rendering.
         postRenderXAxisTicks: function() {
             var nvChart = this.nvChart();
             var container = d3.select(nvChart.container);
@@ -588,6 +614,7 @@ brandseye.charts = function() {
             addTooltips(xTicks, this.xAxisTooltips());
         },
 
+        // Set up the y axis before we render the chart.
         preRenderYAxisTicks: function() {
             var nvChart = this.nvChart();
             if (nvChart.yAxis) {
@@ -597,6 +624,7 @@ brandseye.charts = function() {
             }
         },
 
+        // Modify the y axis after we've rendered the chart.
         postRenderYAxisTicks: function() {
             var nvChart = this.nvChart();
             var container = d3.select(nvChart.container);
@@ -605,6 +633,8 @@ brandseye.charts = function() {
             addTooltips(yTicks, this.tickFormat());
         },
 
+        // This is a useful method to override when setting up the container
+        // that we're rendering to, such as its background colour, and so on.
         setupContainer: function() {
             var nvChart = this.nvChart();
             var xScale = nvChart.multibar.xScale();
@@ -621,6 +651,7 @@ brandseye.charts = function() {
                 width = tmp;
             }
 
+            // All of our containers (usually SVG divs) are marked with the *.bm* class.
             container.classed('bm', true);
 
             container.selectAll('.chart-background').remove();
@@ -631,10 +662,12 @@ brandseye.charts = function() {
                 .attr('height', height);
         },
 
+        // Used to determine how much space the chart's legend should take.
         calculateLegendMargin: function() {
             return {top: 0, left: 60, right: this.width()};
         },
 
+        // This draws the legen on the chart.
         arrangeLegend: function(selection) {
             this.attributes.legend
                 .colours(this.colours())
@@ -645,6 +678,8 @@ brandseye.charts = function() {
             selection.call(this.attributes.legend);
         },
 
+        // This is the default margins that the graph should have. It is used
+        // in *calculateMargins()* to determine the true margins of the charts.
         defaultMargins: function() {
             return {
                 top:    30,
@@ -654,6 +689,8 @@ brandseye.charts = function() {
             };
         },
 
+        // Calculates the margins the chart requires, using the *defaultMargins()* of the chart.
+        // It also takes in to account features such as the legend size.
         calculateMargins: function(selection) {
             var maxLabelLength = this.attributes.maxLabelLength || 0;
             var margins = this.defaultMargins();
@@ -684,6 +721,7 @@ brandseye.charts = function() {
                 .style('opacity', this.zeroOpacity());
         },
 
+        // This renders labels on the chart.
         arrangeLabels: function(selection) {
             var nvChart = this.nvChart(),
                 labels = this.labels();
@@ -707,7 +745,7 @@ brandseye.charts = function() {
         labelPosition: "columns",
 
         //----------------------------------------
-        // ## Getters and Setters
+        // ### Getters and Setters
         // The getters and setters provide access to the various data elements that a graph requires.
         // Most of the functions below act as both getters and setters. When given an argument, they will
         // set the value of an item, and then return the graph object, allowing calls to be chained. When used
@@ -719,7 +757,6 @@ brandseye.charts = function() {
         //            .data(data)
         //            .element($('.graph')[0]);
 
-        // ### Setting the data
         // **data()** sets the data to be displayed. The data can be provided in a number of formats.
         // The simplest is to provide an array of objects with x / y values, like so:
         //
@@ -774,6 +811,7 @@ brandseye.charts = function() {
             return this;
         },
 
+        // Gets the underlying nvd3 (or other element) used to create this chart.
         nvChart: function() {
             return this.attributes.nvChart;
         },
@@ -812,12 +850,14 @@ brandseye.charts = function() {
             return this;
         },
 
+        // Pass this a function to provide formatting of x axis values.
         tickFormat: function(_) {
             if (!arguments.length) return this.attributes.tickFormat;
             this.attributes.tickFormat = _;
             return this;
         },
 
+        // Pass a function to format data labels.
         labelFormat: function(_) {
             if (!arguments.length) return this.attributes.labelFormat;
             this.attributes.labelFormat = _;
@@ -830,12 +870,14 @@ brandseye.charts = function() {
             return this;
         },
 
+        // Set to true / false depending on whether you want to show or hide the labels.
         showLabels: function(_) {
             if (!arguments.length) return this.attributes.showLabels;
             this.attributes.showLabels = _;
             return this;
         },
 
+        // Provides access to the element that draws the labels on the charts.
         labels: function() {
             return this.attributes.labels;
         },
@@ -844,6 +886,8 @@ brandseye.charts = function() {
             return this;
         },
 
+        // If you need the *y*-axis to cover a particular range, pass this function an
+        // array containing the minimum and maximum range.
         forceY: function(force) {
             if (!arguments.length) return [this.attributes.forceMinY, this.attributes.forceMaxY];
             if (_.isArray(force)) {
@@ -857,30 +901,41 @@ brandseye.charts = function() {
             return this;
         },
 
+        // Pass this an array of values to use for the *x*-axis tooltips.
         xAxisTooltips: function(_) {
             if (!arguments.length) return this.attributes.xAxisTooltips;
             this.attributes.xAxisTooltips = _;
             return this;
         },
 
+        // This allows you to override the display values for *x*-axis components.
         xAxisOverride: function(_) {
             if (!arguments.length) return this.attributes.xAxisOverride;
             this.attributes.xAxisOverride = _;
             return this;
         },
 
+        // An array of colours to be used by the graph. For most graphs, this is the colour per data series.
+        // For the pie chart, this would be the colour per slice.
         colours: function(_) {
             if (!arguments.length) return this.attributes.colours;
             this.attributes.colours = (_ && _.length) ? _.concat(brandseye.colours.allColours) : brandseye.colours.allColours;
             return this;
         },
 
+        // Of use for the histogram. It defines the time period of the *x*-axis. It may be set to:
+        // - weekly
+        // - monthly
+        // - yearly
+        // - daily
+        // and defaults to daily.
         coarseness: function(_) {
             if (!arguments.length) return this.attributes.coarseness;
             this.attributes.coarseness = _;
             return this;
         },
 
+        // Set to true / false whether the legend should be shown or hidden.
         showLegend: function(_) {
             if (!arguments.length) return this.attributes.showLegend;
             this.attributes.showLegend = _;
@@ -909,12 +964,15 @@ brandseye.charts = function() {
             return this;
         },
 
+        // The graphs are animated, and this is how long they should be animated for, in milliseconds.
+        // This defaults to 250.
         duration: function(_) {
             if (!arguments.length) return this.attributes.duration;
             this.attributes.duration = _;
             return this;
         },
 
+        // A map giving the amount of space to be added around the chart.
         padding: function(_) {
             if (!arguments.length) return this.attributes.padding;
             this.attributes.padding = {
@@ -958,10 +1016,11 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Histograms
+    // ## The Charts
+
+    // ### Histograms
     // The histogram is useful for accumulating discrete values in to buckets,
     // such as for showing the number of mentions appearing over time.
-
     namespace.Histogram = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1114,7 +1173,7 @@ brandseye.charts = function() {
     namespace.Histogram.prototype.longFormat = function(m, i) { return i === 0 || m.date() === 1; };
 
     //--------------------------------------------------------------
-    // # Bar charts
+    // ### Bar charts
     // *Bar charts* are useful for comparing categories of things. Bar charts
     // are rendered horizontally: if you would like vertical bars, see the *ColumnChart*.
 
@@ -1175,7 +1234,7 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Column charts
+    // ### Column charts
     // *Column charts* are useful for comparing categories of things. Column charts
     // are rendered vertically: if you would like horizontal bars, see the *BarChart*.
 
@@ -1279,7 +1338,7 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Pie charts
+    // ### Pie charts
 
     namespace.PieChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
@@ -1370,7 +1429,7 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Line charts
+    // ### Line charts
     // This shows timeseries data. Expects the x-axis to show dates.
 
     namespace.LineChart = function() {
@@ -1512,7 +1571,7 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Word Clouds
+    // ### Word Clouds
     // While this chart uses a similar interface to the previous charts, its expected data format is different,
     // as is the kind of data that it displays.
     //
@@ -1714,9 +1773,11 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
-    // # Example Metrics
+    // ## The Metrics
     // This section creates various example metrics. All of these can be used in your application,
     // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
+    // They are quite simple implementations, however, and don't directly support comparison data sets (multiple series),
+    // and so on.
 
     // ## Support objects: BrandsEyeMetric
     // This provides a way of easily defining graphs that query the [BrandsEye API](https://api.brandseye.com) and hence
