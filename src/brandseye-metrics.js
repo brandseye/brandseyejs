@@ -20,19 +20,19 @@
  */
 
 // ## Introduction
-// BrandsEye Metrics is a simple library to help with two things:
+// *BrandsEye Metrics* is a simple library to help with two things:
 // 1. Charting. It does this by building on top of [D3][d3] and [nvd3.js][nvd3].
-// 2. Pulling data from a BrandsEye account.
+// 2. Pulling data from a [BrandsEye][brandseye] account.
 //
 // All of the charts are rendered using SVG, animated, and provide events for showing tooltips and
-// mouse interaction.
+// mouse interaction. It is available at [bitbucket][bitbucket] under the MIT license. The examples directory
+// gives examples of the various bits in use, while this document should help with setting up
+// the charts.
 //
 // *[BrandsEye][brandseye]* is an online platform for social media analysis.
 // It provides an [API][api] for accessing the data programmatically, and this library is well suited
 // for displaying that data. Indeed, most of the charts in the BrandsEye application are built on top of this
 // library.
-//
-// The library is available in a bitbucket repository at https://bitbucket.org/brandseye/brandseye-metrics
 //
 // This library can be divided in to two broad sections:
 //
@@ -42,16 +42,23 @@
 //
 // It's certainly possible to use this library to display arbitrary data visually, although it was
 // built with the intention of displaying data from the BrandsEye [API][api]. Indeed, it's used to
-// create many of the data visualisations you can find in the [BrandsEye application][brandseye].
+// create many of the data visualisations offered by the BrandsEye application.
 //
-// The source contains a directory of examples showing how to use the various charts and metrics.
+// This document can be divided in to the following sections.
+//
+// 1. A section on the namespaces and utilities provided by the library
+// 1. A section on the the basic charting infrastructure (a charting "parent" object).
+// 1. Descriptions of the various charts offered by the library.
+// 1. A collection of basic metrics pulling data from a BrandsEye account
+// 1. A method showing how to read data from the BrandsEye API.
 //
 // [d3]: http://www.d3js.org
 // [nvd3]: http://nvd3.org/
 // [api]: https://api.brandseye.com
 // [brandseye]: http://www.brandseye.com
+// [bitbucket]: https://bitbucket.org/brandseye/brandseye-metrics
 
-// ## First steps
+// ## Namespaces and utilities
 
 // All of this library is contained with the *brandseye* namespace. There are a number of sub-namespaces:
 // - brandseye.colours
@@ -64,7 +71,7 @@ var brandseye = {
     version: "0.0.2"
 };
 
-// ## Colours
+// ### Colours
 // A basic colour scheme that we use throughout the library.
 brandseye.colours = {
     scheme: [
@@ -98,7 +105,7 @@ brandseye.colours = {
     ]
 };
 
-// ## Utilities
+// ### Utilities
 // This provides some simple functions used throughout the library, such as tools for generating random numbers,
 // exporting charts as SVG, and so on.
 brandseye.utilities = function() {
