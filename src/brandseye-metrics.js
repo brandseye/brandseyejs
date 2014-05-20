@@ -1802,6 +1802,9 @@ brandseye.charts = function() {
     // A sparkline draws a small line without axes or labels. It's a great way to show the outline
     // of a data set inside of a text area, such as in a paragraph.
     namespace.Sparkline = function(selector, data, x, y) {
+        x = x || function(d) { return d.x; };
+        y = y || function(d) { return d.y; };
+
         var $main = $(selector);
         if (!$('svg', $main).length) {
             $main.html('<svg></svg>');
@@ -1814,6 +1817,7 @@ brandseye.charts = function() {
         svg
             .attr('width', width)
             .attr('height', height)
+            .classed('bm', true)
             .classed('chart-sparkline', true);
 
         var minX = x(_(data).min(x));
@@ -1845,6 +1849,9 @@ brandseye.charts = function() {
 
     // Similar to sparklines, these also colour the area under the chart.
     namespace.Area = function(selector, data, x, y) {
+        x = x || function(d) { return d.x; };
+        y = y || function(d) { return d.y; };
+
         var $main = $(selector);
         if (!$('svg', $main).length) {
             $main.html('<svg></svg>');
@@ -1857,6 +1864,7 @@ brandseye.charts = function() {
         svg
             .attr('width', width)
             .attr('height', height)
+            .classed('bm', true)
             .classed('chart-sparkline', true);
 
         var minX = x(_(data).min(x));

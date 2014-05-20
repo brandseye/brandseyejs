@@ -19,14 +19,20 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-.bm-sparkline-line {
+.bm-chart-sparkline-line {
     fill: none;
-    stroke: blue;
+    stroke: green;
 }
 
 .bm-chart-sparkline-area {
     fill: rgba(0,128,0, 0.6);
     stroke: green;
+}
+
+.bm.chart-sparkline {
+    display: inline;
+    width: auto;
+    height: auto;
 }
 
 .bm .standard-day {
