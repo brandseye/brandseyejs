@@ -1819,7 +1819,8 @@ brandseye.charts = function() {
     //         filter: "published inthelast week"
     //     });
     //
-    //     // Specify the element's height/width and supply a dom object to render to.
+    //     // Specify the element's height/width and supply
+    //     // a dom object to render to.
     //     metric
     //         .element(element)
     //         .width(512)
