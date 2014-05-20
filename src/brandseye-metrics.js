@@ -2906,29 +2906,44 @@ brandseye.charts = function() {
         areas.attr('d', area);
     };
 
-    // # Getting data to show
+    // ## Reading data from the API
 
     // The address of the BrandsEye API server is https://api.brandseye.com. This is a restful,
     // json api. You can visit the page to view the documentation on the api. When asked for a username / password,
     // you can use your, you can use the username API_KEY and use your api key as the password.
+    // Please contact your client service representative if you need to find out what your api key is.
     namespace.brandsEyeApi = "https://api.brandseye.com";
 
-    // This is a helper function to load data from the api. You very likely would want
+    // **loadFromApi()** is a helper function to load data from the api. You very likely would want
     // to only use this when testing the library, as it will expose your api key in your
     // client side code.
     //
     // The function takes a number of possible arguments.
-    // - username: username for accessing the data server (see the **key** option below).
-    // - password: password for accessing the data server (see the **key** option below).
-    // - server: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
-    // - key: An api key to use instead of a username/password pair.
-    // - max: An integer giving the maximum number of items to show (optional).
-    // - showOthers: A boolean, default true, used in conjunction with max above. If true, those items
+    // - *username*: username for accessing the data server (see the *key* option below).
+    // - *password*: password for accessing the data server (see the *key* option below).
+    // - *server*: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
+    // - *key*: An api key to use instead of a username/password pair.
+    // - *max*: An integer giving the maximum number of items to show (optional).
+    // - *showOthers*: A boolean, default true, used in conjunction with max above. If true, those items
     //   not shown because they exceed the max field will be rolled in to an *Other* field.
-    // - xFieldName: The name of the field in which the x value is stored. This is needed when showing others.
-    // - fragment: Optional string. Apart from providing an account code, you may provide a whole fragment string
+    // - *xFieldName*: The name of the field in which the x value is stored. This is needed when showing others.
+    // - *fragment*: Optional string. Apart from providing an account code, you may provide a whole fragment string
     //   representing the API endpoint that you wish to access. For example, rest/accounts/QUIR01BA/mentions/ots
-    // - arguments: An optional map of extra arguments to append to the url.
+    // - *arguments*: An optional map of extra arguments to append to the url.
+    //
+    //      brandseye.charts.loadFromApi({
+    //      key: options.query.key,
+    //         account: options.query.account,
+    //         filter: options.query.filter,
+    //         groupby: options.query.groupby,
+    //         orderby: options.query.orderby,
+    //         include: options.query.include,
+    //         max: options.query.max,
+    //         xFieldName: options.query.xFieldName,
+    //         fragment: options.query.fragment,
+    //         arguments: options.query.arguments
+    //      })
+
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
             throw new Error("Please specify an account");

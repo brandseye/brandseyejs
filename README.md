@@ -1,12 +1,16 @@
 # BrandsEye Metrics
 
-A JavaScript library for displaying data.
+BrandsEye Metrics is a javascript library for display graphs, and for pulling data from
+a BrandsEye account. It's built on top of D3 and NVD3. 
 
 ## Using
 
+BrandsEye metrics makes use of the following libraries.
+
 - JQuery
 - D3
-- NVd3
+- NVD3
+- Underscore
 
 ## Documentation
 
@@ -14,9 +18,12 @@ Documentation can be produced with [docco](http://jashkenas.github.io/docco/) li
 
     docco src/*.js
 
-and can then be found in the doc directory.
+and can then be found in the doc directory. 
 
 ## Examples
+
+There are many examples of the charts, and pulling data from a BrandsEye account, in the 
+examples directory.
 
 ## Distributed code
 
