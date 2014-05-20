@@ -1794,6 +1794,102 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+    // ## Charts not inheriting from Graph
+    // We have two charts that don't follow the standard chart API: *sparklines* and *area*.
+
+    // ### Sparklines
+
+    // A sparkline draws a small line without axes or labels. It's a great way to show the outline
+    // of a data set inside of a text area, such as in a paragraph.
+    namespace.Sparkline = function(selector, data, x, y) {
+        var $main = $(selector);
+        if (!$('svg', $main).length) {
+            $main.html('<svg></svg>');
+        }
+
+        var width = $main.width();
+        var height = $main.height();
+
+        var svg = d3.select($main[0]).select('svg');
+        svg
+            .attr('width', width)
+            .attr('height', height)
+            .classed('chart-sparkline', true);
+
+        var minX = x(_(data).min(x));
+        var maxX = x(_(data).max(x));
+        var minY = y(_(data).min(y));
+        var maxY = y(_(data).max(y));
+
+        var xScale = d3.scale.linear().domain([minX, maxX]).range([0, width]);
+        var yScale = d3.scale.linear().domain([minY, maxY]).range([height, 0]);
+
+        var line = d3.svg.line()
+            .x(function(d) {
+                return xScale(x(d));
+            })
+            .y(function(d) {
+                return yScale(y(d));
+            })
+            .interpolate('linear');
+
+        var lines = svg.selectAll('.bm-chart-sparkline-line').data([data]);
+        lines.exit().remove();
+        lines.enter().append('path').classed('bm-chart-sparkline-line', true);
+
+        lines.attr('d', line);
+    };
+
+    //--------------------------------------------------------------
+    // ### Area charts
+
+    // Similar to sparklines, these also colour the area under the chart.
+    namespace.Area = function(selector, data, x, y) {
+        var $main = $(selector);
+        if (!$('svg', $main).length) {
+            $main.html('<svg></svg>');
+        }
+
+        var width = $main.width();
+        var height = $main.height();
+
+        var svg = d3.select($main[0]).select('svg');
+        svg
+            .attr('width', width)
+            .attr('height', height)
+            .classed('chart-sparkline', true);
+
+        var minX = x(_(data).min(x));
+        var maxX = x(_(data).max(x));
+        var minY = y(_(data).min(y));
+        var maxY = y(_(data).max(y));
+
+        var xScale = d3.scale.linear().domain([minX, maxX]).range([0, width]);
+        var yScale = d3.scale.linear().domain([minY, maxY]).range([height, 0]);
+
+        var area = d3.svg.area()
+            .x(function(d) {
+                return xScale(x(d));
+            })
+            .y0(height)
+            .y1(function(d) {
+                return yScale(y(d));
+            });
+
+        var areas = svg.selectAll('.bm-chart-sparkline-area').data([data]);
+        areas.exit().remove();
+        areas.enter()
+            .append('path')
+            .classed('bm-chart-sparkline-area', true)
+            .style('opacity', 0)
+            .transition()
+            .duration(1000)
+            .style('opacity', 1.0);
+
+        areas.attr('d', area);
+    };
+
+    //--------------------------------------------------------------
     // ## The Metrics
     // This section creates various example metrics. All of these can be used in your application,
     // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
@@ -2817,93 +2913,6 @@ brandseye.charts = function() {
         //--------------
 
         return draw;
-    };
-
-    /**
-     * Adds a sparkline to the given selector object.
-     */
-    namespace.Sparkline = function(selector, data, x, y) {
-        var $main = $(selector);
-        if (!$('svg', $main).length) {
-            $main.html('<svg></svg>');
-        }
-
-        var width = $main.width();
-        var height = $main.height();
-
-        var svg = d3.select($main[0]).select('svg');
-        svg
-            .attr('width', width)
-            .attr('height', height)
-            .classed('chart-sparkline', true);
-
-        var minX = x(_(data).min(x));
-        var maxX = x(_(data).max(x));
-        var minY = y(_(data).min(y));
-        var maxY = y(_(data).max(y));
-
-        var xScale = d3.scale.linear().domain([minX, maxX]).range([0, width]);
-        var yScale = d3.scale.linear().domain([minY, maxY]).range([height, 0]);
-
-        var line = d3.svg.line()
-            .x(function(d) {
-                return xScale(x(d));
-            })
-            .y(function(d) {
-                return yScale(y(d));
-            })
-            .interpolate('linear');
-
-        var lines = svg.selectAll('.bm-chart-sparkline-line').data([data]);
-        lines.exit().remove();
-        lines.enter().append('path').classed('bm-chart-sparkline-line', true);
-
-        lines.attr('d', line);
-    };
-
-    namespace.Area = function(selector, data, x, y) {
-        var $main = $(selector);
-        if (!$('svg', $main).length) {
-            $main.html('<svg></svg>');
-        }
-
-        var width = $main.width();
-        var height = $main.height();
-
-        var svg = d3.select($main[0]).select('svg');
-        svg
-            .attr('width', width)
-            .attr('height', height)
-            .classed('chart-sparkline', true);
-
-        var minX = x(_(data).min(x));
-        var maxX = x(_(data).max(x));
-        var minY = y(_(data).min(y));
-        var maxY = y(_(data).max(y));
-
-        var xScale = d3.scale.linear().domain([minX, maxX]).range([0, width]);
-        var yScale = d3.scale.linear().domain([minY, maxY]).range([height, 0]);
-
-        var area = d3.svg.area()
-            .x(function(d) {
-                return xScale(x(d));
-            })
-            .y0(height)
-            .y1(function(d) {
-                return yScale(y(d));
-            });
-
-        var areas = svg.selectAll('.bm-chart-sparkline-area').data([data]);
-        areas.exit().remove();
-        areas.enter()
-            .append('path')
-            .classed('bm-chart-sparkline-area', true)
-            .style('opacity', 0)
-            .transition()
-            .duration(1000)
-            .style('opacity', 1.0);
-
-        areas.attr('d', area);
     };
 
     // ## Reading data from the API
