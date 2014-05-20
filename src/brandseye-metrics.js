@@ -25,7 +25,7 @@
 // 2. Pulling data from a [BrandsEye][brandseye] account.
 //
 // All of the charts are rendered using SVG, animated, and provide events for showing tooltips and
-// mouse interaction. It is available at [bitbucket][bitbucket] under the MIT license. The examples directory
+// providing mouse interaction. It is available at [bitbucket][bitbucket] under the MIT license. The examples directory
 // gives examples of the various bits in use, while this document should help with setting up
 // the charts.
 //
@@ -67,13 +67,16 @@
 //
 // All of these are defined below
 var brandseye = {
-    // The namespace is versioned, and we use [semantic versioning](http://semver.org/).
+    // We version the library using [semantic versioning](http://semver.org/).
     version: "0.0.2"
 };
 
 // ### Colours
-// A basic colour scheme that we use throughout the library.
+
+// This namespace contains the colours that we use throughout the library, although the charts have a way for
+// you to easily override these colour choices.
 brandseye.colours = {
+    // **brandseye.colours.scheme** is our basic colour scheme.
     scheme: [
         '#58B6FF',
         '#5473BD',
@@ -88,6 +91,7 @@ brandseye.colours = {
         '#43C278',
         '#318F58'
     ],
+    // And **brandseye.colours.allColours** defines a large number of colours.
     allColours: [
         '#f0f8ff', '#faebd7', '#00ffff', '#7fffd4', '#f0ffff', '#f5f5dc', '#ffe4c4', '#000000', '#ffebcd', '#0000ff', '#8a2be2',
         '#a52a2a', '#deb887', '#5f9ea0', '#7fff00', '#d2691e', '#ff7f50', '#6495ed', '#fff8dc', '#dc143c', '#00ffff', '#00008b',
@@ -106,9 +110,12 @@ brandseye.colours = {
 };
 
 // ### Utilities
+
 // This provides some simple functions used throughout the library, such as tools for generating random numbers,
 // exporting charts as SVG, and so on.
 brandseye.utilities = function() {
+
+    // #### Private utility members
 
     var attrs = {
         text: ['font-family', 'font-size', 'font-weight', 'color', 'text-anchor', 'fill',
@@ -132,6 +139,7 @@ brandseye.utilities = function() {
         for (i = 0; i < list.length; i++) inlineSvgCss($(list[i]));
     };
 
+    // #### Public utility members
     return {
         // This restricts the length of a string to the given size. This should cut text
         // at word boundaries, and provide ellipses when text has been shortened.
@@ -170,20 +178,20 @@ brandseye.utilities = function() {
             var width = svg.width();
             var height = svg.height();
 
-            // add namespace and size to the svg so it will render properly
+            // The svg begins with a namespace declaration, as well as some other metadata.
             svg.attr('xmlns', "http://www.w3.org/2000/svg");
             svg.attr('width', width);
             svg.attr('height', height);
             svg.attr('version', "1.1");
 
-            // put in computed styles for lots of things so css is not needed
+            // Styles applied via stylesheets need to be inlined.
             inlineSvgCss(svg);
 
             var xml = svg.parent().html().trim();
             xml = xml.replace(/ class="[^"]+"/g, '');
-            // the extra space after some of the translate's breaks canvg and maybe some other stuff
+            // Extra space after some of the translate's breaks canvg and maybe some other stuff
             xml = xml.replace(/ transform="translate \(/g, ' transform="translate(');
-            // Remove empty clip-path specifications, which batik does not like
+            // Remove empty clip-path specifications, which batik, an svg parsing library, does not like
             xml = xml.replace(/clip-path=""/g, '');
             // Some paths are degenerate, and we remove their d value. Batik complains otherwise
             xml = xml.replace(/d="MZ"/g, '');
@@ -228,7 +236,7 @@ brandseye.utilities = function() {
 
 
         // Returns a pseudo-random number generator function starting with the specified seed.
-        // From: http://jacksondunstan.com/articles/393
+        // Modified from: http://jacksondunstan.com/articles/393
         random: function(seed) {
             return function() { return (seed = (seed * 9301 + 49297) % 233280) / 233280.0; }
         }
@@ -239,7 +247,7 @@ brandseye.utilities = function() {
 
 brandseye.charts = function() {
 
-    // ### Private methods
+    // ### Private chart members
     // None of the following our visible outside of the namespace.
 
     /*
@@ -384,8 +392,13 @@ brandseye.charts = function() {
         return this;
     };
 
+    // ### Graph definition
+
     // **Graph** is defined as a collection of functions that children can override to do things
     // such as set up axes, display data (as bars, lines, etc.) and so on.
+    //
+    // A graph has multiple elements, including the axes and their labels, the labels
+    // on the individual data elements, and a legend.
     namespace.Graph.prototype = {
 
         // Javascript does not have a great way to provide member data
@@ -413,11 +426,10 @@ brandseye.charts = function() {
         },
 
         // This does the bulk of the work in calling the different functions that define a chart at the appropriate
-        // times.
+        // times. It is the function that you should finally call when drawing a chart.
         render: function() {
             this.setup();
 
-            // TODO We already have parent, which is likely the same as container used everywhere.
             var parent = d3.select(this.element());
 
             if (parent.selectAll('svg').empty()) {
@@ -674,7 +686,7 @@ brandseye.charts = function() {
             return {top: 0, left: 60, right: this.width()};
         },
 
-        // This draws the legen on the chart.
+        // This draws the legend on the chart.
         arrangeLegend: function(selection) {
             this.attributes.legend
                 .colours(this.colours())
@@ -935,6 +947,7 @@ brandseye.charts = function() {
         // - monthly
         // - yearly
         // - daily
+        //
         // and defaults to daily.
         coarseness: function(_) {
             if (!arguments.length) return this.attributes.coarseness;
@@ -953,7 +966,10 @@ brandseye.charts = function() {
         // either be a string, or it could be a map providing an option of a longer or shorter
         // string depending on the amount of available space:
         //
-        //     { long: "Percentage of global fruit output by country", short: "% output" }
+        //     {
+        //       long: "Percentage of global fruit output by country",
+        //       short: "% output"
+        //     }
         dataAxisLabel: function(label) {
             if (!arguments.length) return this.attributes.dataAxisLabel;
             if (_(label).isString()) label = { long: label, short: label };
@@ -1026,6 +1042,7 @@ brandseye.charts = function() {
     // ## The Charts
 
     // ### Histograms
+
     // The histogram is useful for accumulating discrete values in to buckets,
     // such as for showing the number of mentions appearing over time.
     namespace.Histogram = function() {
@@ -1074,14 +1091,13 @@ brandseye.charts = function() {
                 var m = new moment(data);
                 var formatString = 'dddd, MMMM D, YYYY';
 
-                // TODO There is a bug that makes the data and text elements repeat itself with position always
-                // equal to 0. When this begins, data will be null.
+                /* TODO There is a bug that makes the data and text elements repeat itself with position always equal to 0. When this begins, data will be null. */
                 if (!data || seen) {
                     seen = true;
                     return;
                 }
 
-                // TODO sometimes we should rotate nothing, if the rangeBand is large enough.
+                /* TODO sometimes we should rotate nothing, if the rangeBand is large enough. */
                 var rotate = xScale.rangeBand() / that.data().length < 20 ||
                     that.longFormat(m, position) || isMonday(m) ||
                     _(that.data()).any(function(d) { return d.values[0].published === data;});
@@ -1437,7 +1453,7 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // ### Line charts
-    // This shows timeseries data. Expects the x-axis to show dates.
+    // This shows timeseries data. Expects the *x*-axis to show dates.
 
     namespace.LineChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
@@ -1537,14 +1553,13 @@ brandseye.charts = function() {
                 var m = chartX === x ? new moment(data) : moment.unix(data);
                 var formatString = 'dddd, MMMM D, YYYY';
 
-                // TODO There is a bug that makes the data and text elements repeat itself with position always
-                // equal to 0. When this begins, data will be null.
+                /* TODO There is a bug that makes the data and text elements repeat itself with position always equal to 0. When this begins, data will be null. */
                 if (!data || seen) {
                     seen = true;
                     return;
                 }
 
-                // TODO sometimes we should rotate nothing, if the rangeBand is large enough.
+                /* TODO sometimes we should rotate nothing, if the rangeBand is large enough. */
                 var angle = -30;
                 var yOffset = 0;
 
@@ -1587,7 +1602,7 @@ brandseye.charts = function() {
     // to support setting a seed for the random number generator. This provides a great feature: if you find a
     // layout that you like, you can effectively save and replay that.
     //
-    // If you want to stop the animation, call the *stop* method.
+    // If you want to stop the animation, call the **stop()** method.
     //
     // [d3.cloud]: https://github.com/jasondavies/d3-cloud
 
@@ -1702,7 +1717,6 @@ brandseye.charts = function() {
         text.enter()
             .append("text")
             .classed('word', true)
-//            .classed('popup-menu', true)
             .attr("text-anchor", "middle")
             .on('click', function(d) { dispatch.elementClick(d); });
 
@@ -1783,15 +1797,35 @@ brandseye.charts = function() {
     // ## The Metrics
     // This section creates various example metrics. All of these can be used in your application,
     // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
-    // They are quite simple implementations, however, and don't directly support comparison data sets (multiple series),
-    // and so on.
+    // They are quite simple implementations, however, and don't directly
+    // support various features such as comparison data sets (multiple series),
+    //
+    // ### Support objects: BrandsEyeMetric
 
-    // ## Support objects: BrandsEyeMetric
     // This provides a way of easily defining graphs that query the [BrandsEye API](https://api.brandseye.com) and hence
     // have a lot of shared boilerplate code in terms of setting up the call to the API and then displaying
     // the data. This function has a way to set up a query on a particular account, initialises the graph
     // with the appropriate type, and then provides easy access to the graph in order to customise it.
     // There are various examples below of this happening.
+    //
+    // The **loadFromApi()** function is defined further below.
+    //
+    // Showing a metric is simple:
+    //
+    //     // Define the account, api key, and filter to use
+    //     var metric = new brandseye.charts.VolumeMetric({
+    //         account: "BEMF33AA",
+    //         key: 'your api key',
+    //         filter: "published inthelast week"
+    //     });
+    //
+    //     // Specify the element's height/width and supply a dom object to render to.
+    //     metric
+    //         .element(element)
+    //         .width(512)
+    //         .height(350)
+    //         .render();
+    //
     namespace.BrandsEyeMetric = function(options) {
         this.query = options.query;
         this.type = options.type;
@@ -1801,7 +1835,6 @@ brandseye.charts = function() {
         var dataTransform = options.dataTransform || _.identity;
 
         this.run = function(callback) {
-
             brandseye.charts.loadFromApi({
                 key: options.query.key,
                 account: options.query.account,
@@ -1825,6 +1858,11 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Showing volumes
+
+    // This displays a histogram showing the number of mentions
+    // received in a given time period.
     namespace.VolumeMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1844,6 +1882,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Opportunity-to-see
+
+    // This displays a histogram showing the OTS over a given time period.
     namespace.OtsMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1864,6 +1906,11 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Advert-value-equivalent
+
+    // This displays a histogram showing the AVE over a given time period. These values
+    // are by default in Rands (ZAR).
     namespace.AveMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1884,6 +1931,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Engagement
+
+    // This displays a histogram showing a breakdown of engagement over time.
     namespace.EngagementMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1904,6 +1955,16 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Categories
+
+    // Shows a column chart breaking showing the distribution of mentions between
+    // different categories of:
+    //
+    // - press
+    // - enterprise
+    // - consumer
+    // - directory
     namespace.CategoryMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1934,6 +1995,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Countries
+
+    // Shows a break down of volume by country.
     namespace.CountryMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1959,6 +2024,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Language
+
+    // Shows a break down of volume by language
     namespace.LanguageMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -1984,6 +2053,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Gender
+
+    // Shows a break down of volume by gender.
     namespace.GenderMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -2017,6 +2090,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Sentiment
+
+    // Volume by sentiment
     namespace.SentimentMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -2040,6 +2117,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Sources
+
+    // The top sources that mentions come from
     namespace.SourceMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -2065,6 +2146,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Mentions by author
+
+    // Mention volumes broken down by author.
     namespace.AuthorMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -2096,6 +2181,10 @@ brandseye.charts = function() {
         return this;
     };
 
+
+    // ### Reputation
+
+    // A line chart showing the basic reputation of the brand.
     namespace.ReputationMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
@@ -2133,6 +2222,9 @@ brandseye.charts = function() {
         return this;
     };
 
+    // ### A word cloud
+
+    // Shows the distribution of words in selected mentions.
     namespace.WordCloudMetric = function(options) {
         namespace.BrandsEyeMetric.call(this, {
             query: {
