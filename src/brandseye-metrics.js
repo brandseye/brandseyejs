@@ -1801,6 +1801,25 @@ brandseye.charts = function() {
 
     // A sparkline draws a small line without axes or labels. It's a great way to show the outline
     // of a data set inside of a text area, such as in a paragraph.
+    //
+    // An example of it in use:
+    //
+    //     /* Define the area in which to draw the sparkline */
+    //     .sparkline {
+    //        width: 100px;
+    //        height: 1em;
+    //     }
+    //
+    //     // Provide the element and the data
+    //     brandseye.charts.Sparkline($('.sparkline')[0], [
+    //         {x: 0, y: 0},
+    //         {x: 1, y: 2},
+    //         {x: 2, y: 1},
+    //         {x: 3, y: 3},
+    //         {x: 4, y: 5},
+    //         {x: 5, y: 0}
+    //     ]);
+
     namespace.Sparkline = function(selector, data, x, y) {
         x = x || function(d) { return d.x; };
         y = y || function(d) { return d.y; };
@@ -1848,6 +1867,19 @@ brandseye.charts = function() {
     // ### Area charts
 
     // Similar to sparklines, these also colour the area under the chart.
+    //
+    // The example is almost identical to the sparkline example. Do remember to
+    // define the width and height in css of the item you are drawing to.
+    //
+    //     // Provide the element and the data
+    //     brandseye.charts.Area($('.area')[0], [
+    //         {x: 0, y: 0},
+    //         {x: 1, y: 2},
+    //         {x: 2, y: 1},
+    //         {x: 3, y: 3},
+    //         {x: 4, y: 5},
+    //         {x: 5, y: 0}
+    //     ]);
     namespace.Area = function(selector, data, x, y) {
         x = x || function(d) { return d.x; };
         y = y || function(d) { return d.y; };
