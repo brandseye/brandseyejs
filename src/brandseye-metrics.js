@@ -2916,7 +2916,8 @@ brandseye.charts = function() {
 
     // **loadFromApi()** is a helper function to load data from the api. You very likely would want
     // to only use this when testing the library, as it will expose your api key in your
-    // client side code.
+    // client side code. By default it will return data from the *count* endpoint of the BrandsEye API,
+    // although that can be overridden using the *fragment* option below.
     //
     // The function takes a number of possible arguments.
     // - *username*: username for accessing the data server (see the *key* option below).
@@ -2929,20 +2930,22 @@ brandseye.charts = function() {
     // - *xFieldName*: The name of the field in which the x value is stored. This is needed when showing others.
     // - *fragment*: Optional string. Apart from providing an account code, you may provide a whole fragment string
     //   representing the API endpoint that you wish to access. For example, rest/accounts/QUIR01BA/mentions/ots
+    // - *groupby*: An optional string of comma separated values for grouping the resulting data.
+    // - *orderby*: An optional string of comma separated values for ordering the resulting data.
     // - *arguments*: An optional map of extra arguments to append to the url.
+    // - *callback*: a function that will be called on success. It will be passed the data returned from the API.
+    // - *error*: An optional function called on failure.
     //
-    //      brandseye.charts.loadFromApi({
-    //      key: options.query.key,
-    //         account: options.query.account,
-    //         filter: options.query.filter,
-    //         groupby: options.query.groupby,
-    //         orderby: options.query.orderby,
-    //         include: options.query.include,
-    //         max: options.query.max,
-    //         xFieldName: options.query.xFieldName,
-    //         fragment: options.query.fragment,
-    //         arguments: options.query.arguments
-    //      })
+    // An example of its use:
+    //
+    //     brandseye.charts.loadFromApi({
+    //         key: "your key,
+    //         account: "your account code",
+    //         filter: "published inthelast week and sentiment > 1",
+    //         groupby: "published",
+    //         success: function(data) { console.log("Received", data); }
+    //     });
+    //
 
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
@@ -3000,14 +3003,14 @@ brandseye.charts = function() {
                             }, {count: 0, ave: 0, ots: 0, percentage: 0, credibility: 0, reach: 0, engagement: 0})
                             .value();
                         others[options.xFieldName] = "Others";
-                        console.log("+++++ Others after", others);
                         data.push(others);
                     }
                 }
                 callback(data);
             },
             error: function() {
-                alert("ERROR");
+                if (options.error) options.error();
+                else throw new Error("There was an error communicating with the API");
             }
         });
     };
