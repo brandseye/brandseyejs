@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>The various default metrics in the library</title>
+    <title>The various default metrics in the BrandsEye Metrics library</title>
 
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="http://underscorejs.org/underscore.js"></script>
@@ -15,9 +15,16 @@
     <link href="../src/brandseye-metrics.css" rel="stylesheet" type="text/css">
 
     <style>
+
+        input {
+            display: block;
+            width: 450px;
+        }
+
         .graphs {
             display: flex;
             flex-wrap: wrap;
+            visibility: hidden;
         }
 
         .chart {
@@ -27,10 +34,6 @@
             border: solid thin grey;
             margin: 10px;
             border-radius: 5px;
-        }
-
-        .chart.longer {
-            width: 400px;
         }
 
         h2 {
@@ -46,15 +49,17 @@
 </h1>
 
 <p>
-    These are the default metrics implemented in the library.
+    These are the default metrics implemented in the
+    <a href="https://bitbucket.org/brandseye/brandseye-metrics">BrandsEye Metrics</a> library.
+    Enter your account and filter information, along with your API key, to pull data from your own account.
+    If you're a BrandsEye client and need to find out what your API key is, please contact your
+    client service representative.
 </p>
 
-<form>
-    <input type="text" placeholder="account">
-    <input type="text" placeholder="filter">
-    <input type="text" placeholder="key">
-    <button>Draw graphs</button>
-</form>
+    <input id="account" type="text" placeholder="account">
+    <input id="filter" type="text" placeholder="filter" value="published inthelast week and relevancy isnt irrelevant">
+    <input id="key" type="text" placeholder="key">
+    <button id="draw-button">Draw graphs</button>
 
 <div class="graphs">
     <div class="chart">
@@ -127,44 +132,74 @@
 
 <script>
     $(function() {
-        var query = {
-            account: "BEMF33AA",
-            key: '74c0643twmugtfqwo72n7sfai',
-            filter: "published inthelast week"
-        };
+        function drawGraphs() {
 
-        var setupData = [
-            { constructor: brandseye.charts.VolumeMetric, element: $('.volume-metric')[0] },
-            { constructor: brandseye.charts.OtsMetric, element: $('.ots-metric')[0] },
-            { constructor: brandseye.charts.AveMetric, element: $('.ave-metric')[0] },
-            { constructor: brandseye.charts.EngagementMetric, element: $('.engagement-metric')[0] },
-            { constructor: brandseye.charts.CategoryMetric, element: $('.category-metric')[0] },
-            { constructor: brandseye.charts.CountryMetric, element: $('.country-metric')[0] },
-            { constructor: brandseye.charts.LanguageMetric, element: $('.language-metric')[0] },
-            { constructor: brandseye.charts.GenderMetric, element: $('.gender-metric')[0] },
-            { constructor: brandseye.charts.SentimentMetric, element: $('.sentiment-metric')[0] },
-            { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] },
-            { constructor: brandseye.charts.AuthorMetric, element: $('.author-metric')[0] },
-            { constructor: brandseye.charts.ReputationMetric, element: $('.reputation-metric')[0] },
-            { constructor: brandseye.charts.WordCloudMetric, element: $('.word-cloud-metric')[0] }
-        ];
+            var account = $('#account').val(),
+                filter = $('#filter').val(),
+                key = $('#key').val();
 
-        var chart;
-        var map;
-        for (var i = 0; i < setupData.length; i++) {
-            map = setupData[i];
-            chart = new map.constructor(query);
-            chart.run(function(element) {
-                return function(chart) {
-                    chart
-                            .element(element)
-                            .width(512)
-                            .height(350)
-                            .render();
-                };
-            }(map.element));
+            if (!account) {
+                alert("Please fill in an account code");
+                return;
+            }
+            account = account.toUpperCase();
+
+            if (!filter) {
+                alert("Please fill in a filter");
+                return;
+            }
+
+            if (!key) {
+                alert("Please supply an API key");
+                return;
+            }
+
+            var query = {
+                account: account,
+                key: key,
+                filter: filter
+            };
+
+            $('.graphs').css({
+                visibility: 'inherit'
+            });
+
+            var setupData = [
+                { constructor: brandseye.charts.VolumeMetric, element: $('.volume-metric')[0] },
+                { constructor: brandseye.charts.OtsMetric, element: $('.ots-metric')[0] },
+                { constructor: brandseye.charts.AveMetric, element: $('.ave-metric')[0] },
+                { constructor: brandseye.charts.EngagementMetric, element: $('.engagement-metric')[0] },
+                { constructor: brandseye.charts.CategoryMetric, element: $('.category-metric')[0] },
+                { constructor: brandseye.charts.CountryMetric, element: $('.country-metric')[0] },
+                { constructor: brandseye.charts.LanguageMetric, element: $('.language-metric')[0] },
+                { constructor: brandseye.charts.GenderMetric, element: $('.gender-metric')[0] },
+                { constructor: brandseye.charts.SentimentMetric, element: $('.sentiment-metric')[0] },
+                { constructor: brandseye.charts.SourceMetric, element: $('.source-metric')[0] },
+                { constructor: brandseye.charts.AuthorMetric, element: $('.author-metric')[0] },
+                { constructor: brandseye.charts.ReputationMetric, element: $('.reputation-metric')[0] },
+                { constructor: brandseye.charts.WordCloudMetric, element: $('.word-cloud-metric')[0] }
+            ];
+
+            var chart;
+            var map;
+            for (var i = 0; i < setupData.length; i++) {
+                map = setupData[i];
+                chart = new map.constructor(query);
+                chart.run(function(element) {
+                    return function(chart) {
+                        chart
+                                .element(element)
+                                .width(512)
+                                .height(350)
+                                .render();
+                    };
+                }(map.element));
+            }
         }
-    });
+
+        $('#draw-button').on('click', drawGraphs);
+    })
+
 </script>
 
 

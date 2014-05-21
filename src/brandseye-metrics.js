@@ -849,7 +849,6 @@ brandseye.charts = function() {
         height: function(_) {
             if (!arguments.length) return this.attributes.height;
             this.attributes.height = _;
-            console.log("Height has been set to ", this.attributes.height);
             return this;
         },
 
@@ -1057,7 +1056,7 @@ brandseye.charts = function() {
     };
 
     namespace.Histogram.prototype = new namespace.Graph();
-    namespace.Histogram.prototype.createChart = function() { console.log("Histogram!!"); return nv.models.multiBarChart(); };
+    namespace.Histogram.prototype.createChart = function() { return nv.models.multiBarChart(); };
 
     namespace.Histogram.prototype.arrangeTicks = function() {
         var seen = false;
@@ -1212,7 +1211,7 @@ brandseye.charts = function() {
     };
 
     namespace.BarChart.prototype = new namespace.Graph();
-    namespace.BarChart.prototype.createChart = function() { console.log("barchart!!"); return nv.models.multiBarHorizontalChart(); };
+    namespace.BarChart.prototype.createChart = function() { return nv.models.multiBarHorizontalChart(); };
     namespace.BarChart.prototype.labelPosition = "rows";
 
     namespace.BarChart.prototype.initialiseData = function() {
@@ -1273,7 +1272,7 @@ brandseye.charts = function() {
     };
 
     namespace.ColumnChart.prototype = new namespace.Graph();
-    namespace.ColumnChart.prototype.createChart = function() { console.log("columnchart!!"); return nv.models.multiBarChart(); };
+    namespace.ColumnChart.prototype.createChart = function() { return nv.models.multiBarChart(); };
 
     namespace.ColumnChart.prototype.initialiseData = function() {
         var data = this.data();
@@ -1375,7 +1374,7 @@ brandseye.charts = function() {
     };
 
     namespace.PieChart.prototype = new namespace.Graph();
-    namespace.PieChart.prototype.createChart = function() { console.log("piechart!!"); return nv.models.pieChart(); };
+    namespace.PieChart.prototype.createChart = function() { return nv.models.pieChart(); };
     namespace.PieChart.prototype.labelPosition = "circle";
 
     namespace.PieChart.prototype.getDataToSet = function() {
@@ -1467,7 +1466,7 @@ brandseye.charts = function() {
     };
 
     namespace.LineChart.prototype = new namespace.Graph();
-    namespace.LineChart.prototype.createChart = function() { console.log("linechart!!"); return nv.models.lineChart(); };
+    namespace.LineChart.prototype.createChart = function() { return nv.models.lineChart(); };
 
     namespace.LineChart.prototype.setupContainer = function() { };
     namespace.LineChart.prototype.arrangeLabels = function() { };
@@ -1627,7 +1626,7 @@ brandseye.charts = function() {
     };
 
     namespace.WordCloudChart.prototype = new namespace.Graph();
-    namespace.WordCloudChart.prototype.createChart = function() { console.log("word cloud!!"); return d3.layout.cloud(); };
+    namespace.WordCloudChart.prototype.createChart = function() { return d3.layout.cloud(); };
 
     namespace.WordCloudChart.prototype.setupContainer = function() {
         this.attributes.parent.classed('bm', true)
@@ -2016,6 +2015,9 @@ brandseye.charts = function() {
             success: function(data){
                 if (data.status === 401) {
                     throw new Error("You are not authorised to access this endpoint");
+                }
+                if (data.status) {
+                    throw new Error(data.error);
                 }
                 if (options.max) {
                     var originalData = data;
