@@ -245,6 +245,28 @@ brandseye.utilities = function() {
             return (Math.round(value * base) / base).toString() + '%';
         },
 
+        // This formats a number as its SI unit equivalent. For example,
+        // 1000 is 1K.
+        formatSi: function(number) {
+            number = Math.round(number);
+
+            if (number / 1000000000 >= 1) {
+                var result = Math.round(number / 1000000000);
+                return result + "G";
+            }
+            if (number / 1000000 >= 1) {
+                var result = Math.round(number / 1000000);
+                return result + "M";
+            }
+            if (number / 1000 >= 1) {
+                var result = Math.round(number / 1000);
+                return result + 'k';
+            }
+
+            return number;
+        },
+
+
 
         // Returns a pseudo-random number generator function starting with the specified seed.
         // Modified from: http://jacksondunstan.com/articles/393
@@ -881,6 +903,10 @@ brandseye.charts = function() {
         },
 
         // Pass this a function to provide formatting of x axis values.
+        // This function will be passed two values. The first is the value
+        // that should be formatted. The second is a number indicating the amount
+        // of visual compression that the number value should have. The larger
+        // this number, the larger the amount of visual compression.
         tickFormat: function(_) {
             if (!arguments.length) return this.attributes.tickFormat;
             this.attributes.tickFormat = _;
@@ -2170,6 +2196,7 @@ brandseye.charts = function() {
         this
             .x(function(d) { return d.published; })
             .y(function(d) { return d.count; })
+            .tickFormat(brandseye.utilities.formatSi)
             .dataAxisLabel("Volume");
 
         return this;
@@ -2194,6 +2221,7 @@ brandseye.charts = function() {
         this
             .x(function(d) { return d.published; })
             .y(function(d) { return d.ots; })
+            .tickFormat(brandseye.utilities.formatSi)
             .dataAxisLabel({long: "Opportunity to see", short: "OTS"});
 
         return this;
@@ -2219,6 +2247,7 @@ brandseye.charts = function() {
         this
             .x(function(d) { return d.published; })
             .y(function(d) { return d.ave; })
+            .tickFormat(function(d) { return "R" + brandseye.utilities.formatSi(d); })
             .dataAxisLabel({long: "Ad-value equivalent", short: "AVE"});
 
         return this;
