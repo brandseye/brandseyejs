@@ -54,6 +54,13 @@
 //    and pulling data from the BrandsEye API.
 // 1. <a href="#appendix">Various helper objects</a> for laying out labels and legends.
 //
+// There are also examples available:
+//
+// - A <a href="http://brandseye.github.io/brandseyejs/examples/simple.html">simple example</a> showing how to load a chart.
+// - A <a href="http://brandseye.github.io/brandseyejs/examples/gallery.html">gallery of available charts</a>.
+// - A <a href="http://brandseye.github.io/brandseyejs/examples/metrics.html">gallery of metrics</a> showing how to load
+//   data from the BrandsEye API. These examples do require a BrandsEye API key.
+//
 // [d3]: http://www.d3js.org
 // [nvd3]: http://nvd3.org/
 // [api]: https://api.brandseye.com
