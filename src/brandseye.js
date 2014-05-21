@@ -1852,6 +1852,10 @@ brandseye.charts = function() {
     //         {x: 4, y: 5},
     //         {x: 5, y: 0}
     //     ]);
+    //
+    // Sparklines appear like so:
+    //
+    // ![sparkline example](http://brandseye.github.io/brandseyejs/images/sparkline.png)
 
     namespace.Sparkline = function(selector, data, x, y) {
         x = x || function(d) { return d.x; };
@@ -1913,6 +1917,10 @@ brandseye.charts = function() {
     //         {x: 4, y: 5},
     //         {x: 5, y: 0}
     //     ]);
+    //
+    // Area charts appear like so:
+    //
+    // ![Area chart example](http://brandseye.github.io/brandseyejs/images/area-chart.png)
     namespace.Area = function(selector, data, x, y) {
         x = x || function(d) { return d.x; };
         y = y || function(d) { return d.y; };
