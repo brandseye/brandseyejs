@@ -72,7 +72,7 @@
 // All of these are defined below
 var brandseye = {
     // We version the library using [semantic versioning](http://semver.org/).
-    version: "0.0.2"
+    version: "1.0.0"
 };
 
 // ### Colours
