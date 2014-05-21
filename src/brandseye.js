@@ -1057,6 +1057,10 @@ brandseye.charts = function() {
 
     // The histogram is useful for accumulating discrete values in to buckets,
     // such as for showing the number of mentions appearing over time.
+    //
+    // This is how a histogram appears:
+    //
+    // ![Histogram example](http://brandseye.github.io/brandseyejs/images/histogram.png)
     namespace.Histogram = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1209,9 +1213,13 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // ### Bar charts
+
     // *Bar charts* are useful for comparing categories of things. Bar charts
     // are rendered horizontally: if you would like vertical bars, see the *ColumnChart*.
-
+    //
+    // A bar chart appears like so:
+    //
+    // ![Bar chart example](http://brandseye.github.io/brandseyejs/images/bar-chart.png)
     namespace.BarChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1270,9 +1278,12 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // ### Column charts
+
     // *Column charts* are useful for comparing categories of things. Column charts
     // are rendered vertically: if you would like horizontal bars, see the *BarChart*.
-
+    //
+    // This is an example of a column chart:
+    // ![Histogram example](http://brandseye.github.io/brandseyejs/images/column-chart.png)
     namespace.ColumnChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1373,8 +1384,11 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+
     // ### Pie charts
 
+    // This is an example of a pie chart
+    // ![Pie chart example](http://brandseye.github.io/brandseyejs/images/pie-chart.png)
     namespace.PieChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1465,8 +1479,11 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // ### Line charts
-    // This shows timeseries data. Expects the *x*-axis to show dates.
 
+    // This shows timeseries data. Expects the *x*-axis to show dates.
+    //
+    // This is an example of a line chart:
+    // ![Line chart example](http://brandseye.github.io/brandseyejs/images/line-chart.png)
     namespace.LineChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         return this;
@@ -1606,6 +1623,7 @@ brandseye.charts = function() {
 
     //--------------------------------------------------------------
     // ### Word Clouds
+
     // While this chart uses a similar interface to the previous charts, its expected data format is different,
     // as is the kind of data that it displays.
     //
@@ -1616,8 +1634,11 @@ brandseye.charts = function() {
     //
     // If you want to stop the animation, call the **stop()** method.
     //
+    // This is an example of a word cloud:
+    //
+    // ![Histogram example](http://brandseye.github.io/brandseyejs/images/word-cloud.png)
+    //
     // [d3.cloud]: https://github.com/jasondavies/d3-cloud
-
     namespace.WordCloudChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
         this.attributes.seed = Math.floor(Math.random() * 10000);
