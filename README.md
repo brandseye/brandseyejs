@@ -11,6 +11,7 @@ BrandsEye.js makes use of the following libraries.
 - D3
 - NVD3
 - Underscore
+- moment.js
 
 ## Documentation
 
