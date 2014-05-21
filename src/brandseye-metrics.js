@@ -46,11 +46,13 @@
 //
 // This document can be divided in to the following sections.
 //
-// 1. A section on the namespaces and utilities provided by the library
-// 1. A section on the the basic charting infrastructure (a charting "parent" object).
-// 1. Descriptions of the various charts offered by the library.
-// 1. A collection of basic metrics pulling data from a BrandsEye account
-// 1. A method showing how to read data from the BrandsEye API.
+// 1. A section on the <a href="#utilities">namespaces and utilities</a> provided by the library
+// 1. A section on the the basic <a href="#graph-object">charting infrastructure</a> (a charting "parent" object).
+// 1. Descriptions of the <a href="#charts">various charts</a> offered by the library.
+// 1. A method showing how to <a href="#load">read data from the BrandsEye API</a>.
+// 1. A collection of <a href="#metrics">basic metrics</a> built using the charts provided in the library,
+//    and pulling data from the BrandsEye API.
+// 1. <a href="#appendix">Various helper objects</a> for laying out labels and legends.
 //
 // [d3]: http://www.d3js.org
 // [nvd3]: http://nvd3.org/
@@ -58,9 +60,11 @@
 // [brandseye]: http://www.brandseye.com
 // [bitbucket]: https://bitbucket.org/brandseye/brandseye-metrics
 
+// <a id="utilities"></a>
 // ## Namespaces and utilities
 
 // All of this library is contained with the *brandseye* namespace. There are a number of sub-namespaces:
+//
 // - brandseye.colours
 // - brandseye.utilities
 // - brandseye.charts
@@ -243,6 +247,7 @@ brandseye.utilities = function() {
     }
 }();
 
+// <a id="graph-object"></a>
 // ## The Chart namespace
 
 brandseye.charts = function() {
@@ -359,7 +364,7 @@ brandseye.charts = function() {
     }
 
     //--------------------------------------------------------------
-    // # Basic graph functionality
+    // ## Basic graph functionality
 
     // We define all of the public interface in this alias, which we will
     // later assign to **brandseye.charts**.
@@ -1039,6 +1044,7 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+    // <a id="charts"></a>
     // ## The Charts
 
     // ### Histograms
@@ -1929,7 +1935,119 @@ brandseye.charts = function() {
         areas.attr('d', area);
     };
 
+    //----------------------------------------
+    // <a id="load"></a>
+    // ## Reading data from the API
+
+    // The address of the BrandsEye API server is https://api.brandseye.com. This is a restful,
+    // json api. You can visit the page to view the documentation on the api. When asked for a username / password,
+    // you can use your, you can use the username API_KEY and use your api key as the password.
+    // Please contact your client service representative if you need to find out what your api key is.
+    namespace.brandsEyeApi = "https://api.brandseye.com";
+
+    // **loadFromApi()** is a helper function to load data from the api. You very likely would want
+    // to only use this when testing the library, as it will expose your api key in your
+    // client side code. By default it will return data from the *count* endpoint of the BrandsEye API,
+    // although that can be overridden using the *fragment* option below.
+    //
+    // The function takes a number of possible arguments.
+    // - *username*: username for accessing the data server (see the *key* option below).
+    // - *password*: password for accessing the data server (see the *key* option below).
+    // - *server*: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
+    // - *key*: An api key to use instead of a username/password pair.
+    // - *max*: An integer giving the maximum number of items to show (optional).
+    // - *showOthers*: A boolean, default true, used in conjunction with max above. If true, those items
+    //   not shown because they exceed the max field will be rolled in to an *Other* field.
+    // - *xFieldName*: The name of the field in which the x value is stored. This is needed when showing others.
+    // - *fragment*: Optional string. Apart from providing an account code, you may provide a whole fragment string
+    //   representing the API endpoint that you wish to access. For example, rest/accounts/QUIR01BA/mentions/ots
+    // - *groupby*: An optional string of comma separated values for grouping the resulting data.
+    // - *orderby*: An optional string of comma separated values for ordering the resulting data.
+    // - *arguments*: An optional map of extra arguments to append to the url.
+    // - *callback*: a function that will be called on success. It will be passed the data returned from the API.
+    // - *error*: An optional function called on failure.
+    //
+    // An example of its use:
+    //
+    //     brandseye.charts.loadFromApi({
+    //         key: "your key,
+    //         account: "your account code",
+    //         filter: "published inthelast week and sentiment > 1",
+    //         groupby: "published",
+    //         success: function(data) { console.log("Received", data); }
+    //     });
+    //
+
+    namespace.loadFromApi = function(options) {
+        if (!options.account && !options.fragment) {
+            throw new Error("Please specify an account");
+        }
+
+        var username = options.username || "API_KEY",
+            password = options.password || options.key,
+            server = options.server || namespace.brandsEyeApi,
+            callback = options.success,
+            authorisation = "Basic " + btoa(username + ":" + password),
+            fragment = options.fragment || "rest/accounts/" + options.account + "/mentions/count";
+
+        if (options.showOthers === undefined) options.showOthers = true;
+        if (options.max && options.showOthers) options.max = options.max - 1;
+        if (options.max && options.showOthers && !options.xFieldName) throw new Error("xFieldName must be set when showing Other values");
+
+        var arguments = [];
+        arguments.push("Authorization=" + authorisation);
+        if (options.arguments) {
+            for (var key in options.arguments) {
+                arguments.push(key + "=" + encodeURIComponent(options.arguments[key]));
+            }
+        }
+
+        if (options.groupby) arguments.push("groupby=" + encodeURIComponent(options.groupby));
+        if (options.filter) arguments.push("filter=" + encodeURIComponent(options.filter));
+        if (options.orderby) arguments.push("orderby=" + encodeURIComponent(options.orderby));
+        if (options.include) arguments.push("include=" + encodeURIComponent(options.include));
+
+        var url = server + "/" + fragment + "?" + arguments.join('&');
+
+        return $.ajax({
+            url: url,
+            contentType: "application/json",
+            dataType: 'jsonp',
+            success: function(data){
+                if (data.status === 401) {
+                    throw new Error("You are not authorised to access this endpoint");
+                }
+                if (options.max) {
+                    var originalData = data;
+                    data = _(data).take(options.max);
+                    if (options.showOthers) {
+                        var others = _.chain(originalData)
+                            .rest(options.max)
+                            .reduce(function(memo, num) {
+                                return {
+                                    count: memo.count + (num.count || 0),
+                                    ave: memo.ave + (num.ave || 0),
+                                    ots: memo.ots + (num.ots || 0),
+                                    percentage: memo.percentage + (num.percentage || 0),
+                                    credibility: memo.credibility + (num.credibility || 0)
+                                };
+                            }, {count: 0, ave: 0, ots: 0, percentage: 0, credibility: 0, reach: 0, engagement: 0})
+                            .value();
+                        others[options.xFieldName] = "Others";
+                        data.push(others);
+                    }
+                }
+                callback(data);
+            },
+            error: function() {
+                if (options.error) options.error();
+                else throw new Error("There was an error communicating with the API");
+            }
+        });
+    };
+
     //--------------------------------------------------------------
+    // <a id="metrics"></a>
     // ## The Metrics
     // This section creates various example metrics. All of these can be used in your application,
     // or can be used to show how to pull appropriate data from the [BrandsEye API](https://api.brandseye.com).
@@ -2383,12 +2501,16 @@ brandseye.charts = function() {
     };
 
     //--------------------------------------------------------------
+    // <a id="appendix"></a>
+    // ## Appendix: various helper objects
 
-    /**
-     * Places labels on a chart. Currently this supports row and column charts, by
-     * setting the position() field to be 'rows' or 'columns'. You can also format
-     * how the label will appear by setting the format function.
-     */
+
+    // ### Drawing labels
+
+    // This places labels on the data items of a chart, such as the bars on a bar chart.
+    // Currently this supports row and column charts, by
+    // setting the **position()** field to be 'rows' or 'columns'. You can also format
+    // how the label will appear by setting the format function.
     namespace.chartLabel = function() {
 
         var x,
@@ -2407,12 +2529,9 @@ brandseye.charts = function() {
             originalSelection,
             zeroOpacity = 0;
 
-        //-------------------------------------
 
-        /**
-         * The function that does the actual rendering of the labels. It takes
-         * a D3 selection and returns itself.
-         */
+        // The function that does the actual rendering of the labels. It takes
+        // a D3 selection and returns itself.
         function draw(selection) {
             originalSelection = selection;
 
@@ -2488,7 +2607,6 @@ brandseye.charts = function() {
             return draw;
         }
 
-        //------------------------------
 
         function setupCircleLabels(labels) {
             // Calculate beginning and end angles.
@@ -2529,12 +2647,9 @@ brandseye.charts = function() {
                 });
         }
 
-        //------------------------------
 
-        /**
-         * This is used to determine if we should scale text.
-         * If we are drawing series data, the range should be contracted a bit.
-         */
+        // This is used to determine if we should scale text.
+        // If we are drawing series data, the range should be contracted a bit.
         function calculateRangeBuffer(length) {
             return length > 1 ? 0.95 : 1.05;
         }
@@ -2569,7 +2684,6 @@ brandseye.charts = function() {
 
             // Now that the labels have their text set, lets scale
             // them to fit the rangeBand.
-
             var removeLabels = _.once(function() {
                 var remove = false;
                 labels.each(function() {
@@ -2602,8 +2716,6 @@ brandseye.charts = function() {
                 removeLabels();
             }
         }
-
-        //-------------------------------------
 
         draw.show = function() {
             d3.select(originalSelection.node())
@@ -2639,8 +2751,6 @@ brandseye.charts = function() {
                 });
             });
         };
-
-        //-------------------------------------
 
         draw.position = function(_) {
             if (!arguments.length) return position;
@@ -2696,22 +2806,20 @@ brandseye.charts = function() {
             return draw;
         };
 
-        /**
-         * Passes two possible arguments. The first is the data that should be formatted. The second
-         * is an indiciation of the amount of compression that should occur, as determined by the
-         * determineCompression function.
-         */
+
+        // Passes two possible arguments. The first is the data that should be formatted. The second
+        // is an indiciation of the amount of compression that should occur, as determined by the
+        // determineCompression function.
         draw.format = function(_) {
             if (!arguments.length) return format;
             format = _;
             return draw;
         };
 
-        /**
-         * This function should return a numeric indication of how much compression the label format
-         * should incur. This number needs to be meaningful only to the label format function.
-         * Larger numbers, however, should mean smaller compression.
-         */
+
+        // This function should return a numeric indication of how much compression the label format
+        // should incur. This number needs to be meaningful only to the label format function.
+        // Larger numbers, however, should mean smaller compression.
         draw.determineCompression = function(_) {
             if (!arguments.length) return determineCompression;
             determineCompression = _;
@@ -2737,12 +2845,12 @@ brandseye.charts = function() {
     };
 
 
-    //--------------------------------------------------------
+    //----------------------------------------
+    // ### Drawing chart legends
 
-
+    // This determines the amount of space required for a legend, and also
+    // renders that legend.
     namespace.chartLegend = function() {
-
-        //-------------------------------------
 
         var margin = {top: 0, left: 0, right: 180},
             colours,
@@ -2843,7 +2951,7 @@ brandseye.charts = function() {
                                 if (colours) return d.color || colours[i % colours.length];
                                 else return d.color || 'black';
                             });
-                    })
+                    });
 
                     // This index and odd data indexing is needed because d3 is only returning an index of 0, and has not
                     // properly updated the data for these subelements.
@@ -2953,115 +3061,6 @@ brandseye.charts = function() {
         //--------------
 
         return draw;
-    };
-
-    // ## Reading data from the API
-
-    // The address of the BrandsEye API server is https://api.brandseye.com. This is a restful,
-    // json api. You can visit the page to view the documentation on the api. When asked for a username / password,
-    // you can use your, you can use the username API_KEY and use your api key as the password.
-    // Please contact your client service representative if you need to find out what your api key is.
-    namespace.brandsEyeApi = "https://api.brandseye.com";
-
-    // **loadFromApi()** is a helper function to load data from the api. You very likely would want
-    // to only use this when testing the library, as it will expose your api key in your
-    // client side code. By default it will return data from the *count* endpoint of the BrandsEye API,
-    // although that can be overridden using the *fragment* option below.
-    //
-    // The function takes a number of possible arguments.
-    // - *username*: username for accessing the data server (see the *key* option below).
-    // - *password*: password for accessing the data server (see the *key* option below).
-    // - *server*: an optional argument for the server to use. If not filled in, the default BrandsEye API server will be used.
-    // - *key*: An api key to use instead of a username/password pair.
-    // - *max*: An integer giving the maximum number of items to show (optional).
-    // - *showOthers*: A boolean, default true, used in conjunction with max above. If true, those items
-    //   not shown because they exceed the max field will be rolled in to an *Other* field.
-    // - *xFieldName*: The name of the field in which the x value is stored. This is needed when showing others.
-    // - *fragment*: Optional string. Apart from providing an account code, you may provide a whole fragment string
-    //   representing the API endpoint that you wish to access. For example, rest/accounts/QUIR01BA/mentions/ots
-    // - *groupby*: An optional string of comma separated values for grouping the resulting data.
-    // - *orderby*: An optional string of comma separated values for ordering the resulting data.
-    // - *arguments*: An optional map of extra arguments to append to the url.
-    // - *callback*: a function that will be called on success. It will be passed the data returned from the API.
-    // - *error*: An optional function called on failure.
-    //
-    // An example of its use:
-    //
-    //     brandseye.charts.loadFromApi({
-    //         key: "your key,
-    //         account: "your account code",
-    //         filter: "published inthelast week and sentiment > 1",
-    //         groupby: "published",
-    //         success: function(data) { console.log("Received", data); }
-    //     });
-    //
-
-    namespace.loadFromApi = function(options) {
-        if (!options.account && !options.fragment) {
-            throw new Error("Please specify an account");
-        }
-
-        var username = options.username || "API_KEY",
-            password = options.password || options.key,
-            server = options.server || namespace.brandsEyeApi,
-            callback = options.success,
-            authorisation = "Basic " + btoa(username + ":" + password),
-            fragment = options.fragment || "rest/accounts/" + options.account + "/mentions/count";
-
-        if (options.showOthers === undefined) options.showOthers = true;
-        if (options.max && options.showOthers) options.max = options.max - 1;
-        if (options.max && options.showOthers && !options.xFieldName) throw new Error("xFieldName must be set when showing Other values");
-
-        var arguments = [];
-        arguments.push("Authorization=" + authorisation);
-        if (options.arguments) {
-            for (var key in options.arguments) {
-                arguments.push(key + "=" + encodeURIComponent(options.arguments[key]));
-            }
-        }
-
-        if (options.groupby) arguments.push("groupby=" + encodeURIComponent(options.groupby));
-        if (options.filter) arguments.push("filter=" + encodeURIComponent(options.filter));
-        if (options.orderby) arguments.push("orderby=" + encodeURIComponent(options.orderby));
-        if (options.include) arguments.push("include=" + encodeURIComponent(options.include));
-
-        var url = server + "/" + fragment + "?" + arguments.join('&');
-
-        return $.ajax({
-            url: url,
-            contentType: "application/json",
-            dataType: 'jsonp',
-            success: function(data){
-                if (data.status === 401) {
-                    throw new Error("You are not authorised to access this endpoint");
-                }
-                if (options.max) {
-                    var originalData = data;
-                    data = _(data).take(options.max);
-                    if (options.showOthers) {
-                        var others = _.chain(originalData)
-                            .rest(options.max)
-                            .reduce(function(memo, num) {
-                                return {
-                                    count: memo.count + (num.count || 0),
-                                    ave: memo.ave + (num.ave || 0),
-                                    ots: memo.ots + (num.ots || 0),
-                                    percentage: memo.percentage + (num.percentage || 0),
-                                    credibility: memo.credibility + (num.credibility || 0)
-                                };
-                            }, {count: 0, ave: 0, ots: 0, percentage: 0, credibility: 0, reach: 0, engagement: 0})
-                            .value();
-                        others[options.xFieldName] = "Others";
-                        data.push(others);
-                    }
-                }
-                callback(data);
-            },
-            error: function() {
-                if (options.error) options.error();
-                else throw new Error("There was an error communicating with the API");
-            }
-        });
     };
 
     return namespace;
