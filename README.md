@@ -1,11 +1,11 @@
-# BrandsEye Metrics
+# BrandsEye.js
 
-BrandsEye Metrics is a javascript library for display graphs, and for pulling data from
+BrandsEye.js is a javascript library for display graphs, and for pulling data from
 a BrandsEye account. It's built on top of D3 and NVD3. 
 
 ## Using
 
-BrandsEye metrics makes use of the following libraries.
+BrandsEye.js makes use of the following libraries.
 
 - JQuery
 - D3

@@ -20,12 +20,12 @@
  */
 
 // ## Introduction
-// *BrandsEye Metrics* is a simple library to help with two things:
+// *BrandsEye.js* is a simple library to help with two things:
 // 1. Charting. It does this by building on top of [D3][d3] and [nvd3.js][nvd3].
 // 2. Pulling data from a [BrandsEye][brandseye] account.
 //
 // All of the charts are rendered using SVG, are animated, and provide events for showing tooltips and
-// providing mouse interaction. It is available at [bitbucket][bitbucket] under the MIT license. The examples directory
+// providing mouse interaction. It is available at [github][github] under the MIT license. The examples directory
 // gives examples of the various bits in use, while this document should help with setting up
 // the charts.
 //
@@ -58,7 +58,7 @@
 // [nvd3]: http://nvd3.org/
 // [api]: https://api.brandseye.com
 // [brandseye]: http://www.brandseye.com
-// [bitbucket]: https://bitbucket.org/brandseye/brandseye-metrics
+// [github]: https://github.com/brandseye/brandseye.js
 
 // <a id="utilities"></a>
 // ## Namespaces and utilities
