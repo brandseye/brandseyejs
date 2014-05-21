@@ -18,7 +18,8 @@ Documentation can be produced with [docco](http://jashkenas.github.io/docco/) li
 
     docco src/*.js
 
-and can then be found in the doc directory. 
+and can then be found in the doc directory. The live documentation can be found at 
+[here](http://brandseye.github.io/brandseyejs/brandseye.html).
 
 ## Examples
 
