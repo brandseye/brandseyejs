@@ -23,7 +23,13 @@ and can then be found in the doc directory.
 ## Examples
 
 There are many examples of the charts, and pulling data from a BrandsEye account, in the 
-examples directory.
+examples directory. The following examples are provided:
+
+- simple.html, which shows how to display a basic chart
+- gallery.html, which shows a list of the various available charts
+- metrics.html, which shows how to use the BrandsEye metrics available in BrandsEye.js
+
+Only metrics.html requires a BrandsEye account.
 
 ## Distributed code
 
