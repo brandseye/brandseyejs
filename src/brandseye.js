@@ -2038,6 +2038,14 @@ brandseye.charts = function() {
     //         success: function(data) { console.log("Received", data); }
     //     });
     //
+    // ### Caveats on its use
+    // Using this function on the client-side *will* expose your API key. To prevent this, you should
+    // proxy all calls to our server via your own servers. By changing the **brandseye.charts.brandsEyeAPI** field,
+    // you can have this method talk to your own servers, using a user supplied username and password. Or, alternatively,
+    // this function works well in both [node][node] and [phantomJS][phantomjs].
+    //
+    // [node]: http://nodejs.org/
+    // [phantomjs]: http://phantomjs.org/
 
     namespace.loadFromApi = function(options) {
         if (!options.account && !options.fragment) {
