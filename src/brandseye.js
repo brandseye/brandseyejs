@@ -78,8 +78,13 @@
 //
 // All of these are defined below
 var brandseye = {
+    // ### Changes
     // We version the library using [semantic versioning](http://semver.org/).
-    version: "1.0.0"
+    //
+    // - 1.0.0: Initial release
+    // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
+    //          as the second argument to the event.
+    version: "1.1.0"
 };
 
 // ### Colours
@@ -1664,6 +1669,13 @@ brandseye.charts = function() {
     //
     // ![Histogram example](http://brandseye.github.io/brandseyejs/images/word-cloud.png)
     //
+    // #### Events
+    // - elementClick: passed two arguments, the first being the data element associated with the word that
+    //   was clicked, the second being the dom element that was clicked.
+    // - tooltipShow: called when the mouse hovers over a word, passing the word and the associated dom object as the
+    //   first and second objects.
+    // - tooltipHide: called when the mouse moves off of a word.
+    //
     // [d3.cloud]: https://github.com/jasondavies/d3-cloud
     namespace.WordCloudChart = function() {
         namespace.Graph.prototype.createAttributes.call(this);
@@ -1777,12 +1789,12 @@ brandseye.charts = function() {
             .append("text")
             .classed('word', true)
             .attr("text-anchor", "middle")
-            .on('click', function(d) { dispatch.elementClick(d); });
+            .on('click', function(d) { dispatch.elementClick(d, this); });
 
         text
             .text(function (d) { return d.text; })
             .style('font-family', this.font())
-            .on('mouseover', function(d) { dispatch.tooltipShow(d); })
+            .on('mouseover', function(d) { dispatch.tooltipShow(d, this); })
             .on('mouseout', function(d) { dispatch.tooltipHide(d); });
 
         text
