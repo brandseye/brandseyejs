@@ -85,7 +85,8 @@ var brandseye = {
     // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
     //          as the second argument to the event.
     // - 1.1.1: BarCharts and ColumnCharts were incorrectly formatting data labels.
-    version: "1.1.1"
+    // - 1.1.2: bug fix: some charts are produced with an x value that Batik does not like.
+    version: "1.1.2"
 };
 
 // ### Colours
@@ -212,6 +213,8 @@ brandseye.utilities = function() {
             xml = xml.replace(/clip-path=""/g, '');
             // Some paths are degenerate, and we remove their d value. Batik complains otherwise
             xml = xml.replace(/d="MZ"/g, '');
+            // Some charts are generated with x values that Batik does not like.
+            xml = xml.replace(/x="NaN"/g, 'x="0"');
             return xml;
         },
 
