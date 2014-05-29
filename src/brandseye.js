@@ -84,7 +84,8 @@ var brandseye = {
     // - 1.0.0: Initial release
     // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
     //          as the second argument to the event.
-    version: "1.1.0"
+    // - 1.1.1: BarCharts and ColumnCharts were incorrectly formatting data labels.
+    version: "1.1.1"
 };
 
 // ### Colours
@@ -1284,6 +1285,10 @@ brandseye.charts = function() {
         this.attributes.maxLabelLength = maxLabelLength;
     };
 
+    namespace.BarChart.prototype.preRenderXAxisTicks = function() {
+        this.nvChart().xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
+    };
+
     namespace.BarChart.prototype.calculateLegendMargin = function() {
         return {top: 0, left: 30, right: this.width()};
     };
@@ -1359,6 +1364,10 @@ brandseye.charts = function() {
             this.attributes.maxXLabelLength = maxXLabelLength;
             this.attributes.maxYLabelLength = maxYLabelLength;
         }
+    };
+
+    namespace.ColumnChart.prototype.preRenderXAxisTicks = function() {
+        this.nvChart().xAxis.tickFormat(_.partial(xAxisTickFormat, xAxisRestriction));
     };
 
     namespace.ColumnChart.prototype.postRenderXAxisTicks = function() {
@@ -2148,7 +2157,8 @@ brandseye.charts = function() {
     //
     // The **loadFromApi()** function is defined further below.
     //
-    // Showing a metric is simple:
+    // Showing a metric is simple, and makes use of the **run()** method, which
+    // begins the process of downloading the data:
     //
     //     // Define the account, api key, and filter to use
     //     var metric = new brandseye.charts.VolumeMetric({
@@ -2159,11 +2169,17 @@ brandseye.charts = function() {
     //
     //     // Specify the element's height/width and supply
     //     // a dom object to render to.
-    //     metric
-    //         .element(element)
-    //         .width(512)
-    //         .height(350)
-    //         .render();
+    //     metric.run(function (chart, data) {
+    //          console.log("This is the data we received", data);
+    //
+    //          // Notice that we don't need to set the data.
+    //          // It has already been set.
+    //          chart
+    //              .element(element)
+    //              .width(512)
+    //              .height(350)
+    //              .render();
+    //     });
     //
     namespace.BrandsEyeMetric = function(options) {
         this.query = options.query;
