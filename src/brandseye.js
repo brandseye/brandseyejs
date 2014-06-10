@@ -81,12 +81,13 @@ var brandseye = {
     // ### Changes
     // We version the library using [semantic versioning](http://semver.org/).
     //
-    // - 1.0.0: Initial release
+    // - 1.2.0: Histogram now supports an "hourly" coarseness.
+    // - 1.1.2: bug fix: some charts are produced with an x value that Batik does not like.
+    // - 1.1.1: BarCharts and ColumnCharts were incorrectly formatting data labels.
     // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
     //          as the second argument to the event.
-    // - 1.1.1: BarCharts and ColumnCharts were incorrectly formatting data labels.
-    // - 1.1.2: bug fix: some charts are produced with an x value that Batik does not like.
-    version: "1.1.2"
+    // - 1.0.0: Initial release
+    version: "1.2.0"
 };
 
 // ### Colours
@@ -321,7 +322,7 @@ brandseye.charts = function() {
     var defaultLabelRestriction = 15;
     var xAxisRestriction = 25;
     var loadingText = '';
-    var dateRegex = /^\d+-\d+-\d+$/;
+    var dateRegex = /^\d+-\d+-\d+(\s\d\d:\d\d)?$/;
 
     /*
      * Attempts to limit the text of x-axis labels to an appropriate length.
@@ -989,10 +990,11 @@ brandseye.charts = function() {
         },
 
         // Of use for the histogram. It defines the time period of the *x*-axis. It may be set to:
+        // - hourly
+        // - daily
         // - weekly
         // - monthly
         // - yearly
-        // - daily
         //
         // and defaults to daily.
         coarseness: function(_) {
@@ -1104,6 +1106,11 @@ brandseye.charts = function() {
     namespace.Histogram.prototype = new namespace.Graph();
     namespace.Histogram.prototype.createChart = function() { return nv.models.multiBarChart(); };
 
+    namespace.Histogram.prototype.defaultMarginBottom = function() {
+        if (this.coarseness() == 'hourly') return 40;
+        return 20;
+    }
+
     namespace.Histogram.prototype.arrangeTicks = function() {
         var seen = false;
         var that = this;
@@ -1113,7 +1120,11 @@ brandseye.charts = function() {
         var xScale = this.nvChart().multibar.xScale();
 
         var isMonday = function(m) {
-            return m.day() === 1;
+            return m.day() === 1 && (m.hour() != 0 || that.coarseness() != "hourly");
+        };
+
+        var isDayStart = function(m) {
+            return that.coarseness() == "hourly" && m.hour() == 0;
         };
 
         // Here, if there are comparisons, we want to map label dates to lists of comparison dates.
@@ -1149,8 +1160,9 @@ brandseye.charts = function() {
                 }
 
                 /* TODO sometimes we should rotate nothing, if the rangeBand is large enough. */
-                var rotate = xScale.rangeBand() / that.data().length < 20 ||
-                    that.longFormat(m, position) || isMonday(m) ||
+                var rangeBandWidth = that.coarseness() == 'hourly' ? 30 : 20;
+                var rotate = xScale.rangeBand() / that.data().length < rangeBandWidth ||
+                    that.longFormat(m, position) || isMonday(m) || isDayStart(m) ||
                     _(that.data()).any(function(d) { return d.values[0].published === data;});
                 var angle = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? -30 : -90;
                 var yOffset = that.coarseness() === 'monthly' || that.coarseness() === 'weekly' ? 0 : 5;
@@ -1158,12 +1170,13 @@ brandseye.charts = function() {
                 d3.select(this)
                     .style('text-anchor', rotate ? 'end' : 'middle')
                     .attr('class', function(d) {
-                        if (!d || that.coarseness() !== 'daily') return "";
+                        if (!d || (that.coarseness() !== 'daily' && that.coarseness() !== 'hourly')) return "";
 
                         // Here we want to see if this is the beginning of a month
-                        if (m.month() === 0 && m.date() === 1) return "year-begin";
-                        if (m.date() == 1) return "month-begin";
-                        if (m.day() == 1) return "week-begin";
+                        if (m.month() === 0 && m.date() === 1 && isDayStart(m)) return "year-begin";
+                        if (m.date() == 1 && isDayStart(m)) return "month-begin";
+                        if (m.day() == 1 && isDayStart(m)) return "week-begin";
+                        if (isDayStart(m)) return "day-begin";
                         return "standard-day";
                     })
                     .attr('transform', rotate ? 'translate (-10, ' + yOffset + ') rotate(' + angle + ' 0,0)' : '')
@@ -1213,12 +1226,19 @@ brandseye.charts = function() {
         var nvChart = this.nvChart();
         var that = this;
 
+
         if (nvChart.xAxis) {
             nvChart.xAxis.tickFormat(function(d, i) {
                 if (!dateRegex.test(d)) return d;
                 var m = new moment(d);
 
                 switch (that.coarseness()) {
+                    case 'hourly':
+                        if ((that.longFormat(m, i) && m.hour() == 0) || i == 0) return m.format("MMM D, HH:mm");
+                        if (m.day() === 1 && m.hour() == 0) return m.format("ddd DD, HH:mm");
+                        if (m.hour() == 0) return m.format("ddd D, HH:mm");
+
+                        return m.format("HH:mm");
                     case 'daily':
                         if (that.longFormat(m, i)) return m.format("MMM DD");
                         if (m.day() === 1) return m.format("ddd DD");
