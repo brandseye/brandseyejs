@@ -81,6 +81,8 @@ var brandseye = {
     // ### Changes
     // We version the library using [semantic versioning](http://semver.org/).
     //
+    // - 1.2.1: Fixed a bug in which the support for hours broke the highlighting of the beginning of the month
+    //          in the histogram.
     // - 1.2.0: Histogram now supports an "hourly" coarseness.
     // - 1.1.2: bug fix: some charts are produced with an x value that Batik does not like.
     // - 1.1.1: BarCharts and ColumnCharts were incorrectly formatting data labels.
