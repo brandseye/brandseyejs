@@ -1109,7 +1109,7 @@ brandseye.charts = function() {
     namespace.Histogram.prototype.defaultMarginBottom = function() {
         if (this.coarseness() == 'hourly') return 40;
         return 20;
-    }
+    };
 
     namespace.Histogram.prototype.arrangeTicks = function() {
         var seen = false;
@@ -1124,7 +1124,7 @@ brandseye.charts = function() {
         };
 
         var isDayStart = function(m) {
-            return that.coarseness() == "hourly" && m.hour() == 0;
+            return m.hour() == 0 && m.minute() == 0;
         };
 
         // Here, if there are comparisons, we want to map label dates to lists of comparison dates.
@@ -1176,7 +1176,7 @@ brandseye.charts = function() {
                         if (m.month() === 0 && m.date() === 1 && isDayStart(m)) return "year-begin";
                         if (m.date() == 1 && isDayStart(m)) return "month-begin";
                         if (m.day() == 1 && isDayStart(m)) return "week-begin";
-                        if (isDayStart(m)) return "day-begin";
+                        if (that.coarseness() === "hourly" && isDayStart(m)) return "day-begin";
                         return "standard-day";
                     })
                     .attr('transform', rotate ? 'translate (-10, ' + yOffset + ') rotate(' + angle + ' 0,0)' : '')
