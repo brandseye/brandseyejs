@@ -81,6 +81,7 @@ var brandseye = {
     // ### Changes
     // We version the library using [semantic versioning](http://semver.org/).
     //
+    // - 1.2.3: Fixed a bug in which hourly labels are wrongly rotated at the beginning of a month.
     // - 1.2.2: Fixed a bug in which some labels may be rotated, but not others
     // - 1.2.1: Fixed a bug in which the support for hours broke the highlighting of the beginning of the month
     //          in the histogram.
@@ -1268,7 +1269,9 @@ brandseye.charts = function() {
 
     // Returns true if we should format this date long, rather than just
     // with the date.
-    namespace.Histogram.prototype.longFormat = function(m, i) { return i === 0 || m.date() === 1; };
+    namespace.Histogram.prototype.longFormat = function(m, i) {
+        return i === 0 || (m.date() === 1 && (this.coarseness() !== 'hourly' || (m.hour() == 0 && m.minute() == 0)));
+    };
 
     //--------------------------------------------------------------
     // ### Bar charts
