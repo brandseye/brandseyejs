@@ -13,14 +13,28 @@ BrandsEye.js makes use of the following libraries.
 - Underscore
 - moment.js
 
+## Building BrandsEye.js
+
+[Gulp](http://gulpjs.com) is used to build BrandsEye.js. You will need to install the node package manager [nodejs](http://nodejs.org/download/)
+ 
+    git clone https://github.com/brandseye/brandseyejs.git
+    cd brandseyejs
+    npm install 
+    gulp
+
+Here is a list of the gulp plugins we use:
+
+- [gulp-concat](https://www.npmjs.org/package/gulp-concat/)
+- [gulp-csso](https://www.npmjs.org/package/gulp-csso/)
+- [gulp-docco](https://www.npmjs.org/package/gulp-docco/)
+- [gulp-rename](https://www.npmjs.org/package/gulp-rename/)
+- [gulp-uglify](https://www.npmjs.org/package/gulp-uglify/)
+
+
 ## Documentation
 
-Documentation can be produced with [docco](http://jashkenas.github.io/docco/) like so:
-
-    docco src/*.js
-
-and can then be found in the doc directory. The live documentation can be found at 
-[here](http://brandseye.github.io/brandseyejs/brandseye.html).
+Documentation is produced with [docco](http://jashkenas.github.io/docco/) and can then be found in the doc directory. 
+The live documentation can be found [here](http://brandseye.github.io/brandseyejs/brandseye.html).
 
 ## Examples
 
@@ -37,6 +51,9 @@ Only metrics.html requires a BrandsEye account.
 
 The following libraries are distributed in the lib directory, along with their associated licenses:
 
+- jquery-1.11.0.min.js http://en.wikipedia.org/wiki/MIT_License
+- underscore.js
+- moment.js http://en.wikipedia.org/wiki/MIT_License
 - nvd3 http://nvd3.org/
 - D3 Word Cloud Layout https://github.com/jasondavies/d3-cloud This has been patched to provide
   support for repeatable random number generation (hence, repeatable layouts).
