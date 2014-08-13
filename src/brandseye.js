@@ -3,6 +3,7 @@ var brandseye =  {};
 // ### Changes
 // We version the library using [semantic versioning](http://semver.org/).
 //
+// - 1.3.2: You can now change the background colour for all charts
 // - 1.3.1: You can now change the colours used by the word cloud
 // - 1.3.0: We now use gulpjs to build the brandseyejs library.
 // - 1.2.3: Fixed a bug in which hourly labels are wrongly rotated at the beginning of a month.
@@ -15,7 +16,7 @@ var brandseye =  {};
 // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
 //          as the second argument to the event.
 // - 1.0.0: Initial release
-brandseye.VERSION = '1.3.1';
+brandseye.VERSION = '1.3.2';
 
 
 // Export to the root, which is probably `window`.

@@ -303,6 +303,7 @@ namespace.Graph.prototype = {
         var height = Math.max.apply(Math.max, yScale.range()),
             width = _(xScale.rangeExtent()).last();
 
+
         // In this case, our width and height values have been swapped.
         // This happens, for instance, when rendering bar charts.
         if (yScale.range()[0] == 0) {
@@ -317,7 +318,7 @@ namespace.Graph.prototype = {
         container.selectAll('.chart-background').remove();
         container.select('.nv-wrap').insert('rect', ':first-child')
             .attr('class', 'chart-background')
-            .attr('fill', backgroundColour)
+            .attr('fill', this.backgroundColour())
             .attr('width', width)
             .attr('height', height);
     },
@@ -585,6 +586,12 @@ namespace.Graph.prototype = {
     colours: function (_) {
         if (!arguments.length) return this.attributes.colours;
         this.attributes.colours = (_ && _.length) ? _.concat(brandseye.colours.allColours) : brandseye.colours.allColours;
+        return this;
+    },
+
+    backgroundColour: function (_) {
+        if (!arguments.length) return this.attributes.backgroundColour || backgroundColour;
+        this.attributes.backgroundColour = _;
         return this;
     },
 
