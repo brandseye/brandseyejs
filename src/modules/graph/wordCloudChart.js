@@ -46,6 +46,12 @@ namespace.WordCloudChart.prototype.createChart = function () {
     return d3.layout.cloud();
 };
 
+namespace.WordCloudChart.prototype.colours = function (_) {
+    if (!arguments.length) return this.attributes.colours;
+    this.attributes.colours = (_ && _.length) ? _ : brandseye.colours.allColours;
+    return this;
+};
+
 namespace.WordCloudChart.prototype.setupContainer = function () {
     this.attributes.parent.classed('bm', true)
 };
@@ -134,7 +140,8 @@ namespace.WordCloudChart.prototype.layoutComplete = function (words) {
     if (!data.length) return;
 
     var x = this.x(),
-        y = this.y();
+        y = this.y(),
+        colours = this.colours();
 
     _(data).each(function (d) {
         wordToCount[x(d)] = y(d);
@@ -171,7 +178,7 @@ namespace.WordCloudChart.prototype.layoutComplete = function (words) {
             return d.size + "px";
         })
         .style("fill", function (d, i) {
-            return brandseye.colours.scheme[i % brandseye.colours.scheme.length];
+            return colours[i % colours.length];
         })
         .attr("transform", function (d) {
             return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
