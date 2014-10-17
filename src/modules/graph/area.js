@@ -28,12 +28,12 @@ namespace.Area = function (selector, data, x, y) {
     };
 
     var $main = $(selector);
+    var width = $main.width(),
+        height = $main.height();
+
     if (!$('svg', $main).length) {
         $main.html('<svg></svg>');
     }
-
-    var width = $main.width();
-    var height = $main.height();
 
     var svg = d3.select($main[0]).select('svg');
     svg
