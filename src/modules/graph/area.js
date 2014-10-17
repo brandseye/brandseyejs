@@ -31,6 +31,8 @@ namespace.Area = function (selector, data, x, y) {
     var width = $main.width(),
         height = $main.height();
 
+    if (width == 0 && height == 0) console.warn("Area chart given no width/height");
+
     if (!$('svg', $main).length) {
         $main.html('<svg></svg>');
     }

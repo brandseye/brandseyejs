@@ -41,6 +41,8 @@ namespace.Sparkline = function (selector, data, x, y) {
     var width = $main.width(),
         height = $main.height();
 
+    if (width == 0 && height == 0) console.warn("Sparklines given no width/height");
+
     if (!$('svg', $main).length) {
         $main.html('<svg></svg>');
     }
