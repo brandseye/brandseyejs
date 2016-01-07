@@ -3,6 +3,7 @@ var brandseye =  {};
 // ### Changes
 // We version the library using [semantic versioning](http://semver.org/).
 //
+// - 1.3.4: Updates nvd3 to 1.7.1 to improve line chart performance
 // - 1.3.3: bug fix: sparklines and area charts now render correctly
 // - 1.3.2: You can now change the background colour for all charts
 // - 1.3.1: You can now change the colours used by the word cloud
@@ -17,7 +18,7 @@ var brandseye =  {};
 // - 1.1.0: the elementClick and tooltipShow events on the word cloud now passes the dom element that was clicked
 //          as the second argument to the event.
 // - 1.0.0: Initial release
-brandseye.VERSION = '1.3.3';
+brandseye.VERSION = '1.3.4';
 
 
 // Export to the root, which is probably `window`.

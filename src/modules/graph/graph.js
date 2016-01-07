@@ -394,7 +394,7 @@ namespace.Graph.prototype = {
             .height(this.height())
             .xScale(nvChart.multibar.xScale())
             .yScale(nvChart.multibar.yScale())
-            .delay(nvChart.delay())
+            .delay(1200)
             .format(this.labelFormat())
             .position(this.labelPosition)
             .determineCompression(this.labelCompression())
