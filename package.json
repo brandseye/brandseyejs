@@ -1,0 +1,21 @@
+{
+  "name": "brandseye.js",
+  "version": "2.0.0",
+  "description": "A Javascript library which helps with building charts and pulling data from a BrandsEye account (see www.brandseye.com for more info)",
+  "main": "b3.js",
+  "repository": "git@github.com:brandseye/brandseyejs",
+  "contributors": [
+    "BrandsEye <noreply@brandseye.com>",
+    "Constance Neeser <connie@brandseye.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack -d"
+  },
+  "devDependencies": {
+    "webpack": "^4.8.3",
+    "webpack-cli": "^2.1.3"
+  }
+}
