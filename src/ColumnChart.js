@@ -31,7 +31,7 @@ export class ColumnChart {
     return this;
   }
 
-  render() {    
+  render() {
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
     if (!this._data) throw new Error("No data set for ColumnChart. See #data()");
 
@@ -58,15 +58,35 @@ export class ColumnChart {
         .attr("transform",
               "translate(" + margin.left + "," + margin.top + ")");
 
-
     let data = this._data,
       _x = this._x,
       _y = this._y;
 
     // Scale the range of the data in the domains
-    x.domain(data.map(function(d) { return _x(d); }));
-    y.domain([0, d3.max(data, function(d) { return _y(d); })]);
+    x.domain(data.map((d) => _x(d)));
+    y.domain([0, d3.max(data, (d) => _y(d))]);
 
+    //---------------------------------
+    // add the Y gridlines
+    let grid = svg.append("g")
+        .attr("class", "grid")
+        .call(d3.axisLeft(y)
+            .tickSize(-width)
+            .tickFormat("")
+        )
+
+    svg.selectAll(".grid line")
+      .style("stroke", colours.eighteen.lightGrey);
+    svg.selectAll(".grid .domain")
+      .style("opacity", 0);
+
+    grid.style("opacity", 0)
+      .transition()
+      .delay(500)
+      .duration(500)
+      .style("opacity", 1);
+
+    //---------------------------------
     // append the rectangles for the bar chart
     let bars = svg
       .append("g")
@@ -86,17 +106,23 @@ export class ColumnChart {
         .delay((d,i) => i * 100 )
         .attr("height", (d) => height - y(_y(d)));
 
-
-
-
-
     // add the x Axis
     svg.append("g")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x))
+        .style("opacity", 0)
+        .transition()
+        .duration(1000)
+        .style("opacity", 1);
 
     // add the y Axis
     svg.append("g")
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y).tickSize(0).tickPadding(10))
+        .style("opacity", 0)
+        .transition()
+        .duration(1000)
+        .style("opacity", 1);
+
+
   }
 }
