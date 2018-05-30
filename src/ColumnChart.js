@@ -108,6 +108,7 @@ export class ColumnChart {
 
     // add the x Axis
     svg.append("g")
+        .attr("class", "x-axis")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x))
         .style("opacity", 0)
@@ -117,12 +118,15 @@ export class ColumnChart {
 
     // add the y Axis
     svg.append("g")
+        .attr("class", "y-axis")
         .call(d3.axisLeft(y).tickSize(0).tickPadding(10))
         .style("opacity", 0)
         .transition()
         .duration(1000)
         .style("opacity", 1);
 
+    svg.selectAll("text")
+      .style("fill", colours.eighteen.darkGrey);
 
   }
 }
