@@ -31,16 +31,13 @@ export class ColumnChart {
     return this;
   }
 
-  render() {
-    console.log("render()");
+  render() {    
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
     if (!this._data) throw new Error("No data set for ColumnChart. See #data()");
 
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
-
-    console.log("render ---- [2]");
 
     // set the ranges
     var x = d3.scaleBand()
