@@ -5,6 +5,8 @@ export class ColumnChart {
   constructor() {
     this._x = (d) => d.x;
     this._y = (d) => d.y;
+    this._height = 420;
+    this._width = 420;
   }
 
   data(data) {
@@ -31,13 +33,25 @@ export class ColumnChart {
     return this;
   }
 
+  width(width) {
+    if (width === undefined) return this._width;
+    this._width = width;
+    return this;
+  }
+
+  height(height) {
+    if (height === undefined) return this._height;
+    this._height = height;
+    return this;
+  }
+
   render() {
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
     if (!this._data) throw new Error("No data set for ColumnChart. See #data()");
 
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    width = this._width - margin.left - margin.right,
+    height = this._height - margin.top - margin.bottom;
 
     // set the ranges
     var x = d3.scaleBand()
@@ -102,6 +116,20 @@ export class ColumnChart {
         .attr("width", x.bandwidth())
         .attr("height", 0)
         .style("fill", colours.eighteen.midGrey)
+        .on("mouseover", (d, i, nodes) => {
+          d3.select(nodes[i])
+            .interrupt("hover:colour")
+            .transition("hover:colour")
+            .duration(400)
+            .style("fill", d3.hsl(colours.eighteen.midGrey).darker())
+        })
+        .on("mouseout", (d, i, nodes) => {
+          d3.select(nodes[i])
+            .interrupt("hover:colour")
+            .transition("hover:colour")
+            .duration(400)
+            .style("fill", colours.eighteen.midGrey);
+        })
       .transition()
         .delay((d,i) => i * 100 )
         .attr("height", (d) => height - y(_y(d)));
