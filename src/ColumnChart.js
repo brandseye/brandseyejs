@@ -103,22 +103,20 @@ export class ColumnChart {
     }
     bars = bars.data(data);
 
-    let setupBarAttributes = (selection) => {
-      selection.attr("x", (d) => x(_x(d)))
-        .attr("y", 0)
-        .attr("width", x.bandwidth())
-        .attr("height", 0)
-    }
-
     bars   // set x and width for existing bars, animating them.
       .interrupt("bar:move")
       .transition("bar:move")
-      .call(setupBarAttributes);
+        .attr("x", (d) => x(_x(d)))
+        .attr("y", 0)
+        .attr("width", x.bandwidth())
 
     bars.enter()
       .append("rect")                      // Create the geometry
         .attr("class", "bar")
-        .call(setupBarAttributes)          // Set x and width for new bars, not animating.
+        .attr("x", (d) => x(_x(d)))
+        .attr("y", 0)
+        .attr("width", x.bandwidth())
+        .attr("height", 0)
         .style("fill", colours.eighteen.midGrey)
         .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
           d3.select(nodes[i])
@@ -134,11 +132,11 @@ export class ColumnChart {
             .duration(400)
             .style("fill", colours.eighteen.midGrey);
         })
-        .merge(bars)                // For both enter and update selections.
-        .interrupt("bar:growth")
-        .transition("bar:growth")   // Animate the bars to their new position.
-          .delay((d,i) => i * 100 )
-          .attr("height", (d) => height - y(_y(d)));
+      .merge(bars)                // For both enter and update selections.
+      .interrupt("bar:growth")
+      .transition("bar:growth")   // Animate the bars to their new position.
+        .delay((d,i) => i * 100 )
+        .attr("height", (d) => height - y(_y(d)));
 
     bars.exit().remove();
 
@@ -175,7 +173,7 @@ export class ColumnChart {
   }
 
   xaxis(selection, height, xscale) {
-    let width = xscale.bandwidth();
+    const width = xscale.bandwidth();
 
     selection.select(".x-axis").remove();
     let axis = selection.append("g")
@@ -191,13 +189,11 @@ export class ColumnChart {
       .nodes()
       .forEach(text => max = text.getBBox().width);
 
-    if (max >= width - 5) {
+    if (max >= width - 10) {
       axis.selectAll("text")
         .style('text-anchor', 'end')
         .attr("transform", "rotate(-30 0,0)")
     }
-
-
 
     axis
       .transition()
@@ -214,7 +210,5 @@ export class ColumnChart {
         .transition()
         .duration(1000)
         .style("opacity", 1);
-
-
   }
 }
