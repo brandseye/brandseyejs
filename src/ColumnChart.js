@@ -189,6 +189,8 @@ export class ColumnChart {
       .nodes()
       .forEach(text => max = text.getBBox().width);
 
+    console.log("max is ", max, width);
+
     if (max >= width - 10) {
       axis.selectAll("text")
         .style('text-anchor', 'end')
