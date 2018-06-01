@@ -175,14 +175,33 @@ export class ColumnChart {
   }
 
   xaxis(selection, height, xscale) {
+    let width = xscale.bandwidth();
+
     selection.select(".x-axis").remove();
-    selection.append("g")
+    let axis = selection.append("g")
         .attr("class", "x-axis")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(xscale))
         .style("opacity", 0)
-        .transition()
-        .duration(1000)
+        .call(d3.axisBottom(xscale).tickSize(0).tickPadding(5))
+
+    axis.select(".domain").remove();
+
+    let max = 0;
+    axis.selectAll("text")
+      .nodes()
+      .forEach(text => max = text.getBBox().width);
+
+    if (max >= width - 5) {
+      axis.selectAll("text")
+        .style('text-anchor', 'end')
+        .attr("transform", "rotate(-30 0,0)")
+    }
+
+
+
+    axis
+      .transition()
+      .duration(1000)
         .style("opacity", 1);
   }
 
@@ -195,5 +214,7 @@ export class ColumnChart {
         .transition()
         .duration(1000)
         .style("opacity", 1);
+
+
   }
 }
