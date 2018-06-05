@@ -22,6 +22,12 @@ export class ColumnChart {
     return this;
   }
 
+  showLabels(show) {
+    if (show === undefined) return this._show_labels;
+    this._show_labels = show;
+    return this;
+  }
+
   x(x) {
     if (x === undefined) return this._x;
     this._x = x;
@@ -148,11 +154,13 @@ export class ColumnChart {
 
 
     // Labels loaded after our first bar grows.
-    svg.transition("bar:growth")
-      .on("end", (d, i, nodes) => {
-        if (i < nodes.length - 1) return;
-        this.labels(svg, data, x, y, _x, _y);
-      })
+    if (this._show_labels) {
+      svg.transition("bar:growth")
+        .on("end", (d, i, nodes) => {
+          if (i < nodes.length - 1) return;
+          this.labels(svg, data, x, y, _x, _y);
+        })
+    }    
 
     // axes
     svg.call(this.xaxis, height, x);
