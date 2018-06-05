@@ -7,6 +7,7 @@ export class ColumnChart {
     this._y = (d) => d.y;
     this._height = 420;
     this._width = 420;
+    this._BAR_GROWTH = 100;
   }
 
   data(data) {
@@ -49,7 +50,7 @@ export class ColumnChart {
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
     if (!this._data) throw new Error("No data set for ColumnChart. See #data()");
 
-    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    var margin = {top: 20, right: 20, bottom: 40, left: 40},
     width = this._width - margin.left - margin.right,
     height = this._height - margin.top - margin.bottom;
 
@@ -91,6 +92,11 @@ export class ColumnChart {
     svg.call(this.grid, width, y);
 
     //---------------------------------
+    // Get rid of current labels.
+    svg.select(".labels")
+      .remove();
+
+    //---------------------------------
     // append the rectangles for the bar chart
     let bars = svg.select(".bars").selectAll('.bar');
 
@@ -102,6 +108,8 @@ export class ColumnChart {
         .selectAll(".bar");
     }
     bars = bars.data(data);
+
+    bars.exit().remove();
 
     bars   // set x and width for existing bars, animating them.
       .interrupt("bar:move")
@@ -135,10 +143,16 @@ export class ColumnChart {
       .merge(bars)                // For both enter and update selections.
       .interrupt("bar:growth")
       .transition("bar:growth")   // Animate the bars to their new position.
-        .delay((d,i) => i * 100 )
-        .attr("height", (d) => height - y(_y(d)));
+        .delay((d,i) => i * this._BAR_GROWTH )
+        .attr("height", (d) => height - y(_y(d)))
 
-    bars.exit().remove();
+
+    // Labels loaded after our first bar grows.
+    svg.transition("bar:growth")
+      .on("end", (d, i, nodes) => {
+        if (i < nodes.length - 1) return;
+        this.labels(svg, data, x, y, _x, _y);
+      })
 
     // axes
     svg.call(this.xaxis, height, x);
@@ -149,6 +163,40 @@ export class ColumnChart {
 
   }
 
+  labels(selection, data, xscale, yscale, xgetter, ygetter) {
+    let labels = selection.append("g")
+      .attr("class", "labels")
+      .selectAll(".label")
+      .data(data)
+
+    labels.enter().each((d, i, nodes) => {
+      let ypos = yscale(ygetter(d));
+      if (ypos < 15) ypos = 15;
+      else ypos = ypos + -5;
+      let text = d3.select(nodes[i])
+        .append("text")
+          .text(ygetter(d))
+          // .attr("transform", "translate(0, " + height + "), scale(1, -1)")
+          .attr("class", "label")
+          .attr("y", ypos )
+          .attr("dx", -15)
+          .style("opacity", 0)
+          .style("font-size", 12)
+          .style("fill", colours.eighteen.darkGrey);
+
+      const width = text.node().getBBox().width;
+      text
+        .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
+
+      text
+        .transition()
+          .delay(() => i * this._BAR_GROWTH ) // Delay in lockstep with bar growth.
+          .duration(750)
+          .attr("dx", 0)
+          .style("opacity", 1)
+    })
+  }
+
   grid(selection, width, yscale) {
     selection.select(".grid").remove();
 
@@ -157,14 +205,14 @@ export class ColumnChart {
         .call(d3.axisLeft(yscale)
             .tickSize(-width)
             .tickFormat("")
-        )
+        );
 
     grid.selectAll("line")
       .style("stroke", colours.eighteen.lightGrey);
     grid.selectAll(".domain").remove()
 
     grid
-      .lower()
+      .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
       .style("opacity", 0)
       .transition()
       .delay(500)
@@ -187,9 +235,7 @@ export class ColumnChart {
     let max = 0;
     axis.selectAll("text")
       .nodes()
-      .forEach(text => max = text.getBBox().width);
-
-    console.log("max is ", max, width);
+      .forEach(text => max = Math.max(max, text.getBBox().width));
 
     if (max >= width - 10) {
       axis.selectAll("text")
