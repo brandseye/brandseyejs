@@ -160,7 +160,7 @@ export class ColumnChart {
           if (i < nodes.length - 1) return;
           this.labels(svg, data, x, y, _x, _y);
         })
-    }    
+    }
 
     // axes
     svg.call(this.xaxis, height, x);
@@ -177,6 +177,8 @@ export class ColumnChart {
       .selectAll(".label")
       .data(data)
 
+    let maxWidth = 0;
+    let fontSize = 12;    // Our initial font size.
     labels.enter().each((d, i, nodes) => {
       let ypos = yscale(ygetter(d));
       if (ypos < 15) ypos = 15;
@@ -184,15 +186,16 @@ export class ColumnChart {
       let text = d3.select(nodes[i])
         .append("text")
           .text(ygetter(d))
-          // .attr("transform", "translate(0, " + height + "), scale(1, -1)")
           .attr("class", "label")
           .attr("y", ypos )
           .attr("dx", -15)
           .style("opacity", 0)
-          .style("font-size", 12)
+          .style("font-size", fontSize)
           .style("fill", colours.eighteen.darkGrey);
 
+      // Set the x position, which is based on width.
       const width = text.node().getBBox().width;
+      maxWidth = Math.max(width, maxWidth);
       text
         .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
 
@@ -203,6 +206,22 @@ export class ColumnChart {
           .attr("dx", 0)
           .style("opacity", 1)
     })
+
+    // Figure out if we don't have enough space to show our labels.
+    // We then want to resize, if possible.
+    if (xscale.bandwidth() < maxWidth) {
+      let scale = maxWidth / xscale.bandwidth() * 1.05;
+      fontSize = Math.floor(fontSize / scale);
+      labels.enter()
+        .selectAll("text")
+        .style("font-size", fontSize)
+        .each((d, i, nodes) => {
+          const text = d3.select(nodes[i]);
+          const width = text.node().getBBox().width;
+          text
+            .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
+        })
+    }
   }
 
   grid(selection, width, yscale) {
