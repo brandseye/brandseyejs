@@ -212,15 +212,21 @@ export class ColumnChart {
     if (xscale.bandwidth() < maxWidth) {
       let scale = maxWidth / xscale.bandwidth() * 1.05;
       fontSize = Math.floor(fontSize / scale);
-      labels.enter()
-        .selectAll("text")
-        .style("font-size", fontSize)
-        .each((d, i, nodes) => {
-          const text = d3.select(nodes[i]);
-          const width = text.node().getBBox().width;
-          text
-            .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
-        })
+
+      if (fontSize < 8) {
+        // The labels are too small.
+        labels.enter().remove();
+      } else {
+        labels.enter()
+          .selectAll("text")
+          .style("font-size", fontSize)
+          .each((d, i, nodes) => {
+            const text = d3.select(nodes[i]);
+            const width = text.node().getBBox().width;
+            text
+              .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
+          })
+      }
     }
   }
 
