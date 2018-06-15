@@ -94,10 +94,6 @@ export class ColumnChart {
     y.domain([0, d3.max(data, (d) => _y(d))]);
 
     //---------------------------------
-    // add the Y gridlines
-    svg.call(this.grid, width, y);
-
-    //---------------------------------
     // Get rid of current labels.
     svg.select(".labels")
       .remove();
@@ -162,9 +158,14 @@ export class ColumnChart {
         })
     }
 
+    //---------------------------------
+    // add the Y gridlines
+    svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
+
+    //---------------------------------
     // axes
     svg.call(this.xaxis, height, x);
-    svg.call(this.yaxis, y);
+    svg.call(this.yaxis, d3.axisLeft(y).ticks(5));
 
     svg.selectAll("text")
       .style("fill", colours.eighteen.darkGrey);
@@ -183,6 +184,7 @@ export class ColumnChart {
       let ypos = yscale(ygetter(d));
       if (ypos < 15) ypos = 15;
       else ypos = ypos + -5;
+      if (ygetter(d) == 10) console.log("y is ", ypos);
       let text = d3.select(nodes[i])
         .append("text")
           .text(ygetter(d))
@@ -230,12 +232,12 @@ export class ColumnChart {
     }
   }
 
-  grid(selection, width, yscale) {
+  grid(selection, width, axis) {
     selection.select(".grid").remove();
 
     let grid = selection.append("g")
         .attr("class", "grid")
-        .call(d3.axisLeft(yscale)
+        .call(axis
             .tickSize(-width)
             .tickFormat("")
         );
@@ -282,11 +284,11 @@ export class ColumnChart {
         .style("opacity", 1);
   }
 
-  yaxis(selection, yscale) {
+  yaxis(selection, axis) {
     selection.select(".y-axis").remove();
     selection.append("g")
         .attr("class", "y-axis")
-        .call(d3.axisLeft(yscale).tickSize(0).tickPadding(10))
+        .call(axis.tickSize(0).tickPadding(10))
         .style("opacity", 0)
         .transition()
         .duration(1000)
