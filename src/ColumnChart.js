@@ -215,7 +215,7 @@ export class ColumnChart {
 
       if (fontSize < 8) {
         // The labels are too small.
-        labels.enter().remove();
+        labels.enter().selectAll("text").remove();
       } else {
         labels.enter()
           .selectAll("text")
