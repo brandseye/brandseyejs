@@ -180,17 +180,18 @@ export class ColumnChart {
 
     let maxWidth = 0;
     let fontSize = 12;    // Our initial font size.
+    const buffer = 5;
+    const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
     labels.enter().each((d, i, nodes) => {
       let ypos = yscale(ygetter(d));
-      if (ypos < 10) ypos = 10;
-      else ypos = ypos + -5;
-      if (ygetter(d) == 10) console.log("y is ", ypos);
+      let dy = calcDy(ypos);
       let text = d3.select(nodes[i])
         .append("text")
           .text(ygetter(d))
           .attr("class", "label")
           .attr("y", ypos )
           .attr("dx", -15)
+          .attr("dy", dy)
           .style("opacity", 0)
           .style("font-size", fontSize)
           .style("fill", colours.eighteen.darkGrey);
@@ -226,7 +227,8 @@ export class ColumnChart {
             const text = d3.select(nodes[i]);
             const width = text.node().getBBox().width;
             text
-              .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
+              .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2)
+              .attr("dy", calcDy(ygetter(d)));
           })
       }
     }
