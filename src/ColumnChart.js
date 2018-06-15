@@ -182,7 +182,7 @@ export class ColumnChart {
     let fontSize = 12;    // Our initial font size.
     labels.enter().each((d, i, nodes) => {
       let ypos = yscale(ygetter(d));
-      if (ypos < 15) ypos = 15;
+      if (ypos < 10) ypos = 10;
       else ypos = ypos + -5;
       if (ygetter(d) == 10) console.log("y is ", ypos);
       let text = d3.select(nodes[i])
