@@ -10,11 +10,15 @@ export class ColumnChart {
     this._BAR_GROWTH = 100;
   }
 
+  //------------------------------------------------------
+
   data(data) {
     if (data === undefined) return this._data;
     this._data = data;
     return this;
   }
+
+  //------------------------------------------------------
 
   element(element) {
     if (element === undefined) return this._element;
@@ -22,11 +26,15 @@ export class ColumnChart {
     return this;
   }
 
+  //------------------------------------------------------
+
   showLabels(show) {
     if (show === undefined) return this._show_labels;
     this._show_labels = show;
     return this;
   }
+
+  //------------------------------------------------------
 
   x(x) {
     if (x === undefined) return this._x;
@@ -34,11 +42,15 @@ export class ColumnChart {
     return this;
   }
 
+  //------------------------------------------------------
+
   y(y) {
     if (y === undefined) return this._y;
     this._y = y;
     return this;
   }
+
+  //------------------------------------------------------
 
   width(width) {
     if (width === undefined) return this._width;
@@ -46,11 +58,15 @@ export class ColumnChart {
     return this;
   }
 
+  //------------------------------------------------------
+
   height(height) {
     if (height === undefined) return this._height;
     this._height = height;
     return this;
   }
+
+  //------------------------------------------------------
 
   render() {
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
@@ -66,9 +82,6 @@ export class ColumnChart {
               .padding(0.02);
     let y = d3.scaleLinear()
               .range([height, 0]);
-
-    let test = d3.select(this._element).select("svg");
-
 
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
@@ -172,16 +185,19 @@ export class ColumnChart {
 
   }
 
+  //------------------------------------------------------
+
   labels(selection, data, xscale, yscale, xgetter, ygetter) {
     let labels = selection.append("g")
       .attr("class", "labels")
       .selectAll(".label")
       .data(data)
 
-    let maxWidth = 0;
+    let maxWidth = 0;     // For calculating the max width of text.
     let fontSize = 12;    // Our initial font size.
-    const buffer = 5;
+    const buffer = 5;     // Buffer space between words and the top of a bar.
     const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
+
     labels.enter().each((d, i, nodes) => {
       let ypos = yscale(ygetter(d));
       let dy = calcDy(ypos);
@@ -234,6 +250,8 @@ export class ColumnChart {
     }
   }
 
+  //------------------------------------------------------
+
   grid(selection, width, axis) {
     selection.select(".grid").remove();
 
@@ -256,6 +274,8 @@ export class ColumnChart {
       .duration(500)
       .style("opacity", 1);
   }
+
+  //------------------------------------------------------
 
   xaxis(selection, height, xscale) {
     const width = xscale.bandwidth();
@@ -285,6 +305,8 @@ export class ColumnChart {
       .duration(1000)
         .style("opacity", 1);
   }
+
+  //------------------------------------------------------
 
   yaxis(selection, axis) {
     selection.select(".y-axis").remove();
