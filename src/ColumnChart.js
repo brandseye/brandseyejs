@@ -314,7 +314,7 @@ export class ColumnChart {
       svg.transition("bar:growth")
         .on("end", (d, i, nodes) => {
           if (i < nodes.length - 1) return;
-          this.labels(svg, data, x, y, _x, _y);
+          this.renderLabels(svg, data, x, y, _x, _y);
         })
     }
 
@@ -334,7 +334,7 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  labels(selection, data, xscale, yscale, xgetter, ygetter) {
+  renderLabels(selection, data, xscale, yscale, xgetter, ygetter) {
     let labels = selection.append("g")
       .attr("class", "labels")
       .selectAll(".label")
