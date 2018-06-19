@@ -1,4 +1,5 @@
 import { colours } from './Colours';
+import * as d3 from 'd3';
 
 
 export class ColumnChart {
@@ -8,12 +9,23 @@ export class ColumnChart {
     this._height = 420;
     this._width = 420;
     this._BAR_GROWTH = 100;
+    this._duration = 300;
+    this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
+                                 'tooltipShow', 'tooltipHide');
   }
 
   //------------------------------------------------------
 
   data(data) {
-    if (data === undefined) return this._data;
+    if (!arguments.length) return this._data;
+    if (data && data[0].key === undefined) {
+            data = [
+                {
+                    key: "series 1",
+                    values: data
+                }
+            ];
+        }
     this._data = data;
     return this;
   }
@@ -21,7 +33,7 @@ export class ColumnChart {
   //------------------------------------------------------
 
   element(element) {
-    if (element === undefined) return this._element;
+    if (!arguments.length) return this._element;
     this._element = element;
     return this;
   }
@@ -29,15 +41,24 @@ export class ColumnChart {
   //------------------------------------------------------
 
   showLabels(show) {
-    if (show === undefined) return this._show_labels;
+    if (!arguments.length) return this._show_labels;
     this._show_labels = show;
     return this;
   }
 
   //------------------------------------------------------
 
+  // todo dispatch
+  showLegend(show) {
+    if (!arguments.length) return this._show_legend;
+    this._show_legend = show;
+    return this;
+  }
+
+  //------------------------------------------------------
+
   x(x) {
-    if (x === undefined) return this._x;
+    if (!arguments.length) return this._x;
     this._x = x;
     return this;
   }
@@ -45,7 +66,7 @@ export class ColumnChart {
   //------------------------------------------------------
 
   y(y) {
-    if (y === undefined) return this._y;
+    if (!arguments.length) return this._y;
     this._y = y;
     return this;
   }
@@ -53,7 +74,7 @@ export class ColumnChart {
   //------------------------------------------------------
 
   width(width) {
-    if (width === undefined) return this._width;
+    if (!arguments.length) return this._width;
     this._width = width;
     return this;
   }
@@ -61,16 +82,136 @@ export class ColumnChart {
   //------------------------------------------------------
 
   height(height) {
-    if (height === undefined) return this._height;
+    if (!arguments.length) return this._height;
     this._height = height;
     return this;
   }
 
   //------------------------------------------------------
 
+  // todo colours
+  colours(colours) {
+    if (!arguments.length) return this._colours;
+    this._colours = colours;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo backgroundColour
+  backgroundColour(colour) {
+    if (!arguments.length) return this._backgroundColour;
+    this._backgroundColour = colour;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo tickFormat
+  tickFormat(format) {
+    if (!arguments.length) return this._tickFormat;
+    this._tickFormat = format;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo labelFormat
+  labelFormat(format) {
+    if (!arguments.length) return this._labelFormat;
+    this._labelFormat = format;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo missing
+  labelCompression(compression) {
+    if (!arguments.length) return this._compression;
+    this._compression = compression;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  //todo missing
+  dataAxisLabel(label) {
+    if (!arguments.length) return this._dataAxisLabel;
+    this._dataAxisLabel = label;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  tooltip(tooltip) {
+    if (!arguments.length) return this._tooltip;
+    this._tooltip = tooltip;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo forceY
+  forceY(force) {
+    if (!arguments.length) return this._forceY;
+    this._forceY = force;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+// todo missing
+  duration(duration) {
+    console.log("Duration is:", duration);
+    if (!arguments.length) return this._duration;
+    this._duration = duration;
+    return this;
+  }
+
+// todo missing
+  coarseness(coarseness) {
+    if (!arguments.length) return this._coarseness;
+    this._coarseness = coarseness;
+    return this;
+  }
+
+  // todo missing
+  padding(padding) {
+    if (!arguments.length) return this._padding;
+    this._padding = padding;
+    return this;
+  }
+
+  // todo missing
+  xAxisTooltips(tooltips) {
+    if (!arguments.length) return this._xAxisTooltips;
+    this._xAxisTooltips = tooltips;
+    return this;
+  }
+
+  // todo missing
+  xAxisOverride(override) {
+    if (!arguments.length) return this._xAxisOverride;
+    this._xAxisOverride = override;
+    return this;
+  }
+
+  //------------------------------------------------------
+
+  // todo dispatch
+  dispatch() {
+    return this._dispatch;
+  }
+
+  //------------------------------------------------------
+
   render() {
+    console.log("b3js -> render");
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
-    if (!this._data) throw new Error("No data set for ColumnChart. See #data()");
+    if (!this._data) {
+      console.warn("No data set for ColumnChart. See #data()");
+      return;
+    }
 
     var margin = {top: 20, right: 20, bottom: 40, left: 40},
     width = this._width - margin.left - margin.right,
@@ -98,9 +239,14 @@ export class ColumnChart {
                 "translate(" + margin.left + "," + margin.top + ")");
     }
 
-    let data = this._data,
-      _x = this._x,
-      _y = this._y;
+    let data = this._data;
+    if (data.length > 1) console.warn("Unable to handle comparisons");
+    data = data[0].values;
+
+
+
+    let _x = this._x,
+        _y = this._y;
 
     // Scale the range of the data in the domains
     x.domain(data.map((d) => _x(d)));
@@ -159,6 +305,7 @@ export class ColumnChart {
       .interrupt("bar:growth")
       .transition("bar:growth")   // Animate the bars to their new position.
         .delay((d,i) => i * this._BAR_GROWTH )
+        .duration(this._duration)
         .attr("height", (d) => height - y(_y(d)))
 
 
@@ -210,6 +357,8 @@ export class ColumnChart {
           .attr("dy", dy)
           .style("opacity", 0)
           .style("font-size", fontSize)
+          .style("font-family", "Open Sans, sans-serif")
+          .style("font-weight", "normal")
           .style("fill", colours.eighteen.darkGrey);
 
       // Set the x position, which is based on width.
@@ -221,7 +370,7 @@ export class ColumnChart {
       text
         .transition()
           .delay(() => i * this._BAR_GROWTH ) // Delay in lockstep with bar growth.
-          .duration(750)
+          .duration(this._duration)
           .attr("dx", 0)
           .style("opacity", 1)
     })
@@ -291,6 +440,7 @@ export class ColumnChart {
 
     let max = 0;
     axis.selectAll("text")
+      .style("font-family", "Open Sans, sans-serif")
       .nodes()
       .forEach(text => max = Math.max(max, text.getBBox().width));
 
