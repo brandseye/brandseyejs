@@ -213,16 +213,29 @@ export class ColumnChart {
       return;
     }
 
+    let data = this._data;
+    if (data.length > 1) console.warn("Unable to handle comparisons");
+    data = data[0].values;
+
     var margin = {top: 20, right: 20, bottom: 40, left: 40},
     width = this._width - margin.left - margin.right,
     height = this._height - margin.top - margin.bottom;
 
     // set the ranges
+    let _x = this._x,
+        _y = this._y;
+
     let x = d3.scaleBand()
               .range([0, width])
               .padding(0.02);
     let y = d3.scaleLinear()
               .range([height, 0]);
+    this._xscale = x;
+    this._yscale = y;
+
+    // Scale the range of the data in the domains
+    x.domain(data.map((d) => _x(d)));
+    y.domain([0, d3.max(data, (d) => _y(d))]);
 
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
@@ -238,19 +251,6 @@ export class ColumnChart {
           .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
     }
-
-    let data = this._data;
-    if (data.length > 1) console.warn("Unable to handle comparisons");
-    data = data[0].values;
-
-
-
-    let _x = this._x,
-        _y = this._y;
-
-    // Scale the range of the data in the domains
-    x.domain(data.map((d) => _x(d)));
-    y.domain([0, d3.max(data, (d) => _y(d))]);
 
     //---------------------------------
     // Get rid of current labels.
@@ -334,7 +334,55 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  renderLabels(selection, data, xscale, yscale, xgetter, ygetter) {
+  /*
+   * Returns an object with two functions, #show() and #hide(),
+   * to show and hide the labels.
+   */
+  labels() {
+    return {
+
+      show: () => {
+        if (this._element) {
+          let selection = this._element,
+              data = this._data,
+              xscale = this._xscale,
+              yscale = this._yscale,
+              xgetter = this._x,
+              ygetter = this._y;
+
+          if (selection) selection = d3.select(this._element).select("svg").select("g");
+          if (data) data = data[0].values;
+          if (!selection.empty() && data && xscale && yscale && xgetter && ygetter) {
+            let labels = selection.select('.labels');
+            if (!labels.empty()) return;
+            labels.remove()
+            this.renderLabels(selection, data, xscale, yscale, xgetter, ygetter, false);
+          }
+        }
+
+      },
+
+      hide: () => {
+        if (this._element) {
+          d3.select(this._element)
+            .select('.labels')
+            .interrupt("labels")
+            .interrupt("labels:fade")
+            .transition("labels:fade")
+            .style("opacity", 0)
+            .on("end", (d, i, nodes) => {
+              d3.select(nodes[i]).remove();
+            })
+        }
+      }
+    }
+  }
+
+  //------------------------------------------------------
+
+  renderLabels(selection, data, xscale, yscale, xgetter, ygetter, animate) {
+    animate = animate === undefined ? true : animate;
+
     let labels = selection.append("g")
       .attr("class", "labels")
       .selectAll(".label")
@@ -353,7 +401,7 @@ export class ColumnChart {
           .text(ygetter(d))
           .attr("class", "label")
           .attr("y", ypos )
-          .attr("dx", -15)
+          .attr("dx", animate ? -15 : 0)
           .attr("dy", dy)
           .style("opacity", 0)
           .style("font-size", fontSize)
@@ -368,8 +416,8 @@ export class ColumnChart {
         .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
 
       text
-        .transition()
-          .delay(() => i * this._BAR_GROWTH ) // Delay in lockstep with bar growth.
+        .transition("labels")
+          .delay(() => animate ? i * this._BAR_GROWTH : 0) // Delay in lockstep with bar growth.
           .duration(this._duration)
           .attr("dx", 0)
           .style("opacity", 1)
