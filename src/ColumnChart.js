@@ -240,16 +240,22 @@ export class ColumnChart {
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
     // moves the 'group' element to the top left margin
-    let svg = d3.select(this._element).select("svg").select("g");
+    let svg = d3.select(this._element).select("svg");
 
     if (svg.empty()) {
       svg = d3.select(this._element)
         .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
+          // .attr("width", width + margin.left + margin.right)
+          // .attr("height", height + margin.top + margin.bottom)
         .append("g")
+          .attr("class", "main-group")
           .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
+    } else {
+      svg = svg
+          // .attr("width", width + margin.left + margin.right)
+          // .attr("height", height + margin.left + margin.right)
+        .select(".main-group")
     }
 
     //---------------------------------
@@ -267,6 +273,9 @@ export class ColumnChart {
           .attr("class", "bars")
           .attr("transform", "translate(0, " + height + "), scale(1, -1)")
         .selectAll(".bar");
+    } else {
+      svg.select(".bars")
+        .attr("transform", "translate(0, " + height + "), scale(1, -1)")
     }
     bars = bars.data(data);
 
