@@ -12,6 +12,7 @@ export class ColumnChart {
     this._duration = 300;
     this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
                                  'tooltipShow', 'tooltipHide');
+    this._tickFormat = d3.format(",.2r");
   }
 
   //------------------------------------------------------
@@ -162,7 +163,6 @@ export class ColumnChart {
 
 // todo missing
   duration(duration) {
-    console.log("Duration is:", duration);
     if (!arguments.length) return this._duration;
     this._duration = duration;
     return this;
@@ -334,7 +334,7 @@ export class ColumnChart {
     //---------------------------------
     // axes
     svg.call(this.xaxis, height, x);
-    svg.call(this.yaxis, d3.axisLeft(y).ticks(5));
+    svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
 
     svg.selectAll("text")
       .style("fill", colours.eighteen.darkGrey);
