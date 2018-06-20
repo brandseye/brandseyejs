@@ -245,8 +245,8 @@ export class ColumnChart {
     if (svg.empty()) {
       svg = d3.select(this._element)
         .append("svg")
-          // .attr("width", width + margin.left + margin.right)
-          // .attr("height", height + margin.top + margin.bottom)
+          .attr("width", "100%")
+          .attr("height", "100%")
         .append("g")
           .attr("class", "main-group")
           .attr("transform",
@@ -271,12 +271,12 @@ export class ColumnChart {
       bars = svg
         .append("g")
           .attr("class", "bars")
-          .attr("transform", "translate(0, " + height + "), scale(1, -1)")
         .selectAll(".bar");
-    } else {
-      svg.select(".bars")
-        .attr("transform", "translate(0, " + height + "), scale(1, -1)")
     }
+
+    svg.select(".bars")
+      .attr("transform", "translate(0, " + height + "), scale(1, -1)")
+
     bars = bars.data(data);
 
     bars.exit().remove();
