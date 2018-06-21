@@ -12,7 +12,7 @@ export class ColumnChart {
     this._duration = 300;
     this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
                                  'tooltipShow', 'tooltipHide');
-    this._tickFormat = d3.format(",.2r");
+    this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
   }
 
   //------------------------------------------------------
@@ -108,7 +108,6 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo tickFormat
   tickFormat(format) {
     if (!arguments.length) return this._tickFormat;
     this._tickFormat = format;
@@ -117,7 +116,14 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo labelFormat
+  xAxisTickFormat(format) {
+    if (!arguments.length) return this._xAxisTickFormat;
+    this._xAxisTickFormat = format;
+    return this;
+  }
+
+  //------------------------------------------------------
+
   labelFormat(format) {
     if (!arguments.length) return this._labelFormat;
     this._labelFormat = format;
@@ -260,7 +266,7 @@ export class ColumnChart {
 
     //---------------------------------
     // Get rid of current labels.
-    svg.select(".labels")
+    svg.select(".chart-labels")
       .remove();
 
     //---------------------------------
@@ -313,7 +319,9 @@ export class ColumnChart {
       .merge(bars)                // For both enter and update selections.
       .interrupt("bar:growth")
       .transition("bar:growth")   // Animate the bars to their new position.
-        .delay((d,i) => i * this._BAR_GROWTH )
+        .delay((d, i, nodes) => {
+          return this.calcBarGrowth(i, nodes.length);
+        })
         .duration(this._duration)
         .attr("height", (d) => height - y(_y(d)))
 
@@ -333,7 +341,7 @@ export class ColumnChart {
 
     //---------------------------------
     // axes
-    svg.call(this.xaxis, height, x);
+    svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
     svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
 
     svg.selectAll("text")
@@ -362,7 +370,7 @@ export class ColumnChart {
           if (selection) selection = d3.select(this._element).select("svg").select("g");
           if (data) data = data[0].values;
           if (!selection.empty() && data && xscale && yscale && xgetter && ygetter) {
-            let labels = selection.select('.labels');
+            let labels = selection.select('.chart-labels');
             if (!labels.empty()) return;
             labels.remove()
             this.renderLabels(selection, data, xscale, yscale, xgetter, ygetter, false);
@@ -374,7 +382,7 @@ export class ColumnChart {
       hide: () => {
         if (this._element) {
           d3.select(this._element)
-            .select('.labels')
+            .select('.chart-labels')
             .interrupt("labels")
             .interrupt("labels:fade")
             .transition("labels:fade")
@@ -393,8 +401,8 @@ export class ColumnChart {
     animate = animate === undefined ? true : animate;
 
     let labels = selection.append("g")
-      .attr("class", "labels")
-      .selectAll(".label")
+      .attr("class", "chart-labels")
+      .selectAll(".chart-label")
       .data(data)
 
     let maxWidth = 0;     // For calculating the max width of text.
@@ -407,15 +415,15 @@ export class ColumnChart {
       let dy = calcDy(ypos);
       let text = d3.select(nodes[i])
         .append("text")
-          .text(ygetter(d))
-          .attr("class", "label")
+          .text(this._labelFormat(ygetter(d)))
+          .attr("class", "chart-label")
           .attr("y", ypos )
           .attr("dx", animate ? -15 : 0)
           .attr("dy", dy)
           .style("opacity", 0)
-          .style("font-size", fontSize)
           .style("font-family", "Open Sans, sans-serif")
           .style("font-weight", "normal")
+          .style("font-size", fontSize + "px")
           .style("fill", colours.eighteen.darkGrey);
 
       // Set the x position, which is based on width.
@@ -426,7 +434,7 @@ export class ColumnChart {
 
       text
         .transition("labels")
-          .delay(() => animate ? i * this._BAR_GROWTH : 0) // Delay in lockstep with bar growth.
+          .delay(() => animate ? this.calcBarGrowth(i, nodes.length) : 0) // Delay in lockstep with bar growth.
           .duration(this._duration)
           .attr("dx", 0)
           .style("opacity", 1)
@@ -434,18 +442,24 @@ export class ColumnChart {
 
     // Figure out if we don't have enough space to show our labels.
     // We then want to resize, if possible.
+    console.log("Max width:", maxWidth, "bandwidth", xscale.bandwidth());
     if (xscale.bandwidth() < maxWidth) {
       let scale = maxWidth / xscale.bandwidth() * 1.05;
       fontSize = Math.floor(fontSize / scale);
+      console.log("Font size: ", fontSize);
 
       if (fontSize < 8) {
+        console.log("Too small")
         // The labels are too small.
         labels.enter().selectAll("text").remove();
       } else {
+        console.log("Entering")
         labels.enter()
+          .merge(labels)
           .selectAll("text")
-          .style("font-size", fontSize)
+          .style("font-size", fontSize + "px")
           .each((d, i, nodes) => {
+            console.log("Updating, and setting font things for", nodes[i])
             const text = d3.select(nodes[i]);
             const width = text.node().getBBox().width;
             text
@@ -483,15 +497,13 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  xaxis(selection, height, xscale) {
-    const width = xscale.bandwidth();
-
+  xaxis(selection, height, width, xaxis) {
     selection.select(".x-axis").remove();
     let axis = selection.append("g")
         .attr("class", "x-axis")
         .attr("transform", "translate(0," + height + ")")
         .style("opacity", 0)
-        .call(d3.axisBottom(xscale).tickSize(0).tickPadding(5))
+        .call(xaxis);
 
     axis.select(".domain").remove();
 
@@ -524,5 +536,13 @@ export class ColumnChart {
         .transition()
         .duration(1000)
         .style("opacity", 1);
+  }
+
+  //------------------------------------------------------
+
+  calcBarGrowth(i, max) {
+    if (max < 10) return i * this._BAR_GROWTH / 2;
+    if (max < 35) return i * this._BAR_GROWTH / 4;
+    return 1;
   }
 }
