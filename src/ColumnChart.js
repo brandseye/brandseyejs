@@ -302,6 +302,7 @@ export class ColumnChart {
         .attr("width", x.bandwidth())
         .attr("height", 0)
         .style("fill", colours.eighteen.midGrey)
+        .style("cursor", "pointer")
         .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
           d3.select(nodes[i])
             .interrupt("hover:colour")
@@ -315,6 +316,15 @@ export class ColumnChart {
             .transition("hover:colour")
             .duration(400)
             .style("fill", colours.eighteen.midGrey);
+        })
+        .on("click auxclick", (d, i, nodes) => {
+          this._dispatch.call("elementClick", this, {
+            e: d3.event,
+            point: d,
+            series: this._data[0], // todo comparisons
+            seriesIndex: 0,
+            value: this._y(d)
+          })
         })
       .merge(bars)                // For both enter and update selections.
       .interrupt("bar:growth")
@@ -421,6 +431,7 @@ export class ColumnChart {
           .attr("dx", animate ? -15 : 0)
           .attr("dy", dy)
           .style("opacity", 0)
+          .style("pointer-events", "none")
           .style("font-family", "Open Sans, sans-serif")
           .style("font-weight", "normal")
           .style("font-size", fontSize + "px")
@@ -442,24 +453,19 @@ export class ColumnChart {
 
     // Figure out if we don't have enough space to show our labels.
     // We then want to resize, if possible.
-    console.log("Max width:", maxWidth, "bandwidth", xscale.bandwidth());
     if (xscale.bandwidth() < maxWidth) {
       let scale = maxWidth / xscale.bandwidth() * 1.05;
       fontSize = Math.floor(fontSize / scale);
-      console.log("Font size: ", fontSize);
 
       if (fontSize < 8) {
-        console.log("Too small")
         // The labels are too small.
         labels.enter().selectAll("text").remove();
       } else {
-        console.log("Entering")
         labels.enter()
           .merge(labels)
           .selectAll("text")
           .style("font-size", fontSize + "px")
           .each((d, i, nodes) => {
-            console.log("Updating, and setting font things for", nodes[i])
             const text = d3.select(nodes[i]);
             const width = text.node().getBBox().width;
             text
