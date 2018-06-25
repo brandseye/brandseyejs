@@ -13,6 +13,7 @@ export class ColumnChart {
     this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
                                  'tooltipShow', 'tooltipHide');
     this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
+    this._colours = [ colours.eighteen.midGrey ]
   }
 
   //------------------------------------------------------
@@ -303,21 +304,21 @@ export class ColumnChart {
         .attr("y", 0)
         .attr("width", x.bandwidth())
         .attr("height", 0)
-        .style("fill", colours.eighteen.midGrey)
+        .style("fill", this.getSeriesColour(0))
         .style("cursor", "pointer")
         .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
           d3.select(nodes[i])
             .interrupt("hover:colour")
             .transition("hover:colour")
             .duration(400)
-            .style("fill", d3.hsl(colours.eighteen.midGrey).darker())
+            .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
         })
         .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
           d3.select(nodes[i])
             .interrupt("hover:colour")
             .transition("hover:colour")
             .duration(400)
-            .style("fill", colours.eighteen.midGrey);
+            .style("fill", this.getSeriesColour(0));
         })
         .on("click auxclick", (d, i, nodes) => {
           this._dispatch.call("elementClick", this, {
@@ -587,5 +588,12 @@ export class ColumnChart {
     if (max < 10) return i * this._BAR_GROWTH / 2;
     if (max < 35) return i * this._BAR_GROWTH / 4;
     return 1;
+  }
+
+  getSeriesColour(i) {
+    if (i < 0 || !this._colours) return colours.eighteen.midGrey;
+
+    i = i % this._colours.length;
+    return this._colours[i];
   }
 }
