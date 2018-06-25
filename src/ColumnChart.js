@@ -223,9 +223,11 @@ export class ColumnChart {
     if (data.length > 1) console.warn("Unable to handle comparisons");
     data = data[0].values;
 
-    var margin = {top: 20, right: 20, bottom: 40, left: 40},
-    width = this._width - margin.left - margin.right,
-    height = this._height - margin.top - margin.bottom;
+    var margin = {top: 20, right: 20, bottom: 40, left: 40};
+    if (this._dataAxisLabel) margin.left += 20 + 12;
+
+    let width = this._width - margin.left - margin.right,
+        height = this._height - margin.top - margin.bottom;
 
     // set the ranges
     let _x = this._x,
@@ -343,6 +345,10 @@ export class ColumnChart {
           if (i < nodes.length - 1) return;
           this.renderLabels(svg, data, x, y, _x, _y);
         })
+    }
+
+    if (this._dataAxisLabel) {
+      this.renderDataAxisLabel(height, margin);
     }
 
     //---------------------------------
@@ -474,6 +480,37 @@ export class ColumnChart {
           })
       }
     }
+  }
+
+  //------------------------------------------------------
+
+  renderDataAxisLabel(height, margins) {
+    let svg = d3.select(this._element).select('svg');
+    svg.selectAll(".data-labels").remove();
+
+    if (!this._dataAxisLabel) return;
+    let text = this._dataAxisLabel;
+    if (text.long) text = text.long;
+
+    let x = - (margins.top + height / 2);
+
+    let label = svg.append("g")
+        .attr("class", "data-labels")
+      .append("text")
+        .text(text)
+        .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
+        .style("font-family", "Open Sans, sans-serif")
+        .style("font-size", "12px")
+        .style("font-style", "italic")
+        .style("fill", colours.eighteen.darkGrey);
+
+    let width = label.node().getBBox().width;
+    if (width >= height && this._dataAxisLabel.short) {
+      label.text(this._dataAxisLabel.short);
+      width = label.node().getBBox().width;
+    }
+
+    label.attr("dx", - width / 2);
   }
 
   //------------------------------------------------------
