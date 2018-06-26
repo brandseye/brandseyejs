@@ -14,6 +14,7 @@ export class ColumnChart {
                                  'tooltipShow', 'tooltipHide');
     this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
     this._colours = [ colours.eighteen.midGrey ]
+    this._backgroundColour = "#FFF"
   }
 
   //------------------------------------------------------
@@ -91,7 +92,6 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo colours
   colours(colours) {
     if (!arguments.length) return this._colours;
     this._colours = colours;
@@ -100,10 +100,9 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo backgroundColour
   backgroundColour(colour) {
     if (!arguments.length) return this._backgroundColour;
-    this._backgroundColour = colour;
+    this._backgroundColour = colour || "#FFF"; // never set it to null.
     return this;
   }
 
@@ -159,7 +158,6 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo forceY
   forceY(force) {
     if (!arguments.length) return this._forceY;
     this._forceY = force;
@@ -205,7 +203,6 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  // todo dispatch
   dispatch() {
     return this._dispatch;
   }
@@ -249,22 +246,23 @@ export class ColumnChart {
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
     // moves the 'group' element to the top left margin
-    let svg = d3.select(this._element).select("svg");
+    let topLevel = d3.select(this._element).select("svg");
 
-    if (svg.empty()) {
-      svg = d3.select(this._element)
+    if (topLevel.empty()) {
+      topLevel = d3.select(this._element)
         .append("svg")
           .attr("width", "100%")
-          .attr("height", "100%")
+          .attr("height", "100%");
+    }
+
+    let svg = topLevel.select('.main-group');
+
+    if (svg.empty()) {
+      svg = topLevel
         .append("g")
           .attr("class", "main-group")
           .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
-    } else {
-      svg = svg
-          // .attr("width", width + margin.left + margin.right)
-          // .attr("height", height + margin.left + margin.right)
-        .select(".main-group")
     }
 
     //---------------------------------
@@ -350,6 +348,20 @@ export class ColumnChart {
 
     if (this._dataAxisLabel) {
       this.renderDataAxisLabel(height, margin);
+    }
+
+    // ---------------------------------
+    // Set the background colour
+
+    d3.select(this._element).select(".background").remove();
+    if (this._backgroundColour) {
+      d3.select(this._element).select("svg")
+        .append("rect")
+          .attr("class", "background")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .style("fill", this._backgroundColour)
+        .lower();
     }
 
     //---------------------------------
