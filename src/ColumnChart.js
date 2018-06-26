@@ -310,6 +310,13 @@ export class ColumnChart {
             .transition("hover:colour")
             .duration(400)
             .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
+          this._dispatch.call("tooltipShow", this, {
+            e: d3.event,
+            point: d,
+            series: this._data[0], // todo comparisons
+            seriesIndex: 0,
+            value: this._y(d)
+          })
         })
         .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
           d3.select(nodes[i])
@@ -317,6 +324,7 @@ export class ColumnChart {
             .transition("hover:colour")
             .duration(400)
             .style("fill", this.getSeriesColour(0));
+          this._dispatch.call("tooltipHide", this);
         })
         .on("click auxclick", (d, i, nodes) => {
           this._dispatch.call("elementClick", this, {
