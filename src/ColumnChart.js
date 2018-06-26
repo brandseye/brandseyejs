@@ -221,8 +221,18 @@ export class ColumnChart {
     if (data.length > 1) console.warn("Unable to handle comparisons");
     data = data[0].values;
 
-    var margin = {top: 20, right: 20, bottom: 40, left: 40};
+    let margin = {top: 20, right: 20, bottom: 40, left: 40};
     if (this._dataAxisLabel) margin.left += 20 + 12;
+    if (data) {
+      let maxLabelLength = 0;
+      console.log("Doing for data");
+      data.forEach((d) => {
+        let length = this._xAxisTickFormat(this._x(d)).length;
+        console.log(d, this._x(d), this._xAxisTickFormat(this._x(d)), length, maxLabelLength);
+        if (length > maxLabelLength) maxLabelLength = length;
+      })
+      margin.bottom += maxLabelLength * 1.5;
+  }
 
     let width = this._width - margin.left - margin.right,
         height = this._height - margin.top - margin.bottom;
@@ -304,37 +314,37 @@ export class ColumnChart {
         .attr("height", 0)
         .style("fill", this.getSeriesColour(0))
         .style("cursor", "pointer")
-        .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-          d3.select(nodes[i])
-            .interrupt("hover:colour")
-            .transition("hover:colour")
-            .duration(400)
-            .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
-          this._dispatch.call("tooltipShow", this, {
-            e: d3.event,
-            point: d,
-            series: this._data[0], // todo comparisons
-            seriesIndex: 0,
-            value: this._y(d)
-          })
+      .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
+        d3.select(nodes[i])
+          .interrupt("hover:colour")
+          .transition("hover:colour")
+          .duration(400)
+          .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
+        this._dispatch.call("tooltipShow", this, {
+          e: d3.event,
+          point: d,
+          series: this._data[0], // todo comparisons
+          seriesIndex: 0,
+          value: this._y(d)
         })
-        .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-          d3.select(nodes[i])
-            .interrupt("hover:colour")
-            .transition("hover:colour")
-            .duration(400)
-            .style("fill", this.getSeriesColour(0));
-          this._dispatch.call("tooltipHide", this);
+      })
+      .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+        d3.select(nodes[i])
+          .interrupt("hover:colour")
+          .transition("hover:colour")
+          .duration(400)
+          .style("fill", this.getSeriesColour(0));
+        this._dispatch.call("tooltipHide", this);
+      })
+      .on("click auxclick", (d, i, nodes) => {
+        this._dispatch.call("elementClick", this, {
+          e: d3.event,
+          point: d,
+          series: this._data[0], // todo comparisons
+          seriesIndex: 0,
+          value: this._y(d)
         })
-        .on("click auxclick", (d, i, nodes) => {
-          this._dispatch.call("elementClick", this, {
-            e: d3.event,
-            point: d,
-            series: this._data[0], // todo comparisons
-            seriesIndex: 0,
-            value: this._y(d)
-          })
-        })
+      })
       .merge(bars)                // For both enter and update selections.
       .interrupt("bar:growth")
       .transition("bar:growth")   // Animate the bars to their new position.
