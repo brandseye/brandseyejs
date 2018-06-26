@@ -334,7 +334,8 @@ export class ColumnChart {
           return this.calcBarGrowth(i, nodes.length);
         })
         .duration(this._duration)
-        .attr("height", (d) => height - y(_y(d)))
+        .style("fill", this.getSeriesColour(0))
+        .attr("height", (d) => height - y(_y(d)));
 
 
     // Labels loaded after our first bar grows.
