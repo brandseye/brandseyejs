@@ -372,10 +372,6 @@ export class ColumnChart {
     // axes
     svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
     svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
-
-    svg.selectAll("text")
-      .style("fill", colours.eighteen.darkGrey);
-
   }
 
   //------------------------------------------------------
@@ -439,6 +435,12 @@ export class ColumnChart {
     const buffer = 5;     // Buffer space between words and the top of a bar.
     const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
 
+    // Want to figure out if the label is too dark / light for the
+    // bar.
+    let invertedColor = d3.hcl(this.getSeriesColour(0));
+    invertedColor.l += Math.min(invertedColor.l + 50, 100);
+    let invert = d3.hcl(this.getSeriesColour(0)).l < 60;
+
     labels.enter().each((d, i, nodes) => {
       let ypos = yscale(ygetter(d));
       let dy = calcDy(ypos);
@@ -446,7 +448,7 @@ export class ColumnChart {
         .append("text")
           .text(this._labelFormat(ygetter(d)))
           .attr("class", "chart-label")
-          .attr("y", ypos )
+          .attr("y", ypos)
           .attr("dx", animate ? -15 : 0)
           .attr("dy", dy)
           .style("opacity", 0)
@@ -454,7 +456,7 @@ export class ColumnChart {
           .style("font-family", "Open Sans, sans-serif")
           .style("font-weight", "normal")
           .style("font-size", fontSize + "px")
-          .style("fill", colours.eighteen.darkGrey);
+          .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
       // Set the x position, which is based on width.
       const width = text.node().getBBox().width;
@@ -540,7 +542,9 @@ export class ColumnChart {
 
     grid.selectAll("line")
       .style("stroke", colours.eighteen.lightGrey);
-    grid.selectAll(".domain").remove()
+    grid.selectAll(".domain").remove();
+
+    console.log("grids:", grid.selectAll("text").attr("fill"), grid.selectAll("text").nodes())
 
     grid
       .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
@@ -566,6 +570,7 @@ export class ColumnChart {
     let max = 0;
     axis.selectAll("text")
       .style("font-family", "Open Sans, sans-serif")
+      .style("fill", colours.eighteen.darkGrey)
       .nodes()
       .forEach(text => max = Math.max(max, text.getBBox().width));
 
@@ -585,13 +590,17 @@ export class ColumnChart {
 
   yaxis(selection, axis) {
     selection.select(".y-axis").remove();
-    selection.append("g")
+    let x = selection.append("g")
         .attr("class", "y-axis")
         .call(axis.tickSize(0).tickPadding(10))
         .style("opacity", 0)
         .transition()
         .duration(1000)
         .style("opacity", 1);
+
+    x.selectAll("text")
+      .style("font-family", "Open Sans, sans-serif")
+      .style("fill", colours.eighteen.darkGrey)
   }
 
   //------------------------------------------------------
