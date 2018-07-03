@@ -316,11 +316,11 @@ export class ColumnChart {
       .transition("groups:move")
         .attr("transform", d => "translate(" + x(_x(d.data[0])) + ",0)")
         .attr("width", x.bandwidth())
-      .each((d, s_i, nodes) => {
+      .each((s_d, s_i, nodes) => {
         let group = d3.select(nodes[s_i])
 
         let bars = group.selectAll(".bar")
-          .data(d.data);
+          .data(s_d.data);
 
         bars.interrupt("bar:move")     // Animate the bars to their new position.
           .transition("bar:move")
@@ -335,8 +335,39 @@ export class ColumnChart {
             .attr("y", 0)
             .attr("width", xGroup.bandwidth())
             .attr("height", 0)
-            .style("fill", this.getSeriesColour(s_i))
+            .style("fill", (d, i) => this.getSeriesColour(i))
             .style("cursor", "pointer")
+          .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
+            d3.select(nodes[i])
+              .interrupt("hover:colour")
+              .transition("hover:colour")
+              .duration(400)
+              .style("fill", d3.hcl(this.getSeriesColour(i)).darker())
+            this._dispatch.call("tooltipShow", this, {
+              e: d3.event,
+              point: d,
+              series: s_d,
+              seriesIndex: s_i,
+              value: d._y
+            })
+          })
+          .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+            d3.select(nodes[i])
+              .interrupt("hover:colour")
+              .transition("hover:colour")
+              .duration(400)
+              .style("fill", this.getSeriesColour(i));
+            this._dispatch.call("tooltipHide", this);
+          })
+          .on("click auxclick", (d, i, nodes) => {
+            this._dispatch.call("elementClick", this, {
+              e: d3.event,
+              point: d,
+              series: d._series,
+              seriesIndex: s_i,
+              value: this._y(d)
+            })
+          })
           .merge(bars)
           .interrupt("bar:growth")    // Animate bars growing.
           .transition("bar:growth")
@@ -346,6 +377,7 @@ export class ColumnChart {
             .duration(this._duration)
             .style("fill", (d, i) => this.getSeriesColour(i))
             .attr("height", d => height - y(d._y));
+
       })
 
 
@@ -701,16 +733,11 @@ export class ColumnChart {
 
         let field = results[d_i];
         field.data.push(Object.assign({
-          _series: s_i,
+          _series: series,
+          _s_i: s_i,
           _key: series.key,
           _y: this._y(d)
         }, d));
-
-        console.log("value", Object.assign({
-          _series: s_i,
-          _key: series.key,
-          _y: this._y(d)
-        }, d), d)
       })
     })
 
