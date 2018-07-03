@@ -514,7 +514,6 @@ export class ColumnChart {
           // Set the x position, which is based on width.
           const width = text.node().getBBox().width;
           maxWidth = Math.max(width, maxWidth);
-          console.log("herm: ", d._key, xgroup(d._key), xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
           text
             .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
 
