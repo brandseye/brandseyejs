@@ -222,14 +222,16 @@ export class ColumnChart {
 
     let margin = {top: 20, right: 20, bottom: 40, left: 40};
     if (this._dataAxisLabel) margin.left += 20 + 12;
-    // if (data) {
-    //   let maxLabelLength = 0;
-    //   data.forEach((d) => {
-    //     let length = this._xAxisTickFormat(this._x(d)).length;
-    //     if (length > maxLabelLength) maxLabelLength = length;
-    //   })
-    //   margin.bottom += maxLabelLength * 1.5;
-    // }
+    if (data) {
+      let maxLabelLength = 0;
+      data.forEach(d => {
+        d.data.forEach(d => {
+          let length = this._xAxisTickFormat(this._x(d)).length;
+          if (length > maxLabelLength) maxLabelLength = length;
+        })        
+      })
+      margin.bottom += maxLabelLength * 1.5;
+    }
 
     let width = this._width - margin.left - margin.right,
         height = this._height - margin.top - margin.bottom;
@@ -445,9 +447,9 @@ export class ColumnChart {
     //     })
     // }
     //
-    // if (this._dataAxisLabel) {
-    //   this.renderDataAxisLabel(height, margin);
-    // }
+    if (this._dataAxisLabel) {
+      this.renderDataAxisLabel(height, margin);
+    }
 
     // ---------------------------------
     // Set the background colour
