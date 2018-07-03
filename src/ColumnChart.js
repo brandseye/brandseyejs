@@ -334,7 +334,7 @@ export class ColumnChart {
             .attr("x", d => xGroup(d._key))
             .attr("y", 0)
             .attr("width", xGroup.bandwidth())
-            .attr("height", 0) 
+            .attr("height", 0)
             .style("fill", this.getSeriesColour(s_i))
             .style("cursor", "pointer")
           .merge(bars)
@@ -420,25 +420,25 @@ export class ColumnChart {
     // ---------------------------------
     // Set the background colour
 
-    // d3.select(this._element).select(".background").remove();
-    // if (this._backgroundColour) {
-    //   d3.select(this._element).select("svg")
-    //     .append("rect")
-    //       .attr("class", "background")
-    //       .attr("width", "100%")
-    //       .attr("height", "100%")
-    //       .style("fill", this._backgroundColour)
-    //     .lower();
-    // }
+    d3.select(this._element).select(".background").remove();
+    if (this._backgroundColour) {
+      d3.select(this._element).select("svg")
+        .append("rect")
+          .attr("class", "background")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .style("fill", this._backgroundColour)
+        .lower();
+    }
 
     //---------------------------------
     // add the Y gridlines
-    // svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
+    svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
 
     //---------------------------------
     // axes
-    // svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
-    // svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
+    svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
+    svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
   }
 
   //------------------------------------------------------
