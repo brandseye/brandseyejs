@@ -228,7 +228,7 @@ export class ColumnChart {
         d.data.forEach(d => {
           let length = this._xAxisTickFormat(this._x(d)).length;
           if (length > maxLabelLength) maxLabelLength = length;
-        })        
+        })
       })
       margin.bottom += maxLabelLength * 1.5;
     }
@@ -439,14 +439,15 @@ export class ColumnChart {
 
 
     // Labels loaded after our first bar grows.
-    // if (this._show_labels) {
-    //   svg.transition("bar:growth")
-    //     .on("end", (d, i, nodes) => {
-    //       if (i < nodes.length - 1) return;
-    //       this.renderLabels(svg, data, x, y, _x, _y);
-    //     })
-    // }
-    //
+    if (this._show_labels) {
+      svg.transition("bar:growth")
+        .on("end", (d, i, nodes) => {
+          if (i < nodes.length - 1) return;
+          alert("SHOW")
+          // this.renderLabels(svg, data, x, y, _x, _y);
+        })
+    }
+
     if (this._dataAxisLabel) {
       this.renderDataAxisLabel(height, margin);
     }
