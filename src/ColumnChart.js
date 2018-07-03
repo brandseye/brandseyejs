@@ -310,13 +310,13 @@ export class ColumnChart {
     groups.enter()
       .append("g")
         .attr("class", "group")
-        .attr("transform", d => "translate(" + x(_x(d.data[0])) + ",0)")
+        .attr("transform", d => "translate(" + x(d.key) + ",0)")
         .attr("width", x.bandwidth())
         .attr("height", "100%")
       .merge(groups)
       .interrupt("groups:move")
       .transition("groups:move")
-        .attr("transform", d => "translate(" + x(_x(d.data[0])) + ",0)")
+        .attr("transform", d => "translate(" + x(d.key) + ",0)")
         .attr("width", x.bandwidth())
       .each((s_d, s_i, nodes) => {
         let group = d3.select(nodes[s_i])
@@ -443,8 +443,7 @@ export class ColumnChart {
       svg.transition("bar:growth")
         .on("end", (d, i, nodes) => {
           if (i < nodes.length - 1) return;
-          alert("SHOW")
-          // this.renderLabels(svg, data, x, y, _x, _y);
+          this.renderLabels(svg, data, x, xGroup, y, _x, _y);
         })
     }
 
@@ -524,12 +523,13 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  renderLabels(selection, data, xscale, yscale, xgetter, ygetter, animate) {
+  renderLabels(selection, data, xscale, xgroup, yscale, xgetter, ygetter, animate) {
     animate = animate === undefined ? true : animate;
 
     let labels = selection.append("g")
       .attr("class", "chart-labels")
-      .selectAll(".chart-label")
+      // .selectAll(".chart-label")
+      .selectAll(".label-group")
       .data(data)
 
     let maxWidth = 0;     // For calculating the max width of text.
@@ -537,47 +537,60 @@ export class ColumnChart {
     const buffer = 5;     // Buffer space between words and the top of a bar.
     const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
 
-    // Want to figure out if the label is too dark / light for the
-    // bar.
-    let invertedColor = d3.hcl(this.getSeriesColour(0));
-    invertedColor.l += Math.min(invertedColor.l + 50, 100);
-    let invert = d3.hcl(this.getSeriesColour(0)).l < 60;
+    labels.enter().each((series, s_i, s_nodes) => {
+      let group = d3.select(s_nodes[s_i])
+        .append("g")
+          .attr("class", "label-group")
+          .attr("transform", d => "translate(" + xscale(d.key) + ",0)")
+        .selectAll(".chart-label")
+        .data(series.data)
+        .enter()
+        .each((d, i, nodes) => {
 
-    labels.enter().each((d, i, nodes) => {
-      let ypos = yscale(ygetter(d));
-      let dy = calcDy(ypos);
-      let text = d3.select(nodes[i])
-        .append("text")
-          .text(this._labelFormat(ygetter(d)))
-          .attr("class", "chart-label")
-          .attr("y", ypos)
-          .attr("dx", animate ? -15 : 0)
-          .attr("dy", dy)
-          .style("opacity", 0)
-          .style("pointer-events", "none")
-          .style("font-family", "Open Sans, sans-serif")
-          .style("font-weight", "normal")
-          .style("font-size", fontSize + "px")
-          .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
+          // Want to figure out if the label is too dark / light for the
+          // bar.
+          let invertedColor = d3.hcl(this.getSeriesColour(i));
+          invertedColor.l += Math.min(invertedColor.l + 50, 100);
+          let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
 
-      // Set the x position, which is based on width.
-      const width = text.node().getBBox().width;
-      maxWidth = Math.max(width, maxWidth);
-      text
-        .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2);
+          let ypos = yscale(ygetter(d));
+          let dy = calcDy(ypos);
+          let text = d3.select(nodes[i])
+            .append("text")
+              .text(this._labelFormat(d._y))
+              .attr("class", "chart-label")
+              .attr("y", ypos)
+              .attr("dx", animate ? -15 : 0)
+              .attr("dy", dy)
+              .style("opacity", 0)
+              .style("pointer-events", "none")
+              .style("font-family", "Open Sans, sans-serif")
+              .style("font-weight", "normal")
+              .style("font-size", fontSize + "px")
+              .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
-      text
-        .transition("labels")
-          .delay(() => animate ? this.calcBarGrowth(i, nodes.length) : 0) // Delay in lockstep with bar growth.
-          .duration(this._duration)
-          .attr("dx", 0)
-          .style("opacity", 1)
+          // Set the x position, which is based on width.
+          const width = text.node().getBBox().width;
+          maxWidth = Math.max(width, maxWidth);
+          console.log("herm: ", d._key, xgroup(d._key), xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+          text
+            .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+
+          text
+            .transition("labels")
+              .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
+              .duration(this._duration)
+              .attr("dx", 0)
+              .style("opacity", 1)
+        })
     })
+
+
 
     // Figure out if we don't have enough space to show our labels.
     // We then want to resize, if possible.
-    if (xscale.bandwidth() < maxWidth) {
-      let scale = maxWidth / xscale.bandwidth() * 1.05;
+    if (xgroup.bandwidth() < maxWidth) {
+      let scale = maxWidth / xgroup.bandwidth() * 1.05;
       fontSize = Math.floor(fontSize / scale);
 
       if (fontSize < 8) {
@@ -592,8 +605,8 @@ export class ColumnChart {
             const text = d3.select(nodes[i]);
             const width = text.node().getBBox().width;
             text
-              .attr("x", xscale(xgetter(d)) + xscale.bandwidth() / 2 - width / 2)
-              .attr("dy", calcDy(ygetter(d)));
+              .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
+              .attr("dy", calcDy(d._y));
           })
       }
     }
