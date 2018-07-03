@@ -210,29 +210,26 @@ export class ColumnChart {
   //------------------------------------------------------
 
   render() {
-    console.log("b3js -> render");
     if (!this._element) throw new Error("No element set for ColumnChart. See #element()");
     if (!this._data) {
       console.warn("No data set for ColumnChart. See #data()");
       return;
     }
 
-    let data = this._data;
-    if (data.length > 1) console.warn("Unable to handle comparisons");
-    data = data[0].values;
+    let data = this.getTransformedData();
+    let keys = this.getKeys();
+    console.log("Keys are", keys);
 
     let margin = {top: 20, right: 20, bottom: 40, left: 40};
     if (this._dataAxisLabel) margin.left += 20 + 12;
-    if (data) {
-      let maxLabelLength = 0;
-      console.log("Doing for data");
-      data.forEach((d) => {
-        let length = this._xAxisTickFormat(this._x(d)).length;
-        console.log(d, this._x(d), this._xAxisTickFormat(this._x(d)), length, maxLabelLength);
-        if (length > maxLabelLength) maxLabelLength = length;
-      })
-      margin.bottom += maxLabelLength * 1.5;
-  }
+    // if (data) {
+    //   let maxLabelLength = 0;
+    //   data.forEach((d) => {
+    //     let length = this._xAxisTickFormat(this._x(d)).length;
+    //     if (length > maxLabelLength) maxLabelLength = length;
+    //   })
+    //   margin.bottom += maxLabelLength * 1.5;
+    // }
 
     let width = this._width - margin.left - margin.right,
         height = this._height - margin.top - margin.bottom;
@@ -244,14 +241,21 @@ export class ColumnChart {
     let x = d3.scaleBand()
               .range([0, width])
               .padding(0.02);
+
+    let xGroup = d3.scaleBand()
+              .padding(0)
+
     let y = d3.scaleLinear()
               .range([height, 0]);
     this._xscale = x;
     this._yscale = y;
 
     // Scale the range of the data in the domains
-    x.domain(data.map((d) => _x(d)));
-    y.domain([0, d3.max(data, (d) => _y(d))]);
+    x.domain(data.map(d => d.key));
+    xGroup = xGroup.rangeRound([0, x.bandwidth()]).domain(keys);
+    y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
+    console.log("Max is: ", d3.max(data, d => d3.max(d.data, d => d._y)));
+    console.log("series 1 value is", keys.map(d => xGroup(d)));
 
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
@@ -282,115 +286,159 @@ export class ColumnChart {
 
     //---------------------------------
     // append the rectangles for the bar chart
-    let bars = svg.select(".bars").selectAll('.bar');
+    let groups = svg.select(".bars").selectAll('.group');
+    console.log("groups is", groups.nodes());
 
-    if (bars.empty()) {
-      bars = svg
+    if (groups.empty()) {
+      groups = svg
         .append("g")
           .attr("class", "bars")
-        .selectAll(".bar");
+        .selectAll(".group");
     }
 
     svg.select(".bars")
       .attr("transform", "translate(0, " + height + "), scale(1, -1)")
 
-    bars = bars.data(data);
+    groups = groups.data(data);
+    console.log("Data", data);
 
-    bars.exit().remove();
+    groups.exit().remove();
 
-    bars   // set x and width for existing bars, animating them.
-      .interrupt("bar:move")
-      .transition("bar:move")
-        .attr("x", (d) => x(_x(d)))
-        .attr("y", 0)
+    // Adding new groups, and hence adding new bars to those groups.
+    groups.enter()
+      .append("g")
+        .attr("class", "group")
+        .attr("transform", d => "translate(" + x(_x(d.data[0])) + ",0)")
         .attr("width", x.bandwidth())
-
-    bars.enter()
-      .append("rect")                      // Create the geometry
-        .attr("class", "bar")
-        .attr("x", (d) => x(_x(d)))
-        .attr("y", 0)
+        .attr("height", "100%")
+      .merge(groups)
+      .interrupt("groups:move")
+      .transition("groups:move")
+        .attr("transform", d => "translate(" + x(_x(d.data[0])) + ",0)")
         .attr("width", x.bandwidth())
-        .attr("height", 0)
-        .style("fill", this.getSeriesColour(0))
-        .style("cursor", "pointer")
-      .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-        d3.select(nodes[i])
-          .interrupt("hover:colour")
-          .transition("hover:colour")
-          .duration(400)
-          .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
-        this._dispatch.call("tooltipShow", this, {
-          e: d3.event,
-          point: d,
-          series: this._data[0], // todo comparisons
-          seriesIndex: 0,
-          value: this._y(d)
-        })
+      .each((d, s_i, nodes) => {
+        let group = d3.select(nodes[s_i])
+
+        let bars = group.selectAll(".bar")
+          .data(d.data);
+
+        bars.interrupt("bar:move")     // Animate the bars to their new position.
+          .transition("bar:move")
+            .attr("width", xGroup.bandwidth())
+            .attr("x", d => xGroup(d._key))
+            .attr("y", 0);
+
+        bars.enter()
+          .append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xGroup(d._key))
+            .attr("y", 0)
+            .attr("width", xGroup.bandwidth())
+            .attr("height", 0) 
+            .style("fill", this.getSeriesColour(s_i))
+            .style("cursor", "pointer")
+          .merge(bars)
+          .interrupt("bar:growth")    // Animate bars growing.
+          .transition("bar:growth")
+            .delay((d) => {
+              return this.calcBarGrowth(s_i, nodes.length);
+            })
+            .duration(this._duration)
+            .style("fill", (d, i) => this.getSeriesColour(i))
+            .attr("height", d => height - y(d._y));
       })
-      .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-        d3.select(nodes[i])
-          .interrupt("hover:colour")
-          .transition("hover:colour")
-          .duration(400)
-          .style("fill", this.getSeriesColour(0));
-        this._dispatch.call("tooltipHide", this);
-      })
-      .on("click auxclick", (d, i, nodes) => {
-        this._dispatch.call("elementClick", this, {
-          e: d3.event,
-          point: d,
-          series: this._data[0], // todo comparisons
-          seriesIndex: 0,
-          value: this._y(d)
-        })
-      })
-      .merge(bars)                // For both enter and update selections.
-      .interrupt("bar:growth")
-      .transition("bar:growth")   // Animate the bars to their new position.
-        .delay((d, i, nodes) => {
-          return this.calcBarGrowth(i, nodes.length);
-        })
-        .duration(this._duration)
-        .style("fill", this.getSeriesColour(0))
-        .attr("height", (d) => height - y(_y(d)));
+
+
+
+
+
+
+    // bars.enter()
+    //   .append("rect")                      // Create the geometry
+    //     .attr("class", "bar")
+    //     .attr("x", (d) => x(_x(d)))
+    //     .attr("y", 0)
+    //     .attr("width", x.bandwidth())
+    //     .attr("height", 0)
+    //     .style("fill", this.getSeriesColour(0))
+    //     .style("cursor", "pointer")
+    //   .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
+    //     d3.select(nodes[i])
+    //       .interrupt("hover:colour")
+    //       .transition("hover:colour")
+    //       .duration(400)
+    //       .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
+    //     this._dispatch.call("tooltipShow", this, {
+    //       e: d3.event,
+    //       point: d,
+    //       series: this._data[0], // todo comparisons
+    //       seriesIndex: 0,
+    //       value: this._y(d)
+    //     })
+    //   })
+    //   .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+    //     d3.select(nodes[i])
+    //       .interrupt("hover:colour")
+    //       .transition("hover:colour")
+    //       .duration(400)
+    //       .style("fill", this.getSeriesColour(0));
+    //     this._dispatch.call("tooltipHide", this);
+    //   })
+    //   .on("click auxclick", (d, i, nodes) => {
+    //     this._dispatch.call("elementClick", this, {
+    //       e: d3.event,
+    //       point: d,
+    //       series: this._data[0], // todo comparisons
+    //       seriesIndex: 0,
+    //       value: this._y(d)
+    //     })
+    //   })
+    //   .merge(bars)                // For both enter and update selections.
+    //   .interrupt("bar:growth")
+    //   .transition("bar:growth")   // Animate the bars to their new position.
+    //     .delay((d, i, nodes) => {
+    //       return this.calcBarGrowth(i, nodes.length);
+    //     })
+    //     .duration(this._duration)
+    //     .style("fill", this.getSeriesColour(0))
+    //     .attr("height", (d) => height - y(_y(d)));
 
 
     // Labels loaded after our first bar grows.
-    if (this._show_labels) {
-      svg.transition("bar:growth")
-        .on("end", (d, i, nodes) => {
-          if (i < nodes.length - 1) return;
-          this.renderLabels(svg, data, x, y, _x, _y);
-        })
-    }
-
-    if (this._dataAxisLabel) {
-      this.renderDataAxisLabel(height, margin);
-    }
+    // if (this._show_labels) {
+    //   svg.transition("bar:growth")
+    //     .on("end", (d, i, nodes) => {
+    //       if (i < nodes.length - 1) return;
+    //       this.renderLabels(svg, data, x, y, _x, _y);
+    //     })
+    // }
+    //
+    // if (this._dataAxisLabel) {
+    //   this.renderDataAxisLabel(height, margin);
+    // }
 
     // ---------------------------------
     // Set the background colour
 
-    d3.select(this._element).select(".background").remove();
-    if (this._backgroundColour) {
-      d3.select(this._element).select("svg")
-        .append("rect")
-          .attr("class", "background")
-          .attr("width", "100%")
-          .attr("height", "100%")
-          .style("fill", this._backgroundColour)
-        .lower();
-    }
+    // d3.select(this._element).select(".background").remove();
+    // if (this._backgroundColour) {
+    //   d3.select(this._element).select("svg")
+    //     .append("rect")
+    //       .attr("class", "background")
+    //       .attr("width", "100%")
+    //       .attr("height", "100%")
+    //       .style("fill", this._backgroundColour)
+    //     .lower();
+    // }
 
     //---------------------------------
     // add the Y gridlines
-    svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
+    // svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
 
     //---------------------------------
     // axes
-    svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
-    svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
+    // svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
+    // svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
   }
 
   //------------------------------------------------------
@@ -563,8 +611,6 @@ export class ColumnChart {
       .style("stroke", colours.eighteen.lightGrey);
     grid.selectAll(".domain").remove();
 
-    console.log("grids:", grid.selectAll("text").attr("fill"), grid.selectAll("text").nodes())
-
     grid
       .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
       .style("opacity", 0)
@@ -635,5 +681,46 @@ export class ColumnChart {
 
     i = i % this._colours.length;
     return this._colours[i];
+  }
+
+  getTransformedData() {
+    console.log("Raw data is:", this._data);
+    let data = this._data;
+    if (!data || !data.length) return [];
+
+    let results = [];
+
+    data.forEach((series, s_i) => {
+      series.values.forEach((d, d_i) => {
+        if (results.length <= d_i) {
+          results.push({
+            data: [],
+            key: this._x(d)
+          })
+        }
+
+        let field = results[d_i];
+        field.data.push(Object.assign({
+          _series: s_i,
+          _key: series.key,
+          _y: this._y(d)
+        }, d));
+
+        console.log("value", Object.assign({
+          _series: s_i,
+          _key: series.key,
+          _y: this._y(d)
+        }, d), d)
+      })
+    })
+
+    return results;
+  }
+
+  getKeys() {
+    let data = this._data;
+    if (!data || !data.length) return [];
+
+    return [...new Set(data.map(d => d.key))]
   }
 }
