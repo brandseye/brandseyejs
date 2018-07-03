@@ -250,14 +250,13 @@ export class ColumnChart {
     let y = d3.scaleLinear()
               .range([height, 0]);
     this._xscale = x;
+    this._xgroupscale = xGroup;
     this._yscale = y;
 
     // Scale the range of the data in the domains
     x.domain(data.map(d => d.key));
     xGroup = xGroup.rangeRound([0, x.bandwidth()]).domain(keys);
     y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
-    console.log("Max is: ", d3.max(data, d => d3.max(d.data, d => d._y)));
-    console.log("series 1 value is", keys.map(d => xGroup(d)));
 
     // append the svg object to the body of the page
     // append a 'group' element to 'svg'
@@ -382,68 +381,12 @@ export class ColumnChart {
 
       })
 
-
-
-
-
-
-    // bars.enter()
-    //   .append("rect")                      // Create the geometry
-    //     .attr("class", "bar")
-    //     .attr("x", (d) => x(_x(d)))
-    //     .attr("y", 0)
-    //     .attr("width", x.bandwidth())
-    //     .attr("height", 0)
-    //     .style("fill", this.getSeriesColour(0))
-    //     .style("cursor", "pointer")
-    //   .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-    //     d3.select(nodes[i])
-    //       .interrupt("hover:colour")
-    //       .transition("hover:colour")
-    //       .duration(400)
-    //       .style("fill", d3.hcl(this.getSeriesColour(0)).darker())
-    //     this._dispatch.call("tooltipShow", this, {
-    //       e: d3.event,
-    //       point: d,
-    //       series: this._data[0], // todo comparisons
-    //       seriesIndex: 0,
-    //       value: this._y(d)
-    //     })
-    //   })
-    //   .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-    //     d3.select(nodes[i])
-    //       .interrupt("hover:colour")
-    //       .transition("hover:colour")
-    //       .duration(400)
-    //       .style("fill", this.getSeriesColour(0));
-    //     this._dispatch.call("tooltipHide", this);
-    //   })
-    //   .on("click auxclick", (d, i, nodes) => {
-    //     this._dispatch.call("elementClick", this, {
-    //       e: d3.event,
-    //       point: d,
-    //       series: this._data[0], // todo comparisons
-    //       seriesIndex: 0,
-    //       value: this._y(d)
-    //     })
-    //   })
-    //   .merge(bars)                // For both enter and update selections.
-    //   .interrupt("bar:growth")
-    //   .transition("bar:growth")   // Animate the bars to their new position.
-    //     .delay((d, i, nodes) => {
-    //       return this.calcBarGrowth(i, nodes.length);
-    //     })
-    //     .duration(this._duration)
-    //     .style("fill", this.getSeriesColour(0))
-    //     .attr("height", (d) => height - y(_y(d)));
-
-
     // Labels loaded after our first bar grows.
     if (this._show_labels) {
       svg.transition("bar:growth")
         .on("end", (d, i, nodes) => {
           if (i < nodes.length - 1) return;
-          this.renderLabels(svg, data, x, xGroup, y, _x, _y);
+          this.renderLabels(svg, data, x, xGroup, y);
         })
     }
 
@@ -487,19 +430,17 @@ export class ColumnChart {
       show: () => {
         if (this._element) {
           let selection = this._element,
-              data = this._data,
+              data = this.getTransformedData(),
               xscale = this._xscale,
-              yscale = this._yscale,
-              xgetter = this._x,
-              ygetter = this._y;
+              xgroup = this._xgroupscale,
+              yscale = this._yscale;
 
           if (selection) selection = d3.select(this._element).select("svg").select("g");
-          if (data) data = data[0].values;
-          if (!selection.empty() && data && xscale && yscale && xgetter && ygetter) {
+          if (!selection.empty() && data && xscale && yscale && xgroup) {
             let labels = selection.select('.chart-labels');
             if (!labels.empty()) return;
             labels.remove()
-            this.renderLabels(selection, data, xscale, yscale, xgetter, ygetter, false);
+            this.renderLabels(selection, data, xscale, xgroup, yscale, false);
           }
         }
 
@@ -523,8 +464,9 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  renderLabels(selection, data, xscale, xgroup, yscale, xgetter, ygetter, animate) {
+  renderLabels(selection, data, xscale, xgroup, yscale, animate) {
     animate = animate === undefined ? true : animate;
+    selection.selectAll(".chart-labels").remove();
 
     let labels = selection.append("g")
       .attr("class", "chart-labels")
@@ -553,7 +495,7 @@ export class ColumnChart {
           invertedColor.l += Math.min(invertedColor.l + 50, 100);
           let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
 
-          let ypos = yscale(ygetter(d));
+          let ypos = yscale(d._y);
           let dy = calcDy(ypos);
           let text = d3.select(nodes[i])
             .append("text")
