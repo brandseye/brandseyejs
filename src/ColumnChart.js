@@ -600,13 +600,14 @@ export class ColumnChart {
     svg.selectAll(".legend").remove();
 
     // Only if we have multiple series.
-    if (!this._data || this._data.length < 2) return;
+    const data = this.getSortedData();
+    if (!data || data.length < 2) return;
 
     let elements = svg.append("g")
         .attr("class", "legend")
         .attr("transform", "translate(0," + height + ")")
       .selectAll(".legend-element")
-      .data(this._data);
+      .data(data);
 
     let position = margins.left;
 
@@ -742,9 +743,25 @@ export class ColumnChart {
     return this._colours[i];
   }
 
+  getSortedData() {
+    let data = this._data;
+    if (!data || !data.length) return [];
+
+    data = this._data.sort((lhs, rhs) => {
+      lhs = lhs.key.toLowerCase();
+      rhs = rhs.key.toLowerCase();
+
+      if (lhs === rhs) return 0;
+      if (lhs < rhs) return -1;
+      return 1;
+    });
+
+    return data;
+  }
+
   getTransformedData() {
     console.log("Raw data is:", this._data);
-    let data = this._data;
+    let data = this.getSortedData();
     if (!data || !data.length) return [];
 
     let results = [];
