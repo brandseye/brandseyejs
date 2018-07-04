@@ -288,7 +288,6 @@ export class ColumnChart {
     //---------------------------------
     // append the rectangles for the bar chart
     let groups = svg.select(".bars").selectAll('.group');
-    console.log("groups is", groups.nodes());
 
     if (groups.empty()) {
       groups = svg
@@ -331,7 +330,7 @@ export class ColumnChart {
 
         bars.enter()
           .append("rect")
-            .attr("class", "bar")
+            .attr("class", (d, i) => "bar series series-" + i)
             .attr("x", d => xGroup(d._key))
             .attr("y", 0)
             .attr("width", xGroup.bandwidth())
@@ -613,7 +612,8 @@ export class ColumnChart {
 
     elements.enter()
       .append("g")
-        .attr("class", "legend-element")
+        .attr("class", (d, i) => "legend-element series series-" + i)
+        .style("cursor", "default")
         .each((d, i, nodes) => {
           let element = d3.select(nodes[i]);
 
@@ -633,9 +633,24 @@ export class ColumnChart {
             .style("font-size", "12px")
             .style("fill", colours.eighteen.darkGrey);
 
+          element.append("title")
+            .text(d.key);
+
           element.attr("transform", "translate(" + position + ",0)");
           position += element.node().getBBox().width + 10;
 
+        })
+        .on("mouseover", (d, i, nodes) => {
+          svg.selectAll(".series:not(.series-" + i + ")")
+            .interrupt("legend:highlight")
+            .transition("legend:highlight")
+              .style("opacity", 0.4);
+        })
+        .on("mouseout", (d, i, nodes) => {
+          svg.selectAll(".series")
+            .interrupt("legend:highlight")
+            .transition("legend:highlight")
+              .style("opacity", 1);
         })
   }
 
