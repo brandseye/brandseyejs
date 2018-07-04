@@ -1,5 +1,5 @@
 import { colours } from './Colours';
-import * as d3 from 'd3';
+// import * as d3 from 'd3';
 
 
 export class ColumnChart {
@@ -230,7 +230,7 @@ export class ColumnChart {
           if (length > maxLabelLength) maxLabelLength = length;
         })
       })
-      margin.bottom += maxLabelLength * 1.5;    // space for axes labels.
+      margin.bottom += maxLabelLength * 1.6;    // space for axes labels.
 
       if (data.length > 1) margin.bottom += 25; // space for the legend.
     }
@@ -302,7 +302,6 @@ export class ColumnChart {
       .attr("transform", "translate(0, " + height + "), scale(1, -1)")
 
     groups = groups.data(data);
-    console.log("Data", data);
 
     groups.exit().remove();
 
@@ -323,6 +322,8 @@ export class ColumnChart {
 
         let bars = group.selectAll(".bar")
           .data(s_d.data);
+
+        bars.exit().remove();
 
         bars.interrupt("bar:move")     // Animate the bars to their new position.
           .transition("bar:move")
