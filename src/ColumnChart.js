@@ -812,7 +812,7 @@ export class ColumnChart {
         if (results.length <= d_i) {
           results.push({
             data: [],
-            key: this._x(d)
+            key: this._xAxisOverride ? this._xAxisOverride[this._x(d)] : this._x(d)
           })
         }
 
