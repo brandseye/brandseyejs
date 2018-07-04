@@ -230,7 +230,9 @@ export class ColumnChart {
           if (length > maxLabelLength) maxLabelLength = length;
         })
       })
-      margin.bottom += maxLabelLength * 1.5;
+      margin.bottom += maxLabelLength * 1.5;    // space for axes labels.
+
+      if (data.length > 1) margin.bottom += 25; // space for the legend.
     }
 
     let width = this._width - margin.left - margin.right,
@@ -605,7 +607,7 @@ export class ColumnChart {
 
     let elements = svg.append("g")
         .attr("class", "legend")
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate(0," + (height - 10) + ")")
       .selectAll(".legend-element")
       .data(data);
 
@@ -624,7 +626,7 @@ export class ColumnChart {
             .attr("rx", 2)
             .attr("ry", 2)
             .attr("y", -10)
-            .style("fill", (d, i) => this.getSeriesColour(i));
+            .style("fill", d => this.getSeriesColour(i));
 
           element.append("text")
             .text(d.key)
@@ -645,7 +647,7 @@ export class ColumnChart {
           svg.selectAll(".series:not(.series-" + i + ")")
             .interrupt("legend:highlight")
             .transition("legend:highlight")
-              .style("opacity", 0.4);
+              .style("opacity", 0.3);
         })
         .on("mouseout", (d, i, nodes) => {
           svg.selectAll(".series")
