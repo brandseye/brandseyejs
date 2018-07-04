@@ -118,7 +118,8 @@ export class ColumnChart {
 
   xAxisTickFormat(format) {
     if (!arguments.length) return this._xAxisTickFormat;
-    this._xAxisTickFormat = format;
+    this._xAxisTickFormat = format || (d => d.toString());
+    console.log("xaxistickformat is now ", format);
     return this;
   }
 
@@ -126,7 +127,7 @@ export class ColumnChart {
 
   labelFormat(format) {
     if (!arguments.length) return this._labelFormat;
-    this._labelFormat = format;
+    this._labelFormat = format || (d => d.toString());
     return this;
   }
 
@@ -541,7 +542,7 @@ export class ColumnChart {
 
     // Figure out if we don't have enough space to show our labels.
     // We then want to resize, if possible.
-    if (xgroup.bandwidth() < maxWidth) {
+    if (xgroup.bandwidth() < maxWidth * 1.05) {
       let scale = maxWidth / xgroup.bandwidth() * 1.05;
       fontSize = Math.floor(fontSize / scale);
 
@@ -599,7 +600,9 @@ export class ColumnChart {
 
   renderLegend(margins) {
     const height = this._height;
-    let svg = d3.select(this._element).select('svg');
+    const width = this._width;
+
+    const svg = d3.select(this._element).select('svg');
     svg.selectAll(".legend").remove();
 
     // Only if we have multiple series.
@@ -612,7 +615,9 @@ export class ColumnChart {
       .selectAll(".legend-element")
       .data(data);
 
-    let position = margins.left;
+    const position_start = margins.left;
+    let position = position_start;
+    let position_height = 0;
 
     elements.enter()
       .append("g")
@@ -640,8 +645,14 @@ export class ColumnChart {
           element.append("title")
             .text(d.key);
 
-          element.attr("transform", "translate(" + position + ",0)");
+          element.attr("transform", "translate(" + position + "," + position_height +")");
           position += element.node().getBBox().width + 10;
+
+          if (position >= width) {
+            position = position_start;
+            position_height += 15;
+            element.attr("transform", "translate(" + position + "," + position_height + ")");
+          }
 
         })
         .on("mouseover", (d, i, nodes) => {
@@ -656,6 +667,10 @@ export class ColumnChart {
             .transition("legend:highlight")
               .style("opacity", 1);
         })
+        .style("opacity", 0)
+      .transition()
+      .duration(1000)
+        .style("opacity", 1);
   }
 
   //------------------------------------------------------
@@ -696,16 +711,25 @@ export class ColumnChart {
     axis.select(".domain").remove();
 
     let max = 0;
+    const fontSize = 12;
     axis.selectAll("text")
       .style("font-family", "Open Sans, sans-serif")
+      .style("font-size", fontSize + "px")
       .style("fill", colours.eighteen.darkGrey)
       .nodes()
       .forEach(text => max = Math.max(max, text.getBBox().width));
 
     if (max >= width - 10) {
+      const bad = max >= width * 2;
+      const angle = bad ? -90 : -30;
+      const fontSize = width <= 13 ? 8 : 12;
+      const x = bad ? -fontSize : 0;
+      const y = bad ? 5 : 2;
+
       axis.selectAll("text")
         .style('text-anchor', 'end')
-        .attr("transform", "rotate(-30 0,0)")
+        .style("font-size", fontSize + "px")
+        .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
     }
 
     axis
