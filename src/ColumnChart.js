@@ -217,11 +217,35 @@ export class ColumnChart {
       return;
     }
 
-    let data = this.getTransformedData();
-    let keys = this.getKeys();
-    console.log("Keys are", keys);
+    const data = this.getTransformedData();
+    const keys = this.getKeys();
 
-    let margin = {top: 20, right: 20, bottom: 40, left: 40};
+    //------------------------------------------------
+    // Set up the SVG area
+
+    let topLevel = d3.select(this._element).select("svg");
+
+    if (topLevel.empty()) {
+      topLevel = d3.select(this._element)
+        .append("svg")
+          .attr("width", "100%")
+          .attr("height", "100%");
+    }
+
+    // ---------------------------------
+    // Layout the showLegend.
+    //
+    // We do this now because we need to know how much space the legend
+    // takes up in order to finish calculating the margins.
+
+    const legendHeight = this.renderLegend();
+
+    //----------------------------------
+    // Calculate margins.
+
+    const margin = {top: 20, right: 20, bottom: 40, left: 40};
+    margin.bottom += legendHeight ? legendHeight + 20 : 0;
+
     if (this._dataAxisLabel) margin.left += 20 + 12;
     if (data) {
       let maxLabelLength = 0;
@@ -232,25 +256,26 @@ export class ColumnChart {
         })
       })
       margin.bottom += maxLabelLength * 1.6;    // space for axes labels.
-
-      if (data.length > 1) margin.bottom += 25; // space for the legend.
     }
 
-    let width = this._width - margin.left - margin.right,
-        height = this._height - margin.top - margin.bottom;
+    const width = this._width - margin.left - margin.right,
+          height = this._height - margin.top - margin.bottom;
+
+    //----------------------------------
+    // Calculate scales and so on.
 
     // set the ranges
-    let _x = this._x,
-        _y = this._y;
+    const _x = this._x,
+          _y = this._y;
 
-    let x = d3.scaleBand()
+    const x = d3.scaleBand()
               .range([0, width])
               .padding(this._data.length > 1 ? 0.08 : 0.02);
 
-    let xGroup = d3.scaleBand()
+    const xGroup = d3.scaleBand()
               .padding(0)
 
-    let y = d3.scaleLinear()
+    const y = d3.scaleLinear()
               .range([height, 0]);
     this._xscale = x;
     this._xgroupscale = xGroup;
@@ -258,20 +283,10 @@ export class ColumnChart {
 
     // Scale the range of the data in the domains
     x.domain(data.map(d => d.key));
-    xGroup = xGroup.rangeRound([0, x.bandwidth()]).domain(keys);
+    xGroup.rangeRound([0, x.bandwidth()]).domain(keys);
     y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
 
-    // append the svg object to the body of the page
-    // append a 'group' element to 'svg'
-    // moves the 'group' element to the top left margin
-    let topLevel = d3.select(this._element).select("svg");
-
-    if (topLevel.empty()) {
-      topLevel = d3.select(this._element)
-        .append("svg")
-          .attr("width", "100%")
-          .attr("height", "100%");
-    }
+    //------------------------------
 
     let svg = topLevel.select('.main-group');
 
@@ -400,11 +415,6 @@ export class ColumnChart {
     if (this._dataAxisLabel) {
       this.renderDataAxisLabel(height, margin);
     }
-
-    // ---------------------------------
-    // Add a legend.
-
-    this.renderLegend(margin);
 
     // ---------------------------------
     // Set the background colour
@@ -598,7 +608,7 @@ export class ColumnChart {
 
   //------------------------------------------------------
 
-  renderLegend(margins) {
+  renderLegend() {
     const height = this._height;
     const width = this._width;
 
@@ -607,15 +617,15 @@ export class ColumnChart {
 
     // Only if we have multiple series.
     const data = this.getSortedData();
-    if (!data || data.length < 2) return;
+    if (!data || data.length < 2) return 0;
 
-    let elements = svg.append("g")
-        .attr("class", "legend")
-        .attr("transform", "translate(0," + (height - 10) + ")")
-      .selectAll(".legend-element")
+    const legend = svg.append("g")
+        .attr("class", "legend");
+
+    let elements = legend.selectAll(".legend-element")
       .data(data);
 
-    const position_start = margins.left;
+    const position_start = 20;
     let position = position_start;
     let position_height = 0;
 
@@ -671,6 +681,10 @@ export class ColumnChart {
       .transition()
       .duration(1000)
         .style("opacity", 1);
+
+    const legendHeight = legend.node().getBBox().height;
+    legend.attr("transform", "translate(0," + (height - legendHeight) + ")");
+    return legendHeight;
   }
 
   //------------------------------------------------------
