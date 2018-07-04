@@ -242,7 +242,7 @@ export class ColumnChart {
 
     let x = d3.scaleBand()
               .range([0, width])
-              .padding(0.02);
+              .padding(this._data.length > 1 ? 0.08 : 0.02);
 
     let xGroup = d3.scaleBand()
               .padding(0)
