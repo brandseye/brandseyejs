@@ -381,6 +381,7 @@ export class ColumnChart {
 
       })
 
+    // ---------------------------------
     // Labels loaded after our first bar grows.
     if (this._show_labels) {
       svg.transition("bar:growth")
@@ -390,9 +391,17 @@ export class ColumnChart {
         })
     }
 
+    // ---------------------------------
+    // Draw the y axis data label.
+
     if (this._dataAxisLabel) {
       this.renderDataAxisLabel(height, margin);
     }
+
+    // ---------------------------------
+    // Add a legend.
+
+    this.renderLegend(margin);
 
     // ---------------------------------
     // Set the background colour
@@ -582,6 +591,52 @@ export class ColumnChart {
     }
 
     label.attr("dx", - width / 2);
+  }
+
+  //------------------------------------------------------
+
+  renderLegend(margins) {
+    const height = this._height;
+    let svg = d3.select(this._element).select('svg');
+    svg.selectAll(".legend").remove();
+
+    // Only if we have multiple series.
+    if (!this._data || this._data.length < 2) return;
+
+    let elements = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(0," + height + ")")
+      .selectAll(".legend-element")
+      .data(this._data);
+
+    let position = margins.left;
+
+    elements.enter()
+      .append("g")
+        .attr("class", "legend-element")
+        .each((d, i, nodes) => {
+          let element = d3.select(nodes[i]);
+
+          element.append("rect")
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .attr("y", -10)
+            .style("fill", (d, i) => this.getSeriesColour(i));
+
+          element.append("text")
+            .text(d.key)
+            .attr("dx", 12)
+            .style("font-family", "Open Sans, sans-serif")
+            .style("font-weight", "normal")
+            .style("font-size", "12px")
+            .style("fill", colours.eighteen.darkGrey);
+
+          element.attr("transform", "translate(" + position + ",0)");
+          position += element.node().getBBox().width + 10;
+
+        })
   }
 
   //------------------------------------------------------
