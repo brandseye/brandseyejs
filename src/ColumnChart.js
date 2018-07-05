@@ -255,7 +255,7 @@ export class ColumnChart {
           if (length > maxLabelLength) maxLabelLength = length;
         })
       })
-      margin.bottom += maxLabelLength * 1.6;    // space for axes labels.
+      margin.bottom += maxLabelLength * 2 + 10;    // space for axes labels.
     }
 
     const width = this._width - margin.left - margin.right,
