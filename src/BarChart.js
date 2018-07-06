@@ -1,7 +1,8 @@
-import {colours} from './Colours';
+import { colours } from './Colours';
+import { maxBounding } from "./helpers";
 
 
-export class ColumnChart {
+export class BarChart {
     constructor() {
         this._x = (d) => d.x;
         this._y = (d) => d.y;
@@ -12,7 +13,7 @@ export class ColumnChart {
         this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
             'tooltipShow', 'tooltipHide');
         this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
-        this._colours = [colours.eighteen.midGrey, colours.eighteen.lightGrey, colours.eighteen.darkGrey];
+        this._colours = [ colours.eighteen.midGrey, colours.eighteen.lightGrey, colours.eighteen.darkGrey ];
         this._backgroundColour = "#FFF"
     }
 
@@ -231,6 +232,11 @@ export class ColumnChart {
         }
 
         // ---------------------------------
+        // Measure max data axis text length
+
+        const dataAxisBB = maxBounding(topLevel, data.map(d => d.key));
+
+        // ---------------------------------
         // Layout the showLegend.
         //
         // We do this now because we need to know how much space the legend
@@ -241,46 +247,35 @@ export class ColumnChart {
         //----------------------------------
         // Calculate margins.
 
-        const margin = {top: 20, right: 20, bottom: 40, left: 40};
+        const margin = {top: 20, right: 20, bottom: 40, left: 10};
         margin.bottom += legendHeight ? legendHeight + 20 : 0;
-
-        if (this._dataAxisLabel) margin.left += 20 + 12;
-        if (data) {
-            let maxLabelLength = 0;
-            data.forEach(d => {
-                d.data.forEach(d => {
-                    let length = this._xAxisTickFormat(this._x(d)).length;
-                    if (length > maxLabelLength) maxLabelLength = length;
-                })
-            });
-            margin.bottom += maxLabelLength * 2 + 10;    // space for axes labels.
-        }
+        margin.left += dataAxisBB.width;
 
         const width = this._width - margin.left - margin.right,
-            height = this._height - margin.top - margin.bottom;
+              height = this._height - margin.top - margin.bottom;
 
         //----------------------------------
         // Calculate scales and so on.
 
-
-        const x = d3.scaleBand()
+        const x = d3.scaleLinear()
             .range([0, width])
+            .nice(5);
+
+        const y = d3.scaleBand()
+            .range([0, height])
             .padding(this._data.length > 1 ? 0.08 : 0.02);
 
-        const xGroup = d3.scaleBand()
+        const yGroup = d3.scaleBand()
             .padding(0);
 
-        const y = d3.scaleLinear()
-            .range([height, 0])
-            .nice(5);
         this._xscale = x;
-        this._xgroupscale = xGroup;
+        this._ygroupscale = yGroup;
         this._yscale = y;
 
         // Scale the range of the data in the domains
-        x.domain(data.map(d => d.key));
-        xGroup.rangeRound([0, x.bandwidth()]).domain(keys);
-        y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
+        y.domain(data.map(d => d.key));
+        yGroup.rangeRound([0, y.bandwidth()]).domain(keys);
+        x.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
 
         //------------------------------
 
@@ -311,7 +306,7 @@ export class ColumnChart {
         }
 
         svg.select(".bars")
-            .attr("transform", "translate(0, " + height + "), scale(1, -1)")
+            .style("fill", "blue");
 
         groups = groups.data(data);
 
@@ -320,17 +315,17 @@ export class ColumnChart {
         // Adding new groups, and hence adding new bars to those groups.
         groups.enter()
             .append("g")
-            .attr("class", "group")
-            .attr("transform", d => "translate(" + x(d.key) + ",0)")
-            .attr("width", x.bandwidth())
-            .attr("height", "100%")
+                .attr("class", "group")
+                .attr("transform", d => "translate(0," + y(d.key) + ")")
+                .attr("height", height - y.bandwidth())
+                .attr("width", "100%")
             .merge(groups)
             .interrupt("groups:move")
             .transition("groups:move")
-            .attr("transform", d => "translate(" + x(d.key) + ",0)")
-            .attr("width", x.bandwidth())
+                .attr("transform", d => "translate(0," + y(d.key) + ")")
+                .attr("height", y.bandwidth())
             .each((s_d, s_i, nodes) => {
-                let group = d3.select(nodes[s_i])
+                let group = d3.select(nodes[s_i]);
 
                 let bars = group.selectAll(".bar")
                     .data(s_d.data);
@@ -339,19 +334,19 @@ export class ColumnChart {
 
                 bars.interrupt("bar:move")     // Animate the bars to their new position.
                     .transition("bar:move")
-                    .attr("width", xGroup.bandwidth())
-                    .attr("x", d => xGroup(d._key))
-                    .attr("y", 0);
+                        .attr("height", yGroup.bandwidth())
+                        .attr("y", d => yGroup(d._key))
+                        .attr("x", 0);
 
                 bars.enter()
                     .append("rect")
-                    .attr("class", (d, i) => "bar series series-" + i)
-                    .attr("x", d => xGroup(d._key))
-                    .attr("y", 0)
-                    .attr("width", xGroup.bandwidth())
-                    .attr("height", 0)
-                    .style("fill", (d, i) => this.getSeriesColour(i))
-                    .style("cursor", "pointer")
+                        .attr("class", (d, i) => "bar series series-" + i)
+                        .attr("y", d => yGroup(d._key))
+                        .attr("x", 0)
+                        .attr("height", yGroup.bandwidth())
+                        .attr("width", 0)
+                        .style("fill", (d, i) => this.getSeriesColour(i))
+                        .style("cursor", "pointer")
                     .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
                         d3.select(nodes[i])
                             .interrupt("hover:colour")
@@ -386,31 +381,31 @@ export class ColumnChart {
                     .merge(bars)
                     .interrupt("bar:growth")    // Animate bars growing.
                     .transition("bar:growth")
-                    .delay((d) => {
+                    .delay(() => {
                         return this.calcBarGrowth(s_i, nodes.length);
                     })
                     .duration(this._duration)
-                    .style("fill", (d, i) => this.getSeriesColour(i))
-                    .attr("height", d => height - y(d._y));
+                        .style("fill", (d, i) => this.getSeriesColour(i))
+                        .attr("width", d => x(d._y));
 
-            })
+            });
 
         // ---------------------------------
         // Labels loaded after our first bar grows.
-        if (this._show_labels) {
-            svg.transition("bar:growth")
-                .on("end", (d, i, nodes) => {
-                    if (i < nodes.length - 1) return;
-                    this.renderLabels(svg, data, x, xGroup, y);
-                })
-        }
+        // if (this._show_labels) {
+        //     svg.transition("bar:growth")
+        //         .on("end", (d, i, nodes) => {
+        //             if (i < nodes.length - 1) return;
+        //             this.renderLabels(svg, data, x, xGroup, y);
+        //         })
+        // }
 
         // ---------------------------------
         // Draw the y axis data label.
 
-        if (this._dataAxisLabel) {
-            this.renderDataAxisLabel(height, margin);
-        }
+        // if (this._dataAxisLabel) {
+        //     this.renderDataAxisLabel(height, margin);
+        // }
 
         // ---------------------------------
         // Set the background colour
@@ -419,21 +414,21 @@ export class ColumnChart {
         if (this._backgroundColour) {
             d3.select(this._element).select("svg")
                 .append("rect")
-                .attr("class", "background")
-                .attr("width", "100%")
-                .attr("height", "100%")
-                .style("fill", this._backgroundColour)
+                    .attr("class", "background")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .style("fill", this._backgroundColour)
                 .lower();
         }
 
         //---------------------------------
         // add the Y gridlines
-        svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
+        svg.call(this.grid, height, d3.axisBottom(x).ticks(5));
 
         //---------------------------------
         // axes
-        svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
-        svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
+        svg.call(this.labelAxis, d3.axisLeft(y).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
+        svg.call(this.dataAxis, height, d3.axisBottom(x).ticks(5).tickFormat(this._tickFormat));
     }
 
     //------------------------------------------------------
@@ -450,15 +445,15 @@ export class ColumnChart {
                     let selection = this._element,
                         data = this.getTransformedData(),
                         xscale = this._xscale,
-                        xgroup = this._xgroupscale,
+                        ygroup = this._ygroupscale,
                         yscale = this._yscale;
 
                     if (selection) selection = d3.select(this._element).select("svg").select("g");
-                    if (!selection.empty() && data && xscale && yscale && xgroup) {
+                    if (!selection.empty() && data && xscale && yscale && ygroup) {
                         let labels = selection.select('.chart-labels');
                         if (!labels.empty()) return;
                         labels.remove()
-                        this.renderLabels(selection, data, xscale, xgroup, yscale, false);
+                        this.renderLabels(selection, data, xscale, ygroup, yscale, false);
                     }
                 }
 
@@ -495,7 +490,7 @@ export class ColumnChart {
         let maxWidth = 0;     // For calculating the max width of text.
         let fontSize = 12;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
-        const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : -buffer;
+        const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
 
         labels.enter().each((series, s_i, s_nodes) => {
             let group = d3.select(s_nodes[s_i])
@@ -518,16 +513,16 @@ export class ColumnChart {
                     let text = d3.select(nodes[i])
                         .append("text")
                         .text(this._labelFormat(d._y))
-                        .attr("class", "chart-label")
-                        .attr("y", ypos)
-                        .attr("dx", animate ? -15 : 0)
-                        .attr("dy", dy)
-                        .style("opacity", 0)
-                        .style("pointer-events", "none")
-                        .style("font-family", "Open Sans, sans-serif")
-                        .style("font-weight", "normal")
-                        .style("font-size", fontSize + "px")
-                        .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
+                            .attr("class", "chart-label")
+                            .attr("y", ypos)
+                            .attr("dx", animate ? -15 : 0)
+                            .attr("dy", dy)
+                            .style("opacity", 0)
+                            .style("pointer-events", "none")
+                            .style("font-family", "Open Sans, sans-serif")
+                            .style("font-weight", "normal")
+                            .style("font-size", fontSize + "px")
+                            .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
                     // Set the x position, which is based on width.
                     const width = text.node().getBBox().width;
@@ -543,6 +538,7 @@ export class ColumnChart {
                         .style("opacity", 1)
                 })
         })
+
 
 
         // Figure out if we don't have enough space to show our labels.
@@ -580,7 +576,7 @@ export class ColumnChart {
         let text = this._dataAxisLabel;
         if (text.long) text = text.long;
 
-        let x = -(margins.top + height / 2);
+        let x = - (margins.top + height / 2);
 
         let label = svg.append("g")
             .attr("class", "data-labels")
@@ -598,7 +594,7 @@ export class ColumnChart {
             width = label.node().getBBox().width;
         }
 
-        label.attr("dx", -width / 2);
+        label.attr("dx", - width / 2);
     }
 
     //------------------------------------------------------
@@ -650,7 +646,7 @@ export class ColumnChart {
                 element.append("title")
                     .text(d.key);
 
-                element.attr("transform", "translate(" + position + "," + position_height + ")");
+                element.attr("transform", "translate(" + position + "," + position_height +")");
                 position += element.node().getBBox().width + 10;
 
                 if (position >= width) {
@@ -684,13 +680,13 @@ export class ColumnChart {
 
     //------------------------------------------------------
 
-    grid(selection, width, axis) {
+    grid(selection, height, axis) {
         selection.select(".grid").remove();
 
         let grid = selection.append("g")
             .attr("class", "grid")
             .call(axis
-                .tickSize(-width)
+                .tickSize(height)
                 .tickFormat("")
             );
 
@@ -709,13 +705,12 @@ export class ColumnChart {
 
     //------------------------------------------------------
 
-    xaxis(selection, height, width, xaxis) {
-        selection.select(".x-axis").remove();
+    labelAxis(selection, axis_object) {
+        selection.select(".label-axis").remove();
         let axis = selection.append("g")
-            .attr("class", "x-axis")
-            .attr("transform", "translate(0," + height + ")")
+            .attr("class", "label-axis")
             .style("opacity", 0)
-            .call(xaxis);
+            .call(axis_object);
 
         axis.select(".domain").remove();
 
@@ -728,19 +723,6 @@ export class ColumnChart {
             .nodes()
             .forEach(text => max = Math.max(max, text.getBBox().width));
 
-        if (max >= width - 10) {
-            const bad = max >= width * 2;
-            const angle = bad ? -90 : -30;
-            const fontSize = width <= 13 ? 8 : 12;
-            const x = bad ? -fontSize : 0;
-            const y = bad ? 5 : 2;
-
-            axis.selectAll("text")
-                .style('text-anchor', 'end')
-                .style("font-size", fontSize + "px")
-                .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
-        }
-
         axis
             .transition()
             .duration(1000)
@@ -749,19 +731,20 @@ export class ColumnChart {
 
     //------------------------------------------------------
 
-    yaxis(selection, axis) {
-        selection.select(".y-axis").remove();
-        let x = selection.append("g")
-            .attr("class", "y-axis")
-            .call(axis.tickSize(0).tickPadding(10))
-            .style("opacity", 0)
+    dataAxis(selection, height, axis_object) {
+        selection.select(".data-axis").remove();
+        let axis = selection.append("g")
+                .attr("class", "data-axis")
+                .attr("transform", "translate(0," + height + ")")
+            .call(axis_object.tickSize(0).tickPadding(10))
+                .style("opacity", 0)
             .transition()
             .duration(1000)
-            .style("opacity", 1);
+                .style("opacity", 1);
 
-        x.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("fill", colours.eighteen.darkGrey)
+        axis.selectAll("text")
+                .style("font-family", "Open Sans, sans-serif")
+                .style("fill", colours.eighteen.darkGrey)
     }
 
     //------------------------------------------------------
@@ -819,7 +802,7 @@ export class ColumnChart {
                     _y: this._y(d)
                 }, d));
             })
-        })
+        });
 
         return results;
     }
