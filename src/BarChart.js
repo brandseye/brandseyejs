@@ -119,7 +119,6 @@ export class BarChart {
     xAxisTickFormat(format) {
         if (!arguments.length) return this._xAxisTickFormat;
         this._xAxisTickFormat = format || (d => d.toString());
-        console.log("xaxistickformat is now ", format);
         return this;
     }
 
@@ -523,7 +522,6 @@ export class BarChart {
 
                     const bb = text.node().getBBox();
                     const oversize = xpos + bb.width + buffer > xscale.range()[1];
-                    console.log("actual ", xpos, "edge", xpos + bb.width + buffer, "selection", xscale.range()[1], oversize);
 
                     text
                         .attr("y", ygroup(d._key) + fontSize / 2 + ygroup.bandwidth() / 2)
@@ -779,7 +777,6 @@ export class BarChart {
     }
 
     getTransformedData() {
-        console.log("Raw data is:", this._data);
         let data = this.getSortedData();
         if (!data || !data.length) return [];
 

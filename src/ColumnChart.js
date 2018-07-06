@@ -118,7 +118,6 @@ export class ColumnChart {
     xAxisTickFormat(format) {
         if (!arguments.length) return this._xAxisTickFormat;
         this._xAxisTickFormat = format || (d => d.toString());
-        console.log("xaxistickformat is now ", format);
         return this;
     }
 
@@ -796,7 +795,6 @@ export class ColumnChart {
     }
 
     getTransformedData() {
-        console.log("Raw data is:", this._data);
         let data = this.getSortedData();
         if (!data || !data.length) return [];
 
