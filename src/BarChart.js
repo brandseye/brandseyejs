@@ -393,13 +393,13 @@ export class BarChart {
 
         // ---------------------------------
         // Labels loaded after our first bar grows.
-        // if (this._show_labels) {
-        //     svg.transition("bar:growth")
-        //         .on("end", (d, i, nodes) => {
-        //             if (i < nodes.length - 1) return;
-        //             this.renderLabels(svg, data, x, xGroup, y);
-        //         })
-        // }
+        if (this._show_labels) {
+            svg.transition("bar:growth")
+                .on("end", (d, i, nodes) => {
+                    if (i < nodes.length - 1) return;
+                    this.renderLabels(svg, data, x, xGroup, y);
+                })
+        }
 
         // ---------------------------------
         // Draw the data axis data label.
@@ -478,15 +478,14 @@ export class BarChart {
 
     //------------------------------------------------------
 
-    renderLabels(selection, data, xscale, xgroup, yscale, animate) {
+    renderLabels(selection, data, xscale, ygroup, yscale, animate) {
         animate = animate === undefined ? true : animate;
         selection.selectAll(".chart-labels").remove();
 
         let labels = selection.append("g")
             .attr("class", "chart-labels")
-            // .selectAll(".chart-label")
             .selectAll(".label-group")
-            .data(data)
+            .data(data);
 
         let maxWidth = 0;     // For calculating the max width of text.
         let fontSize = 12;    // Our initial font size.
@@ -497,7 +496,7 @@ export class BarChart {
             let group = d3.select(s_nodes[s_i])
                 .append("g")
                 .attr("class", "label-group")
-                .attr("transform", d => "translate(" + xscale(d.key) + ",0)")
+                .attr("transform", d => "translate(0," + yscale(d.key) + ")")
                 .selectAll(".chart-label")
                 .data(series.data)
                 .enter()
@@ -509,13 +508,13 @@ export class BarChart {
                     invertedColor.l += Math.min(invertedColor.l + 50, 100);
                     let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
 
-                    let ypos = yscale(d._y);
-                    let dy = calcDy(ypos);
+                    let xpos = xscale(d._y);
+                    let dy = calcDy(xpos);
                     let text = d3.select(nodes[i])
                         .append("text")
                         .text(this._labelFormat(d._y))
                             .attr("class", "chart-label")
-                            .attr("y", ypos)
+                            .attr("x", xpos)
                             .attr("dx", animate ? -15 : 0)
                             .attr("dy", dy)
                             .style("opacity", 0)
@@ -525,11 +524,8 @@ export class BarChart {
                             .style("font-size", fontSize + "px")
                             .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
-                    // Set the x position, which is based on width.
-                    const width = text.node().getBBox().width;
-                    maxWidth = Math.max(width, maxWidth);
                     text
-                        .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+                        .attr("y", ygroup(d._key) + ygroup.bandwidth() / 2 - width);
 
                     text
                         .transition("labels")
@@ -538,7 +534,7 @@ export class BarChart {
                         .attr("dx", 0)
                         .style("opacity", 1)
                 })
-        })
+        });
 
 
 
