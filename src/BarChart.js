@@ -397,7 +397,7 @@ export class BarChart {
             svg.transition("bar:growth")
                 .on("end", (d, i, nodes) => {
                     if (i < nodes.length - 1) return;
-                    this.renderLabels(svg, data, x, xGroup, y);
+                    this.renderLabels(svg, data, x, yGroup, y);
                 })
         }
 
@@ -487,10 +487,8 @@ export class BarChart {
             .selectAll(".label-group")
             .data(data);
 
-        let maxWidth = 0;     // For calculating the max width of text.
         let fontSize = 12;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
-        const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : - buffer;
 
         labels.enter().each((series, s_i, s_nodes) => {
             let group = d3.select(s_nodes[s_i])
@@ -509,23 +507,28 @@ export class BarChart {
                     let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
 
                     let xpos = xscale(d._y);
-                    let dy = calcDy(xpos);
+
                     let text = d3.select(nodes[i])
                         .append("text")
                         .text(this._labelFormat(d._y))
                             .attr("class", "chart-label")
-                            .attr("x", xpos)
+                            .attr("x", xpos + buffer)
                             .attr("dx", animate ? -15 : 0)
-                            .attr("dy", dy)
                             .style("opacity", 0)
                             .style("pointer-events", "none")
                             .style("font-family", "Open Sans, sans-serif")
                             .style("font-weight", "normal")
-                            .style("font-size", fontSize + "px")
-                            .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
+                            .style("font-size", fontSize + "px");
+
+
+                    const bb = text.node().getBBox();
+                    const oversize = xpos + bb.width + buffer > xscale.range()[1];
+                    console.log("actual ", xpos, "edge", xpos + bb.width + buffer, "selection", xscale.range()[1], oversize);
 
                     text
-                        .attr("y", ygroup(d._key) + ygroup.bandwidth() / 2 - width);
+                        .attr("y", ygroup(d._key) + fontSize / 2 + ygroup.bandwidth() / 2)
+                        .attr("x", oversize ? xpos - buffer - bb.width : xpos + buffer)
+                        .style("fill", oversize && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
                     text
                         .transition("labels")
@@ -540,27 +543,27 @@ export class BarChart {
 
         // Figure out if we don't have enough space to show our labels.
         // We then want to resize, if possible.
-        if (xgroup.bandwidth() < maxWidth * 1.05) {
-            let scale = maxWidth / xgroup.bandwidth() * 1.05;
-            fontSize = Math.floor(fontSize / scale);
-
-            if (fontSize < 8) {
-                // The labels are too small.
-                labels.enter().selectAll("text").remove();
-            } else {
-                labels.enter()
-                    .merge(labels)
-                    .selectAll("text")
-                    .style("font-size", fontSize + "px")
-                    .each((d, i, nodes) => {
-                        const text = d3.select(nodes[i]);
-                        const width = text.node().getBBox().width;
-                        text
-                            .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                            .attr("dy", calcDy(d._y));
-                    })
-            }
-        }
+        // if (xgroup.bandwidth() < maxWidth * 1.05) {
+        //     let scale = maxWidth / xgroup.bandwidth() * 1.05;
+        //     fontSize = Math.floor(fontSize / scale);
+        //
+        //     if (fontSize < 8) {
+        //         // The labels are too small.
+        //         labels.enter().selectAll("text").remove();
+        //     } else {
+        //         labels.enter()
+        //             .merge(labels)
+        //             .selectAll("text")
+        //             .style("font-size", fontSize + "px")
+        //             .each((d, i, nodes) => {
+        //                 const text = d3.select(nodes[i]);
+        //                 const width = text.node().getBBox().width;
+        //                 text
+        //                     .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
+        //                     .attr("dy", calcDy(d._y));
+        //             })
+        //     }
+        // }
     }
 
     //------------------------------------------------------

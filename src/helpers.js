@@ -27,7 +27,7 @@ export function maxBounding(selection, text, font, fontSize) {
             height = Math.max(height, bb.height)
         });
 
-    selection.select("text-size").remove();
+    selection.select(".text-size").remove();
     return {
         width: width,
         height: height
