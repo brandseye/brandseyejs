@@ -289,10 +289,10 @@ export class ColumnChart {
         if (svg.empty()) {
             svg = topLevel
                 .append("g")
-                .attr("class", "main-group")
-                .attr("transform",
-                    "translate(" + margin.left + "," + margin.top + ")");
+                .attr("class", "main-group");
         }
+
+        svg.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         //---------------------------------
         // Get rid of current labels.

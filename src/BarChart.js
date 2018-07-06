@@ -234,7 +234,7 @@ export class BarChart {
         // ---------------------------------
         // Measure max data axis text length
 
-        const dataAxisBB = maxBounding(topLevel, data.map(d => d.key));
+        const dataAxisBB = maxBounding(topLevel, data.map(d => this._xAxisTickFormat(d.key)));
 
         // ---------------------------------
         // Layout the showLegend.
@@ -249,7 +249,7 @@ export class BarChart {
 
         const margin = {top: 20, right: 20, bottom: 40, left: 10};
         margin.bottom += legendHeight ? legendHeight + 20 : 0;
-        margin.left += dataAxisBB.width;
+        margin.left += dataAxisBB.width + 10;
         if (this._dataAxisLabel) margin.bottom += 10 + 12;
 
         const width = this._width - margin.left - margin.right,
@@ -286,9 +286,9 @@ export class BarChart {
             svg = topLevel
                 .append("g")
                 .attr("class", "main-group")
-                .attr("transform",
-                    "translate(" + margin.left + "," + margin.top + ")");
         }
+
+        svg.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         //---------------------------------
         // Get rid of current labels.
