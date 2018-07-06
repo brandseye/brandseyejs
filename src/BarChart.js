@@ -250,6 +250,7 @@ export class BarChart {
         const margin = {top: 20, right: 20, bottom: 40, left: 10};
         margin.bottom += legendHeight ? legendHeight + 20 : 0;
         margin.left += dataAxisBB.width;
+        if (this._dataAxisLabel) margin.bottom += 10 + 12;
 
         const width = this._width - margin.left - margin.right,
               height = this._height - margin.top - margin.bottom;
@@ -401,11 +402,11 @@ export class BarChart {
         // }
 
         // ---------------------------------
-        // Draw the y axis data label.
+        // Draw the data axis data label.
 
-        // if (this._dataAxisLabel) {
-        //     this.renderDataAxisLabel(height, margin);
-        // }
+        if (this._dataAxisLabel) {
+            this.renderDataAxisLabel(width, margin);
+        }
 
         // ---------------------------------
         // Set the background colour
@@ -568,7 +569,7 @@ export class BarChart {
 
     //------------------------------------------------------
 
-    renderDataAxisLabel(height, margins) {
+    renderDataAxisLabel(width, margins) {
         let svg = d3.select(this._element).select('svg');
         svg.selectAll(".data-labels").remove();
 
@@ -576,25 +577,25 @@ export class BarChart {
         let text = this._dataAxisLabel;
         if (text.long) text = text.long;
 
-        let x = - (margins.top + height / 2);
+        let x = (margins.left + width / 2);
 
         let label = svg.append("g")
             .attr("class", "data-labels")
             .append("text")
             .text(text)
-            .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
+            .attr("transform", "translate(" + x + "," + (this._height - 15) + ")")
             .style("font-family", "Open Sans, sans-serif")
             .style("font-size", "12px")
             .style("font-style", "italic")
             .style("fill", colours.eighteen.darkGrey);
 
-        let width = label.node().getBBox().width;
-        if (width >= height && this._dataAxisLabel.short) {
+        let textWidth = label.node().getBBox().width;
+        if (textWidth >= width && this._dataAxisLabel.short) {
             label.text(this._dataAxisLabel.short);
-            width = label.node().getBBox().width;
+            textWidth = label.node().getBBox().width;
         }
 
-        label.attr("dx", - width / 2);
+        label.attr("dx", -textWidth / 2);
     }
 
     //------------------------------------------------------
