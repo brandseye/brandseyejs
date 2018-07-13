@@ -221,13 +221,14 @@ export class ColumnChart {
         // Set up the SVG area
 
         let topLevel = d3.select(this._element).select("svg");
-
         if (topLevel.empty()) {
-            topLevel = d3.select(this._element)
-                .append("svg")
-                .attr("width", "100%")
-                .attr("height", "100%");
+            topLevel = d3.select(this._element).append("svg");
         }
+
+        topLevel
+            .style("width", this._width + "px")
+            .style("height", this._height + "px");
+
 
         // ---------------------------------
         // Layout the showLegend.
