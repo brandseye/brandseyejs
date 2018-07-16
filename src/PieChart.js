@@ -400,17 +400,14 @@ export class PieChart extends Chart {
             show: () => {
                 if (this._element) {
                     let selection = this._element,
-                        data = this.getTransformedData(),
-                        xscale = this._xscale,
-                        xgroup = this._xgroupscale,
-                        yscale = this._yscale;
+                        data = this.getTransformedData();
 
-                    if (selection) selection = d3.select(this._element).select("svg").select("g");
-                    if (!selection.empty() && data && xscale && yscale && xgroup) {
+                    if (selection) selection = d3.select(this._element).select("svg").select(".main-group");
+                    if (!selection.empty() && data) {
                         let labels = selection.select('.chart-labels');
                         if (!labels.empty()) return;
-                        labels.remove()
-                        this.renderLabels(selection, data, xscale, xgroup, yscale, false);
+                        labels.remove();
+                        this.renderLabels(selection, data);
                     }
                 }
 
@@ -435,7 +432,6 @@ export class PieChart extends Chart {
     //------------------------------------------------------
 
     renderLabels(selection, data, animate) {
-        animate = animate === undefined ? true : animate;
         selection.selectAll(".chart-labels").remove();
 
         const radius = this._radius + 15;
@@ -451,6 +447,7 @@ export class PieChart extends Chart {
 
         labels.enter()
             .each((d, i, nodes) => {
+                console.log("Adding label ", d.data._y);
                 const centroid = arc.centroid(d);
                 const radians = d.endAngle - d.startAngle;
                 const arcLength = radians * radius;
@@ -465,7 +462,6 @@ export class PieChart extends Chart {
                         .attr("transform", "translate(" + centroid + ")");
 
                 const bounding = label.node().getBBox();
-                console.log(d.data._y, arcLength, bounding.width > arcLength);
                 if (bounding.width < arcLength) {
                     // label.attr("dx", (bounding.width / 2) * (direction[0] < 0 ? -1 : 1));
                     // label.attr("dy", (bounding.height / 2) * (direction[1] < 0 ? -1 : 1));
@@ -482,12 +478,6 @@ export class PieChart extends Chart {
     }
 
     //------------------------------------------------------
-
-    calcBarGrowth(i, max) {
-        if (max < 10) return i * this._BAR_GROWTH / 2;
-        if (max < 35) return i * this._BAR_GROWTH / 4;
-        return 1;
-    }
 
     getSeriesColour(i) {
         if (i < 0 || !this._colours) return colours.eighteen.midGrey;
