@@ -1,19 +1,10 @@
 import {colours} from './Colours';
+import {Chart} from './Chart';
 
-
-export class ColumnChart {
+export class PieChart extends Chart {
     constructor() {
-        this._x = (d) => d.x;
-        this._y = (d) => d.y;
-        this._height = 420;
-        this._width = 420;
-        this._BAR_GROWTH = 100;
-        this._duration = 300;
-        this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
-            'tooltipShow', 'tooltipHide');
-        this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
-        this._colours = [colours.eighteen.midGrey, colours.eighteen.lightGrey, colours.eighteen.darkGrey];
-        this._backgroundColour = "#FFF"
+        super();
+        this._colours = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
     }
 
     //------------------------------------------------------
@@ -215,19 +206,16 @@ export class ColumnChart {
         }
 
         const data = this.getTransformedData();
-        const keys = this.getKeys();
 
         //------------------------------------------------
         // Set up the SVG area
 
         let topLevel = d3.select(this._element).select("svg");
+        if (topLevel.empty()) topLevel = d3.select(this._element).append("svg");
 
-        if (topLevel.empty()) {
-            topLevel = d3.select(this._element)
-                .append("svg")
-                .attr("width", "100%")
-                .attr("height", "100%");
-        }
+        topLevel
+            .style("width", this._width + "px")
+            .style("height", this._height + "px");
 
         // ---------------------------------
         // Layout the showLegend.
@@ -235,7 +223,7 @@ export class ColumnChart {
         // We do this now because we need to know how much space the legend
         // takes up in order to finish calculating the margins.
 
-        const legendHeight = this.renderLegend();
+        const legendHeight = this.renderLegend(topLevel, data, 0, this._width, this._height, d => d._key);
 
         //----------------------------------
         // Calculate margins.
@@ -256,13 +244,13 @@ export class ColumnChart {
         // }
 
         const width = this._width - margin.left - margin.right,
-            height = this._height - margin.top - margin.bottom;
+              height = this._height - margin.top - margin.bottom;
+        const radius = Math.min(width, height) / 2;
 
         //----------------------------------
         // Calculate scales and so on.
 
-
-
+        let colour = d3.scaleOrdinal(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
 
         //------------------------------
 
@@ -274,7 +262,7 @@ export class ColumnChart {
                 .attr("class", "main-group");
         }
 
-        svg.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        svg.attr("transform", "translate(" + (margin.left + width / 2) + "," + (margin.top + height / 2) + ")");
 
         //---------------------------------
         // Get rid of current labels.
@@ -282,117 +270,109 @@ export class ColumnChart {
             .remove();
 
         //---------------------------------
-        // append the rectangles for the bar chart
-        let groups = svg.select(".bars").selectAll('.group');
+        // append the arcs for the pie chart
 
-        if (groups.empty()) {
-            groups = svg
+        let pie = d3.pie()
+            .sort(null)
+            .value(d => d._y);
+
+        let path = d3.arc()
+            .outerRadius(radius - 10)
+            .innerRadius(0);
+
+        let label = d3.arc()
+            .outerRadius(radius - 40)
+            .innerRadius(radius - 40);
+
+        let arcs = svg.select(".slices").selectAll('.arc');
+
+        if (arcs.empty()) {
+            arcs = svg
                 .append("g")
-                .attr("class", "bars")
-                .selectAll(".group");
+                .attr("class", "slices")
+                .selectAll(".arc");
         }
 
-        svg.select(".bars")
-            .attr("transform", "translate(0, " + height + "), scale(1, -1)")
+        let pieData = pie(data);
+        arcs = arcs.data(pieData);
+        arcs.exit().remove();
 
-        groups = groups.data(data);
+        function arcTween(d, i) {
+            this._current = this._current || (i <= 0 ? { startAngle: 0, endAngle: 0} : pieData[i - 1]);
+            let interpolator = d3.interpolate(this._current, d);
+            this._current = interpolator(0);
 
-        groups.exit().remove();
+            return function(t) {
+                return path(interpolator(t))
+            }
+        }
 
-        // Adding new groups, and hence adding new bars to those groups.
-        groups.enter()
-            .append("g")
-            .attr("class", "group")
-            .attr("transform", d => "translate(" + x(d.key) + ",0)")
-            .attr("width", x.bandwidth())
-            .attr("height", "100%")
-            .merge(groups)
-            .interrupt("groups:move")
-            .transition("groups:move")
-            .attr("transform", d => "translate(" + x(d.key) + ",0)")
-            .attr("width", x.bandwidth())
-            .each((s_d, s_i, nodes) => {
-                let group = d3.select(nodes[s_i])
+        arcs.enter()
+            .append("path")
+                .attr("class", (d, i) => "arc " + "series series-" + i)
+                .style("cursor", "pointer")
+            .on("mouseover", (d, i, nodes) => { // Darken the pie on mouse over
+                // We want to shift the pie out a bit on mouseover.
+                // So we want to find the direction to move the pie in.
+                // We can just ask the path helper to give us the centroid,
+                // normalise it, and that is the direction to move in.
+                const centre = path.centroid(d);
+                const norm = Math.sqrt(centre[0] ** 2 + centre[1] ** 2);
+                centre[0] = centre[0] / norm;
+                centre[1] = centre[1] / norm;
 
-                let bars = group.selectAll(".bar")
-                    .data(s_d.data);
-
-                bars.exit().remove();
-
-                bars.interrupt("bar:move")     // Animate the bars to their new position.
-                    .transition("bar:move")
-                    .attr("width", xGroup.bandwidth())
-                    .attr("x", d => xGroup(d._key))
-                    .attr("y", 0);
-
-                bars.enter()
-                    .append("rect")
-                    .attr("class", (d, i) => "bar series series-" + i)
-                    .attr("x", d => xGroup(d._key))
-                    .attr("y", 0)
-                    .attr("width", xGroup.bandwidth())
-                    .attr("height", 0)
-                    .style("fill", (d, i) => this.getSeriesColour(i))
-                    .style("cursor", "pointer")
-                    .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-                        d3.select(nodes[i])
-                            .interrupt("hover:colour")
-                            .transition("hover:colour")
-                            .duration(400)
-                            .style("fill", d3.hcl(this.getSeriesColour(i)).darker())
-                        this._dispatch.call("tooltipShow", this, {
-                            e: d3.event,
-                            point: d,
-                            series: s_d,
-                            seriesIndex: s_i,
-                            value: d._y
-                        })
-                    })
-                    .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-                        d3.select(nodes[i])
-                            .interrupt("hover:colour")
-                            .transition("hover:colour")
-                            .duration(400)
-                            .style("fill", this.getSeriesColour(i));
-                        this._dispatch.call("tooltipHide", this);
-                    })
-                    .on("click auxclick", (d, i, nodes) => {
-                        this._dispatch.call("elementClick", this, {
-                            e: d3.event,
-                            point: d,
-                            series: d._series,
-                            seriesIndex: s_i,
-                            value: this._y(d)
-                        })
-                    })
-                    .merge(bars)
-                    .interrupt("bar:growth")    // Animate bars growing.
-                    .transition("bar:growth")
-                    .delay((d) => {
-                        return this.calcBarGrowth(s_i, nodes.length);
-                    })
-                    .duration(this._duration)
-                    .style("fill", (d, i) => this.getSeriesColour(i))
-                    .attr("height", d => height - y(d._y));
-
+                d3.select(nodes[i])
+                    .interrupt("hover:colour")
+                    .transition("hover:colour")
+                    .duration(300)
+                        .attr("transform", "translate(" + (centre[0] * 10) + "," + (centre[1] * 10) + "), scale(1.1)")
+                        .style("fill", d3.hcl(this.getSeriesColour(i)).darker());
+                this._dispatch.call("tooltipShow", this, {
+                    e: d3.event,
+                    point: d.data,
+                    series: d.data._series,
+                    seriesIndex: d.data._s_i,
+                    value: d.data._y
+                })
             })
+            .on("mouseout", (d, i, nodes) => { // pie is regular colour on mouse out.
+                d3.select(nodes[i])
+                    .interrupt("hover:colour")
+                    .transition("hover:colour")
+                    .duration(300)
+                        .attr("transform", "translate(0,0)")
+                        .style("fill", this.getSeriesColour(i));
+                this._dispatch.call("tooltipHide", this);
+            })
+            .on("click auxclick", (d, i, nodes) => {
+                this._dispatch.call("elementClick", this, {
+                    e: d3.event,
+                    point: d.data,
+                    series: d.data._series,
+                    seriesIndex: d.data._s_i,
+                    value: d.data._y
+                })
+            })
+            .merge(arcs)
+            .transition()
+            .attrTween("d", arcTween)
+                .attr("fill", (d, i) => this.getSeriesColour(i) );
+
+        // arcs.append("text")
+        //     .attr("transform", function(d) { return "translate(" + label.centroid(d) + ")"; })
+        //     .attr("dy", "0.35em")
+        //     .text(d => {console.log("d is", d); return d.data._y; });
+
 
         // ---------------------------------
         // Labels loaded after our first bar grows.
-        if (this._show_labels) {
-            svg.transition("bar:growth")
-                .on("end", (d, i, nodes) => {
-                    if (i < nodes.length - 1) return;
-                    this.renderLabels(svg, data, x, xGroup, y);
-                })
-        }
-
-        // ---------------------------------
-        // Draw the y axis data label.
-
-        if (this._dataAxisLabel) {
-            this.renderDataAxisLabel(height, margin);
-        }
+        // if (this._show_labels) {
+        //     svg.transition("bar:growth")
+        //         .on("end", (d, i, nodes) => {
+        //             if (i < nodes.length - 1) return;
+        //             this.renderLabels(svg, data, x, xGroup, y);
+        //         })
+        // }
 
         // ---------------------------------
         // Set the background colour
@@ -408,14 +388,6 @@ export class ColumnChart {
                 .lower();
         }
 
-        //---------------------------------
-        // add the Y gridlines
-        svg.call(this.grid, width, d3.axisLeft(y).ticks(5));
-
-        //---------------------------------
-        // axes
-        svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
-        svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
     }
 
     //------------------------------------------------------
@@ -585,84 +557,6 @@ export class ColumnChart {
 
     //------------------------------------------------------
 
-    renderLegend() {
-        const height = this._height;
-        const width = this._width;
-
-        const svg = d3.select(this._element).select('svg');
-        svg.selectAll(".legend").remove();
-
-        // Only if we have multiple series.
-        const data = this.getSortedData();
-        if (!data || data.length < 2) return 0;
-
-        const legend = svg.append("g")
-            .attr("class", "legend");
-
-        let elements = legend.selectAll(".legend-element")
-            .data(data);
-
-        const position_start = 20;
-        let position = position_start;
-        let position_height = 0;
-
-        elements.enter()
-            .append("g")
-            .attr("class", (d, i) => "legend-element series series-" + i)
-            .style("cursor", "default")
-            .each((d, i, nodes) => {
-                let element = d3.select(nodes[i]);
-
-                element.append("rect")
-                    .attr("width", 10)
-                    .attr("height", 10)
-                    .attr("rx", 2)
-                    .attr("ry", 2)
-                    .attr("y", -10)
-                    .style("fill", d => this.getSeriesColour(i));
-
-                element.append("text")
-                    .text(d.key)
-                    .attr("dx", 12)
-                    .style("font-family", "Open Sans, sans-serif")
-                    .style("font-weight", "normal")
-                    .style("font-size", "12px")
-                    .style("fill", colours.eighteen.darkGrey);
-
-                element.append("title")
-                    .text(d.key);
-
-                element.attr("transform", "translate(" + position + "," + position_height + ")");
-                position += element.node().getBBox().width + 10;
-
-                if (position >= width) {
-                    position = position_start;
-                    position_height += 15;
-                    element.attr("transform", "translate(" + position + "," + position_height + ")");
-                }
-
-            })
-            .on("mouseover", (d, i, nodes) => {
-                svg.selectAll(".series:not(.series-" + i + ")")
-                    .interrupt("legend:highlight")
-                    .transition("legend:highlight")
-                    .style("opacity", 0.3);
-            })
-            .on("mouseout", (d, i, nodes) => {
-                svg.selectAll(".series")
-                    .interrupt("legend:highlight")
-                    .transition("legend:highlight")
-                    .style("opacity", 1);
-            })
-            .style("opacity", 0)
-            .transition()
-            .duration(1000)
-            .style("opacity", 1);
-
-        const legendHeight = legend.node().getBBox().height;
-        legend.attr("transform", "translate(0," + (height - legendHeight) + ")");
-        return legendHeight;
-    }
 
     //------------------------------------------------------
 
@@ -783,24 +677,17 @@ export class ColumnChart {
 
         let results = [];
 
-        data.forEach((series, s_i) => {
-            series.values.forEach((d, d_i) => {
-                if (results.length <= d_i) {
-                    results.push({
-                        data: [],
-                        key: this._xAxisOverride ? this._xAxisOverride[this._x(d)] : this._x(d)
-                    })
-                }
+        let series = data[0];
+        series.values.forEach((d, d_i) => {
 
-                let field = results[d_i];
-                field.data.push(Object.assign({
-                    _series: series,
-                    _s_i: s_i,
-                    _key: series.key,
-                    _y: this._y(d)
-                }, d));
-            })
-        })
+            results.push(Object.assign({
+                _y: this._y(d),
+                _series_key: series.key,
+                _s_i: 0,
+                _series: series,
+                _key: this._xAxisOverride ? this._xAxisOverride[this._x(d)] : this._x(d)
+            }, d));
+        });
 
         return results;
     }
