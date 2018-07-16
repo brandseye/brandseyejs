@@ -246,6 +246,7 @@ export class PieChart extends Chart {
         const width = this._width - margin.left - margin.right,
               height = this._height - margin.top - margin.bottom;
         const radius = Math.min(width, height) / 2;
+        this._radius = radius;
 
         //----------------------------------
         // Calculate scales and so on.
@@ -275,14 +276,11 @@ export class PieChart extends Chart {
         let pie = d3.pie()
             .sort(null)
             .value(d => d._y);
+        this._pie = pie;
 
         let path = d3.arc()
             .outerRadius(radius - 10)
             .innerRadius(0);
-
-        let label = d3.arc()
-            .outerRadius(radius - 40)
-            .innerRadius(radius - 40);
 
         let arcs = svg.select(".slices").selectAll('.arc');
 
@@ -355,7 +353,7 @@ export class PieChart extends Chart {
             })
             .merge(arcs)
             .transition()
-            .attrTween("d", arcTween)
+                .attrTween("d", arcTween)
                 .attr("fill", (d, i) => this.getSeriesColour(i) );
 
         // arcs.append("text")
@@ -366,13 +364,13 @@ export class PieChart extends Chart {
 
         // ---------------------------------
         // Labels loaded after our first bar grows.
-        // if (this._show_labels) {
-        //     svg.transition("bar:growth")
-        //         .on("end", (d, i, nodes) => {
-        //             if (i < nodes.length - 1) return;
-        //             this.renderLabels(svg, data, x, xGroup, y);
-        //         })
-        // }
+        if (this._show_labels) {
+            svg.transition("bar:growth")
+                .on("end", (d, i, nodes) => {
+                    if (i < nodes.length - 1) return;
+                    this.renderLabels(svg, data);
+                })
+        }
 
         // ---------------------------------
         // Set the background colour
@@ -381,10 +379,10 @@ export class PieChart extends Chart {
         if (this._backgroundColour) {
             d3.select(this._element).select("svg")
                 .append("rect")
-                .attr("class", "background")
-                .attr("width", "100%")
-                .attr("height", "100%")
-                .style("fill", this._backgroundColour)
+                    .attr("class", "background")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .style("fill", this._backgroundColour)
                 .lower();
         }
 
@@ -436,208 +434,51 @@ export class PieChart extends Chart {
 
     //------------------------------------------------------
 
-    renderLabels(selection, data, xscale, xgroup, yscale, animate) {
+    renderLabels(selection, data, animate) {
         animate = animate === undefined ? true : animate;
         selection.selectAll(".chart-labels").remove();
 
+        const radius = this._radius + 15;
+
+        let arc = d3.arc()
+            .outerRadius(radius)
+            .innerRadius(radius);
+
         let labels = selection.append("g")
             .attr("class", "chart-labels")
-            // .selectAll(".chart-label")
             .selectAll(".label-group")
-            .data(data)
+            .data(this._pie(data));
 
-        let maxWidth = 0;     // For calculating the max width of text.
-        let fontSize = 12;    // Our initial font size.
-        const buffer = 5;     // Buffer space between words and the top of a bar.
-        const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : -buffer;
+        labels.enter()
+            .each((d, i, nodes) => {
+                const centroid = arc.centroid(d);
+                const radians = d.endAngle - d.startAngle;
+                const arcLength = radians * radius;
 
-        labels.enter().each((series, s_i, s_nodes) => {
-            let group = d3.select(s_nodes[s_i])
-                .append("g")
-                .attr("class", "label-group")
-                .attr("transform", d => "translate(" + xscale(d.key) + ",0)")
-                .selectAll(".chart-label")
-                .data(series.data)
-                .enter()
-                .each((d, i, nodes) => {
-
-                    // Want to figure out if the label is too dark / light for the
-                    // bar.
-                    let invertedColor = d3.hcl(this.getSeriesColour(i));
-                    invertedColor.l += Math.min(invertedColor.l + 50, 100);
-                    let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
-
-                    let ypos = yscale(d._y);
-                    let dy = calcDy(ypos);
-                    let text = d3.select(nodes[i])
-                        .append("text")
-                        .text(this._labelFormat(d._y))
-                        .attr("class", "chart-label")
-                        .attr("y", ypos)
-                        .attr("dx", animate ? -15 : 0)
-                        .attr("dy", dy)
-                        .style("opacity", 0)
-                        .style("pointer-events", "none")
+                let label = d3.select(nodes[i])
+                    .append("text")
+                    .text(d => this._labelFormat(d.data._y))
                         .style("font-family", "Open Sans, sans-serif")
-                        .style("font-weight", "normal")
-                        .style("font-size", fontSize + "px")
-                        .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
+                        .style("font-size", "12px")
+                        .style("fill", colours.eighteen.darkGrey)
+                        .style("opacity", 0)
+                        .attr("transform", "translate(" + centroid + ")");
 
-                    // Set the x position, which is based on width.
-                    const width = text.node().getBBox().width;
-                    maxWidth = Math.max(width, maxWidth);
-                    text
-                        .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+                const bounding = label.node().getBBox();
+                console.log(d.data._y, arcLength, bounding.width > arcLength);
+                if (bounding.width < arcLength) {
+                    // label.attr("dx", (bounding.width / 2) * (direction[0] < 0 ? -1 : 1));
+                    // label.attr("dy", (bounding.height / 2) * (direction[1] < 0 ? -1 : 1));
+                    label.attr("dx", -(bounding.width / 2));
+                    label.attr("dy", (bounding.height / 2));
 
-                    text
-                        .transition("labels")
-                        .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
+                    label
+                        .transition()
                         .duration(this._duration)
-                        .attr("dx", 0)
                         .style("opacity", 1)
-                })
-        })
+                }
 
-
-        // Figure out if we don't have enough space to show our labels.
-        // We then want to resize, if possible.
-        if (xgroup.bandwidth() < maxWidth * 1.05) {
-            let scale = maxWidth / xgroup.bandwidth() * 1.05;
-            fontSize = Math.floor(fontSize / scale);
-
-            if (fontSize < 8) {
-                // The labels are too small.
-                labels.enter().selectAll("text").remove();
-            } else {
-                labels.enter()
-                    .merge(labels)
-                    .selectAll("text")
-                    .style("font-size", fontSize + "px")
-                    .each((d, i, nodes) => {
-                        const text = d3.select(nodes[i]);
-                        const width = text.node().getBBox().width;
-                        text
-                            .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                            .attr("dy", calcDy(d._y));
-                    })
-            }
-        }
-    }
-
-    //------------------------------------------------------
-
-    renderDataAxisLabel(height, margins) {
-        let svg = d3.select(this._element).select('svg');
-        svg.selectAll(".data-labels").remove();
-
-        if (!this._dataAxisLabel) return;
-        let text = this._dataAxisLabel;
-        if (text.long) text = text.long;
-
-        let x = -(margins.top + height / 2);
-
-        let label = svg.append("g")
-            .attr("class", "data-labels")
-            .append("text")
-            .text(text)
-            .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", "12px")
-            .style("font-style", "italic")
-            .style("fill", colours.eighteen.darkGrey);
-
-        let width = label.node().getBBox().width;
-        if (width >= height && this._dataAxisLabel.short) {
-            label.text(this._dataAxisLabel.short);
-            width = label.node().getBBox().width;
-        }
-
-        label.attr("dx", -width / 2);
-    }
-
-    //------------------------------------------------------
-
-
-    //------------------------------------------------------
-
-    grid(selection, width, axis) {
-        selection.select(".grid").remove();
-
-        let grid = selection.append("g")
-            .attr("class", "grid")
-            .call(axis
-                .tickSize(-width)
-                .tickFormat("")
-            );
-
-        grid.selectAll("line")
-            .style("stroke", colours.eighteen.lightGrey);
-        grid.selectAll(".domain").remove();
-
-        grid
-            .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
-            .style("opacity", 0)
-            .transition()
-            .delay(500)
-            .duration(500)
-            .style("opacity", 1);
-    }
-
-    //------------------------------------------------------
-
-    xaxis(selection, height, width, xaxis) {
-        selection.select(".x-axis").remove();
-        let axis = selection.append("g")
-            .attr("class", "x-axis")
-            .attr("transform", "translate(0," + height + ")")
-            .style("opacity", 0)
-            .call(xaxis);
-
-        axis.select(".domain").remove();
-
-        let max = 0;
-        const fontSize = 12;
-        axis.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", fontSize + "px")
-            .style("fill", colours.eighteen.darkGrey)
-            .nodes()
-            .forEach(text => max = Math.max(max, text.getBBox().width));
-
-        if (max >= width - 10) {
-            const bad = max >= width * 2;
-            const angle = bad ? -90 : -30;
-            const fontSize = width <= 13 ? 8 : 12;
-            const x = bad ? -fontSize : 0;
-            const y = bad ? 5 : 2;
-
-            axis.selectAll("text")
-                .style('text-anchor', 'end')
-                .style("font-size", fontSize + "px")
-                .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
-        }
-
-        axis
-            .transition()
-            .duration(1000)
-            .style("opacity", 1);
-    }
-
-    //------------------------------------------------------
-
-    yaxis(selection, axis) {
-        selection.select(".y-axis").remove();
-        let x = selection.append("g")
-            .attr("class", "y-axis")
-            .call(axis.tickSize(0).tickPadding(10))
-            .style("opacity", 0)
-            .transition()
-            .duration(1000)
-            .style("opacity", 1);
-
-        x.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("fill", colours.eighteen.darkGrey)
+            })
     }
 
     //------------------------------------------------------

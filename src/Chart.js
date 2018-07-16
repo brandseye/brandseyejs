@@ -31,7 +31,6 @@ export class Chart {
         if (!data || data.length < min) return 0;
 
         let maxWidth = maxBounding(svg, data.map(getter)).width;
-        console.log("max width", maxWidth);
 
         const legend = svg.append("g")
             .attr("class", "legend");
