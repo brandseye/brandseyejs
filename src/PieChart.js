@@ -447,7 +447,6 @@ export class PieChart extends Chart {
 
         labels.enter()
             .each((d, i, nodes) => {
-                console.log("Adding label ", d.data._y);
                 const centroid = arc.centroid(d);
                 const radians = d.endAngle - d.startAngle;
                 const arcLength = radians * radius;
