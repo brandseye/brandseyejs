@@ -266,7 +266,7 @@ export class LineChart extends Chart {
 
         const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
         x.domain(d3.extent(allData, d => d._x));
-        y.domain([0, d3.max(allData, d => d._y)]);
+        y.domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)]);
 
         //------------------------------
 
@@ -282,15 +282,73 @@ export class LineChart extends Chart {
 
         //---------------------------------
         // append the lines
-        let lines = svg.select(".lines").selectAll('.line');
+        let lineGroup = svg.select(".lines");
+        lineGroup.selectAll("circle").remove();
 
-        if (lines.empty()) {
-            lines = svg
+        let circle = false;
+        let lastMouse = null;
+        let lastMin = null;
+
+        if (lineGroup.empty()) {
+            lineGroup = svg
                 .append("g")
                 .attr("class", "lines")
-                .selectAll(".line");
+
+            lineGroup
+                .append("rect")
+                .style("opacity", "0")
+                .attr("width", "100%")
+                .attr("height", "100%");
         }
 
+        lineGroup
+            .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
+                const mouse = d3.mouse(nodes[i]);
+
+                const xval = x.invert(mouse[0]);
+                const yval = y.invert(mouse[1]);
+                // let min = this.getClosestPoint(xval, yval, this.getTransformedData()[0].data);
+
+                let mins = data.map(d => this.getClosestPoint(xval, yval, d.data));
+                mins.forEach(d => d._dist =  [x(d._x), y(d._y)])
+
+                mins = mins.filter(min => {
+                    const minScreenDist = Math.sqrt((mouse[0] - min._dist[0]) ** 2 + (mouse[1] - min._dist[1]) ** 2);
+                    min._min_screen = minScreenDist;
+                    return minScreenDist < 100;
+                });
+
+
+                if (!mins || !mins.length) {
+                    lastMouse = null;
+                    lineGroup.selectAll("circle").remove();
+                    return;
+                }
+
+                mins = mins.sort((lhs, rhs) => lhs._min_screen - rhs._min_screen);
+                let min = mins[0];
+
+                if (circle) {
+                    if (lastMin && min._x.getTime() === lastMin._x.getTime()) return;
+                    lineGroup.selectAll("circle").remove();
+                }
+
+                circle = true;
+                lastMouse = mouse;
+                lastMin = min;
+                lineGroup
+                    .append("circle")
+                    .attr("cx", x(min._x))
+                    .attr("cy", y(min._y))
+                    .attr("r", 10)
+                    .attr("fill", this.getSeriesColour(min._s_i))
+                    .style("opacity", 0.1)
+                    .transition()
+                    .style("opacity", 0.5)
+
+            });
+
+        let lines = lineGroup.selectAll('.line');
         lines = lines.data(data);
 
         lines.exit().remove();
@@ -304,15 +362,20 @@ export class LineChart extends Chart {
             .append("path")
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", "steelblue")
+                .attr("stroke", (d, i) => this.getSeriesColour(i))
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
                 .attr("stroke-width", 1.5)
+                .style("opacity", 0)
+
+            // .transition()
+            // .duration(this._duration)
+                .style("opacity", 1)
                 .attr("d", d => line(d.data));
 
         lines
+            // .transition()
             .attr("d", d => line(d.data));
-
 
 
         // Adding new groups, and hence adding new bars to those groups.
@@ -430,7 +493,7 @@ export class LineChart extends Chart {
 
         //---------------------------------
         // axes
-        // svg.call(this.xaxis, height, x.bandwidth(), d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat));
+        svg.call(this.xaxis, height, d3.axisBottom(x)); //.tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat)); //
         svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
     }
 
@@ -626,7 +689,7 @@ export class LineChart extends Chart {
 
     //------------------------------------------------------
 
-    xaxis(selection, height, width, xaxis) {
+    xaxis(selection, height, xaxis) {
         selection.select(".x-axis").remove();
         let axis = selection.append("g")
             .attr("class", "x-axis")
@@ -636,27 +699,27 @@ export class LineChart extends Chart {
 
         axis.select(".domain").remove();
 
-        let max = 0;
-        const fontSize = 12;
-        axis.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", fontSize + "px")
-            .style("fill", colours.eighteen.darkGrey)
-            .nodes()
-            .forEach(text => max = Math.max(max, text.getBBox().width));
-
-        if (max >= width - 10) {
-            const bad = max >= width * 2;
-            const angle = bad ? -90 : -30;
-            const fontSize = width <= 13 ? 8 : 12;
-            const x = bad ? -fontSize : 0;
-            const y = bad ? 5 : 2;
-
-            axis.selectAll("text")
-                .style('text-anchor', 'end')
-                .style("font-size", fontSize + "px")
-                .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
-        }
+        // let max = 0;
+        // const fontSize = 12;
+        // axis.selectAll("text")
+        //     .style("font-family", "Open Sans, sans-serif")
+        //     .style("font-size", fontSize + "px")
+        //     .style("fill", colours.eighteen.darkGrey)
+        //     .nodes()
+        //     .forEach(text => max = Math.max(max, text.getBBox().width));
+        //
+        // if (max >= width - 10) {
+        //     const bad = max >= width * 2;
+        //     const angle = bad ? -90 : -30;
+        //     const fontSize = width <= 13 ? 8 : 12;
+        //     const x = bad ? -fontSize : 0;
+        //     const y = bad ? 5 : 2;
+        //
+        //     axis.selectAll("text")
+        //         .style('text-anchor', 'end')
+        //         .style("font-size", fontSize + "px")
+        //         .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
+        // }
 
         axis
             .transition()
@@ -745,5 +808,21 @@ export class LineChart extends Chart {
         if (!data || !data.length) return [];
 
         return [...new Set(data.map(d => d.key))]
+    }
+
+    getClosestPoint(xval, yval, data) {
+        let calcDist = d => Math.sqrt(Math.abs(d._x - xval) ** 2 + (d._y - yval) ** 2);
+        let min = data[0];
+        let minDist = calcDist(min);
+
+        data.forEach(d => {
+            let dist = calcDist(d);
+            if (dist < minDist) {
+                minDist = dist;
+                min = d;
+            }
+        });
+
+        return min;
     }
 }
