@@ -205,8 +205,6 @@ export class LineChart extends Chart {
         const data = this.getTransformedData();
         const keys = this.getKeys();
 
-        console.log("Data is: ", data);
-
         //------------------------------------------------
         // Set up the SVG area
 
@@ -338,13 +336,25 @@ export class LineChart extends Chart {
                 lastMin = min;
                 lineGroup
                     .append("circle")
-                    .attr("cx", x(min._x))
-                    .attr("cy", y(min._y))
-                    .attr("r", 10)
-                    .attr("fill", this.getSeriesColour(min._s_i))
-                    .style("opacity", 0.1)
+                        .attr("cx", x(min._x))
+                        .attr("cy", y(min._y))
+                        .attr("r", 10)
+                        .attr("fill", this.getSeriesColour(min._s_i))
+                        .style("opacity", 0.1)
+                    .on("mouseover", () => {
+                        this._dispatch.call("tooltipShow", this, {
+                            e: d3.event,
+                            point: min,
+                            series: data[min._s_i],
+                            seriesIndex: min._s_i,
+                            value: min._y
+                        })
+                    })
+                    .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+                        this._dispatch.call("tooltipHide", this);
+                    })
                     .transition()
-                    .style("opacity", 0.5)
+                        .style("opacity", 0.5)
 
             });
 
