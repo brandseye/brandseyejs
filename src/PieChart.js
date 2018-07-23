@@ -454,8 +454,8 @@ export class PieChart extends Chart {
                 let label = d3.select(nodes[i])
                     .append("text")
                     .text(d => this._labelFormat(d.data._y))
-                        .style("font-family", "Open Sans, sans-serif")
-                        .style("font-size", "12px")
+                        // .style("font-family", "Open Sans, sans-serif")
+                        // .style("font-size", "12px")
                         .style("fill", colours.eighteen.darkGrey)
                         .style("opacity", 0)
                         .attr("transform", "translate(" + centroid + ")");

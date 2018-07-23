@@ -600,9 +600,9 @@ export class LineChart extends Chart {
                         .attr("dy", dy)
                         .style("opacity", 0)
                         .style("pointer-events", "none")
-                        .style("font-family", "Open Sans, sans-serif")
-                        .style("font-weight", "normal")
-                        .style("font-size", fontSize + "px")
+                        // .style("font-family", "Open Sans, sans-serif")
+                        // .style("font-weight", "normal")
+                        // .style("font-size", fontSize + "px")
                         .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
 
                     // Set the x position, which is based on width.
@@ -663,9 +663,9 @@ export class LineChart extends Chart {
             .append("text")
             .text(text)
             .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", "12px")
-            .style("font-style", "italic")
+            // .style("font-family", "Open Sans, sans-serif")
+            // .style("font-size", "12px")
+            // .style("font-style", "italic")
             .style("fill", colours.eighteen.darkGrey);
 
         let width = label.node().getBBox().width;
@@ -714,28 +714,6 @@ export class LineChart extends Chart {
 
         axis.select(".domain").remove();
 
-        // let max = 0;
-        // const fontSize = 12;
-        // axis.selectAll("text")
-        //     .style("font-family", "Open Sans, sans-serif")
-        //     .style("font-size", fontSize + "px")
-        //     .style("fill", colours.eighteen.darkGrey)
-        //     .nodes()
-        //     .forEach(text => max = Math.max(max, text.getBBox().width));
-        //
-        // if (max >= width - 10) {
-        //     const bad = max >= width * 2;
-        //     const angle = bad ? -90 : -30;
-        //     const fontSize = width <= 13 ? 8 : 12;
-        //     const x = bad ? -fontSize : 0;
-        //     const y = bad ? 5 : 2;
-        //
-        //     axis.selectAll("text")
-        //         .style('text-anchor', 'end')
-        //         .style("font-size", fontSize + "px")
-        //         .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
-        // }
-
         axis
             .selectAll("text")
             .style('text-anchor', 'end')
@@ -760,7 +738,7 @@ export class LineChart extends Chart {
             .style("opacity", 1);
 
         x.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
+            // .style("font-family", "Open Sans, sans-serif")
             .style("fill", colours.eighteen.darkGrey)
     }
 

@@ -3,8 +3,8 @@
  * much pixel space the text takes up.
  */
 export function maxBounding(selection, text, font, fontSize) {
-    font = font || "Open Sans, sans-serif";
-    fontSize = fontSize || "12";
+    // font = font || "Open Sans, sans-serif";
+    // fontSize = fontSize || "12";
 
     let width = 0;
     let height = 0;
@@ -17,9 +17,9 @@ export function maxBounding(selection, text, font, fontSize) {
         .enter()
         .append("text")
         .text(d => d)
-            .style("font-family", font)
-            .style("font-weight", "normal")
-            .style("font-size", fontSize + "px")
+            // .style("font-family", font)
+            // .style("font-weight", "normal")
+            // .style("font-size", fontSize + "px")
         .each((d, i, nodes) => {
             let node = nodes[i];
             let bb = node.getBBox();

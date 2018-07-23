@@ -514,9 +514,9 @@ export class ColumnChart extends Chart {
                         .attr("dy", dy)
                         .style("opacity", 0)
                         .style("pointer-events", "none")
-                        .style("font-family", "Open Sans, sans-serif")
-                        .style("font-weight", "normal")
-                        .style("font-size", fontSize + "px")
+                        // .style("font-family", "Open Sans, sans-serif")
+                        // .style("font-weight", "normal")
+                        // .style("font-size", fontSize + "px")
                         .style("fill", dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : colours.eighteen.darkGrey);
 
                     // Set the x position, which is based on width.
@@ -580,9 +580,9 @@ export class ColumnChart extends Chart {
             .append("text")
             .text(text)
             .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", "12px")
-            .style("font-style", "italic")
+            // .style("font-family", "Open Sans, sans-serif")
+            // .style("font-size", "12px")
+            // .style("font-style", "italic")
             .style("fill", colours.eighteen.darkGrey);
 
         let width = label.node().getBBox().width;
@@ -634,8 +634,8 @@ export class ColumnChart extends Chart {
         let max = 0;
         const fontSize = 12;
         axis.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", fontSize + "px")
+            // .style("font-family", "Open Sans, sans-serif")
+            // .style("font-size", fontSize + "px")
             .style("fill", colours.eighteen.darkGrey)
             .nodes()
             .forEach(text => max = Math.max(max, text.getBBox().width));
@@ -672,7 +672,7 @@ export class ColumnChart extends Chart {
             .style("opacity", 1);
 
         x.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
+            // .style("font-family", "Open Sans, sans-serif")
             .style("fill", colours.eighteen.darkGrey)
     }
 

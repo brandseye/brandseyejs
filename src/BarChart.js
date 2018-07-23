@@ -499,8 +499,8 @@ export class BarChart extends Chart {
                             .attr("dx", animate ? -15 : 0)
                             .style("opacity", 0)
                             .style("pointer-events", "none")
-                            .style("font-family", "Open Sans, sans-serif")
-                            .style("font-weight", "normal")
+                            // .style("font-family", "Open Sans, sans-serif")
+                            // .style("font-weight", "normal")
                             .style("font-size", fontSize + "px");
 
 
@@ -565,9 +565,9 @@ export class BarChart extends Chart {
             .append("text")
             .text(text)
             .attr("transform", "translate(" + x + "," + (this._height - 15) + ")")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", "12px")
-            .style("font-style", "italic")
+            // .style("font-family", "Open Sans, sans-serif")
+            // .style("font-size", "12px")
+            // .style("font-style", "italic")
             .style("fill", colours.eighteen.darkGrey);
 
         let textWidth = label.node().getBBox().width;
@@ -620,8 +620,8 @@ export class BarChart extends Chart {
         let max = 0;
         const fontSize = 12;
         axis.selectAll("text")
-            .style("font-family", "Open Sans, sans-serif")
-            .style("font-size", fontSize + "px")
+            // .style("font-family", "Open Sans, sans-serif")
+            // .style("font-size", fontSize + "px")
             .style("fill", colours.eighteen.darkGrey)
             .nodes()
             .forEach(text => max = Math.max(max, text.getBBox().width));
@@ -646,7 +646,7 @@ export class BarChart extends Chart {
                 .style("opacity", 1);
 
         axis.selectAll("text")
-                .style("font-family", "Open Sans, sans-serif")
+                // .style("font-family", "Open Sans, sans-serif")
                 .style("fill", colours.eighteen.darkGrey)
     }
 
