@@ -19,14 +19,16 @@ export class Chart {
     }
 
     renderLegend(svg, data, min, width, height, getter) {
+        svg.selectAll(".legend").remove();
+        if (!this._show_legend) return 0;
+
         min = min || 2;
         data = data || this.getSortedData();
         width = width || this._width;
         height = height || this._height;
         getter = getter || (d => d.key);
         svg = svg || d3.select(this._element).select("svg");
-        svg.selectAll(".legend").remove();
-
+        
         // Only if we have multiple series.
         if (!data || data.length < min) return 0;
 
