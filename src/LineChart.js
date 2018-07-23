@@ -4,6 +4,11 @@ import {Chart} from './Chart';
 
 export class LineChart extends Chart {
 
+    constructor() {
+        super();
+        this._xAxisTickFormat = d3.timeFormat("%B %d");
+    }
+
     //------------------------------------------------------
 
     data(data) {
@@ -503,7 +508,7 @@ export class LineChart extends Chart {
 
         //---------------------------------
         // axes
-        svg.call(this.xaxis, height, d3.axisBottom(x)); //.tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat)); //
+        svg.call(this.xaxis, height, d3.axisBottom(x).tickSize(0).tickPadding(5).tickFormat(this._xAxisTickFormat)); //); //
         svg.call(this.yaxis, d3.axisLeft(y).ticks(5).tickFormat(this._tickFormat));
     }
 
@@ -730,6 +735,11 @@ export class LineChart extends Chart {
         //         .style("font-size", fontSize + "px")
         //         .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
         // }
+
+        axis
+            .selectAll("text")
+            .style('text-anchor', 'end')
+            .attr('transform', 'rotate(-30, 0,0)');
 
         axis
             .transition()

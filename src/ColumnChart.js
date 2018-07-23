@@ -485,6 +485,15 @@ export class ColumnChart extends Chart {
         const buffer = 5;     // Buffer space between words and the top of a bar.
         const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : -buffer;
 
+        // Want to figure out if the label is too dark / light for the
+        // bar.
+        const getInvertedColor = (i) => {
+            let invertedColor = d3.hcl(this.getSeriesColour(i));
+            invertedColor.l += Math.min(invertedColor.l + 50, 100);
+            return invertedColor;
+        };
+        const shouldInvert = (i) => d3.hcl(this.getSeriesColour(i)).l < 60;
+
         labels.enter().each((series, s_i, s_nodes) => {
             let group = d3.select(s_nodes[s_i])
                 .append("g")
@@ -494,13 +503,6 @@ export class ColumnChart extends Chart {
                 .data(series.data)
                 .enter()
                 .each((d, i, nodes) => {
-
-                    // Want to figure out if the label is too dark / light for the
-                    // bar.
-                    let invertedColor = d3.hcl(this.getSeriesColour(i));
-                    invertedColor.l += Math.min(invertedColor.l + 50, 100);
-                    let invert = d3.hcl(this.getSeriesColour(i)).l < 60;
-
                     let ypos = yscale(d._y);
                     let dy = calcDy(ypos);
                     let text = d3.select(nodes[i])
@@ -515,7 +517,7 @@ export class ColumnChart extends Chart {
                         .style("font-family", "Open Sans, sans-serif")
                         .style("font-weight", "normal")
                         .style("font-size", fontSize + "px")
-                        .style("fill", dy > 0 && invert ? invertedColor.toString() : colours.eighteen.darkGrey);
+                        .style("fill", dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : colours.eighteen.darkGrey);
 
                     // Set the x position, which is based on width.
                     const width = text.node().getBBox().width;
@@ -550,9 +552,12 @@ export class ColumnChart extends Chart {
                     .each((d, i, nodes) => {
                         const text = d3.select(nodes[i]);
                         const width = text.node().getBBox().width;
+                        const dy = calcDy(d._y);
+
                         text
                             .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                            .attr("dy", calcDy(d._y));
+                            .style("fill", dy > 0 && shouldInvert(i) ? getInvertedColor(i).toString() : colours.eighteen.darkGrey)
+                            .attr("dy", dy);
                     })
             }
         }
