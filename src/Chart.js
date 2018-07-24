@@ -19,6 +19,7 @@ export class Chart {
     }
 
     renderLegend(svg, data, min, width, height, getter) {
+        svg = svg || d3.select(this._element).select("svg");
         svg.selectAll(".legend").remove();
         if (!this._show_legend) return 0;
 
@@ -27,8 +28,7 @@ export class Chart {
         width = width || this._width;
         height = height || this._height;
         getter = getter || (d => d.key);
-        svg = svg || d3.select(this._element).select("svg");
-        
+
         // Only if we have multiple series.
         if (!data || data.length < min) return 0;
 

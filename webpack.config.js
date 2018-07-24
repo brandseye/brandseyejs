@@ -1,11 +1,20 @@
-var path = require('path');
+const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: {
+      "b3js": "./src/index.js",
+      "b3js.min": "./src/index.js",
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'b3js.js',
-      library: 'b3js'
+    filename: '[name].js', library: 'b3js'
+  },
+  optimization: {
+      minimize: true,
+      minimizer: [new UglifyJsPlugin({
+          include: /\.min\.js$/
+      })]
   },
   externals: {
     lodash: {
