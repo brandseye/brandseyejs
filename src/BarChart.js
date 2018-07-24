@@ -564,10 +564,7 @@ export class BarChart extends Chart {
             .attr("class", "data-labels")
             .append("text")
             .text(text)
-            .attr("transform", "translate(" + x + "," + (this._height - 15) + ")")
-            // .style("font-family", "Open Sans, sans-serif")
-            // .style("font-size", "12px")
-            // .style("font-style", "italic")
+            .attr("transform", "translate(" + x + "," + (this._height - margins.bottom + 50) + ")")
             .style("fill", colours.eighteen.darkGrey);
 
         let textWidth = label.node().getBBox().width;
