@@ -252,15 +252,15 @@ export class ColumnChart extends Chart {
 
 
         const x = d3.scaleBand()
-            .range([0, width])
+            .rangeRound([0, width])
             .padding(this._data.length > 1 ? 0.08 : 0.02);
 
         const xGroup = d3.scaleBand()
             .padding(0);
 
         const y = d3.scaleLinear()
-            .range([height, 0])
-            .nice(5);
+            .rangeRound([height, 0])
+            .nice();
         this._xscale = x;
         this._xgroupscale = xGroup;
         this._yscale = y;

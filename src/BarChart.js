@@ -245,11 +245,11 @@ export class BarChart extends Chart {
         // Calculate scales and so on.
 
         const x = d3.scaleLinear()
-            .range([0, width])
-            .nice(5);
+            .rangeRound([0, width])
+            .nice();
 
         const y = d3.scaleBand()
-            .range([0, height])
+            .rangeRound([0, height])
             .padding(this._data.length > 1 ? 0.08 : 0.02);
 
         const yGroup = d3.scaleBand()
