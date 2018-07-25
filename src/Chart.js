@@ -35,6 +35,7 @@ export class Chart {
         this._xAxisTickFormat = this._tickFormat = this._labelFormat = d => d.toString();
         this._colours = [ colours.eighteen.midGrey, colours.eighteen.lightGrey, colours.eighteen.darkGrey ];
         this._backgroundColour = "#FFF";
+        this._interbarProportion = null;
     }
 
     renderLegend(svg, data, min, width, height, getter) {

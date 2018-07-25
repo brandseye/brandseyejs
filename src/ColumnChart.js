@@ -206,6 +206,12 @@ export class ColumnChart extends Chart {
         return this;
     }
 
+    interbarProportion(proportion) {
+        if (!arguments.length) return this._interbarProportion;
+        this._interbarProportion = proportion;
+        return this;
+    }
+
     //------------------------------------------------------
 
     dispatch() {
@@ -269,10 +275,9 @@ export class ColumnChart extends Chart {
         //----------------------------------
         // Calculate scales and so on.
 
-
         const x = d3.scaleBand()
             .rangeRound([0, width])
-            .padding(this._data.length > 1 ? 0.08 : 0.02);
+            .padding(this._interbarProportion !== null ? this._interbarProportion : (this._data.length > 1 ? 0.08 : 0.02));
 
         const xGroup = d3.scaleBand()
             .padding(0);
