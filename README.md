@@ -1,44 +1,29 @@
-# BrandsEye.js
+# B3JS
 
-BrandsEye.js is a javascript library for display graphs, and for pulling data from
-a BrandsEye account. It's built on top of D3 and NVD3.
+B3js is a javascript library for display graphs in BrandsEye. It's built using D3.
 
 ## Using
 
 BrandsEye.js makes use of the following libraries.
 
 - D3
-- moment.js
 
 ## Building BrandsEye.js
 
     git clone https://github.com/brandseye/brandseyejs.git
     cd brandseyejs
     yarn install
-    yarn build # For a dev build
+    yarn build # Produces full and minified code in the dist directory
 
 
 ## Documentation
 
-Documentation is produced with [docco](http://jashkenas.github.io/docco/) and can then be found in the doc directory.
-The live documentation can be found [here](http://brandseye.github.io/brandseyejs/brandseye.html).
+There is currently minimal documentation.
 
 ## Examples
 
 There are many examples of the charts, and pulling data from a BrandsEye account, in the
-examples directory. The following examples are provided:
-
-- simple.html, which shows how to display a basic chart
-- gallery.html, which shows a list of the various available charts
-- metrics.html, which shows how to use the BrandsEye metrics available in BrandsEye.js
-
-Only metrics.html requires a BrandsEye account.
-
-## Distributed code
-
-- moment.js http://en.wikipedia.org/wiki/MIT_License
-- D3 Word Cloud Layout https://github.com/jasondavies/d3-cloud This has been patched to provide
-  support for repeatable random number generation (hence, repeatable layouts).
+dist directory. 
 
 ## License
 
