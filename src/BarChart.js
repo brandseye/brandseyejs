@@ -1,3 +1,23 @@
+// Copyright (C) 2013-2014, 2018 BrandsEye (PTY) LTD
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify,
+//     merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to the following
+// conditions:
+//
+//     The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//     INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+// CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+// OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 import { colours } from './Colours';
 import { maxBounding } from "./helpers";
 import { Chart } from "./Chart";
@@ -499,8 +519,6 @@ export class BarChart extends Chart {
                             .attr("dx", animate ? -15 : 0)
                             .style("opacity", 0)
                             .style("pointer-events", "none")
-                            // .style("font-family", "Open Sans, sans-serif")
-                            // .style("font-weight", "normal")
                             .style("font-size", fontSize + "px");
 
 
@@ -521,31 +539,6 @@ export class BarChart extends Chart {
                 })
         });
 
-
-
-        // Figure out if we don't have enough space to show our labels.
-        // We then want to resize, if possible.
-        // if (xgroup.bandwidth() < maxWidth * 1.05) {
-        //     let scale = maxWidth / xgroup.bandwidth() * 1.05;
-        //     fontSize = Math.floor(fontSize / scale);
-        //
-        //     if (fontSize < 8) {
-        //         // The labels are too small.
-        //         labels.enter().selectAll("text").remove();
-        //     } else {
-        //         labels.enter()
-        //             .merge(labels)
-        //             .selectAll("text")
-        //             .style("font-size", fontSize + "px")
-        //             .each((d, i, nodes) => {
-        //                 const text = d3.select(nodes[i]);
-        //                 const width = text.node().getBBox().width;
-        //                 text
-        //                     .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-        //                     .attr("dy", calcDy(d._y));
-        //             })
-        //     }
-        // }
     }
 
     //------------------------------------------------------
@@ -617,8 +610,6 @@ export class BarChart extends Chart {
         let max = 0;
         const fontSize = 12;
         axis.selectAll("text")
-            // .style("font-family", "Open Sans, sans-serif")
-            // .style("font-size", fontSize + "px")
             .style("fill", colours.eighteen.darkGrey)
             .nodes()
             .forEach(text => max = Math.max(max, text.getBBox().width));
@@ -643,7 +634,6 @@ export class BarChart extends Chart {
                 .style("opacity", 1);
 
         axis.selectAll("text")
-                // .style("font-family", "Open Sans, sans-serif")
                 .style("fill", colours.eighteen.darkGrey)
     }
 

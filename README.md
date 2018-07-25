@@ -42,7 +42,7 @@ Only metrics.html requires a BrandsEye account.
 
 ## License
 
-Copyright (C) 2013-2014 BrandsEye (PTY) LTD
+Copyright (C) 2013-2014, 2018 BrandsEye (PTY) LTD
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
