@@ -22,3 +22,7 @@ export { BarChart as BarChart } from './BarChart';
 export { PieChart as PieChart } from './PieChart';
 export { LineChart as LineChart } from './LineChart';
 export { colours } from './Colours';
+
+// For the Fantastic Chart
+export { chart } from './FantasticChart';
+export { histogram } from './Histogram';

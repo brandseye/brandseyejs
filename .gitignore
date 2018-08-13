@@ -7,3 +7,4 @@ dist
 node_modules
 old-package.json
 yarn.lock
+ideas.js
