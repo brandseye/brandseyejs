@@ -37,8 +37,8 @@ class Histogram extends Geometry {
 
         element.classed("histogram", true);
 
-        console.log("histogram width", width);
-        console.log("histogram height", height);
+        console.log("data", data);
+        console.log("buckets", this.getBuckets(data));
 
         const x = d3.scaleBand()
                     .rangeRound([0, width]);
@@ -53,11 +53,8 @@ class Histogram extends Geometry {
         y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
         x.domain(data.map(d => d._key));
         xGroup
-              .domain(this.getBuckets(data))
+              .domain(this.getKeys(data))
               .rangeRound([0, x.bandwidth()]);
-
-        console.log("data", data);
-        console.log("buckets", this.getBuckets(data));
 
         let groups = element.select(".bars").selectAll('.group');
 
@@ -98,31 +95,25 @@ class Histogram extends Geometry {
                   bars.interrupt("bar:move")     // Animate the bars to their new position.
                       .transition("bar:move")
                       .attr("width", xGroup.bandwidth())
-                      .attr("x", d => xGroup(d._bucket))
+                      .attr("x", d => xGroup(d._key))
                       .attr("y", 0);
 
                   bars.enter()
                       .append("rect")
                           .attr("class", (d, i) => "bar series series-" + i)
-                          .attr("x", d => xGroup(d._bucket))
+                          .attr("x", d => {console.log("key", d._key); return xGroup(d._key)})
                           .attr("y", 0)
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
-                          .style("fill", d => d._colour)
+                          .style("fill", d => d._colour === 1 ? "grey" : "green")
                           .style("stroke", d => d3.hcl(d._colour).darker())
                           .style("cursor", "pointer")
                       .merge(bars)
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
-                      .delay((d) => {
-                          console.log("should animate to", this.calcBarGrowth(s_i, nodes.length));
-                          return this.calcBarGrowth(s_i, nodes.length);
-                      })
-                      .style("fill", d => d._colour)
-                      .attr("height", d => {
-                          console.log(d._y, y(d._y), height);
-                          return height - y(d._y);
-                      });
+                      .delay(() => this.calcBarGrowth(s_i, nodes.length))
+                          .style("fill", d => d._colour)
+                          .attr("height", d => height - y(d._y));
 
                   //     .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
                   //         d3.select(nodes[i])
@@ -161,7 +152,6 @@ class Histogram extends Geometry {
     }
 
     calcBarGrowth(i, max) {
-        console.log("i is", i, "max is", max);
         if (max < 10) return i * this._BAR_GROWTH / 2;
         if (max < 35) return i * this._BAR_GROWTH / 4;
         return 1;
@@ -170,33 +160,47 @@ class Histogram extends Geometry {
     prepareData(data) {
         data = Geometry.prototype.prepareData.call(this, data);
 
+        let results = {};
+
         // We want to calculate what bucket each bit of data belongs to.
         Object.keys(data).forEach(key => {
             let values = data[key].data;
             values.forEach(d => {
                 // todo The bucket is currently just the _x value.
                 d._bucket = d._x;
+                let bucket = results[d._bucket] || { _key: d._bucket, data: [] };
+                bucket.data.push(d);
+                results[d._bucket] = bucket;
             })
         });
 
-        return data;
+        return Object.values(results);
     }
-
 
 
     getBuckets(data) {
         if (!data || !data.length) return [];
 
-        let buckets = new Set();
+        // todo calculate buckets
+        let buckets = new Set(data.map(d => d._key));
+
+
+        return [...buckets]
+    }
+
+    getKeys(data) {
+        if (!data || !data.length) return [];
+
+        let keys = new Set();
 
         // todo calculate buckets
         Object.keys(data).forEach(key => {
             let values = data[key].data;
-            values.forEach(d => buckets.add(d._bucket))
+            values.forEach(d => keys.add(d._key))
         });
 
 
-        return [...buckets]
+        return [...keys]
     }
 
 }

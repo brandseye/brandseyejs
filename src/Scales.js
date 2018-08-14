@@ -17,14 +17,26 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-export { ColumnChart as ColumnChart } from './ColumnChart';
-export { BarChart as BarChart } from './BarChart';
-export { PieChart as PieChart } from './PieChart';
-export { LineChart as LineChart } from './LineChart';
-export { colours } from './Colours';
 
-// For the Fantastic Chart
-export { chart } from './FantasticChart';
-export { histogram } from './Histogram';
-export { line } from './Line';
-export { scaleTime } from './Scales';
+class ScaleTime {
+    transform(val) {
+        if (val instanceof Date) return val;
+        if (typeof val !== 'string') throw new Error("Value is not a string and cannot be converted to a date");
+        return new Date(val);
+    }
+}
+
+class ScaleIdentity {
+    transform(val) {
+        return val;
+    }
+}
+
+
+export function scaleTime() {
+    return new ScaleTime();
+}
+
+export function scaleIdentity() {
+    return new ScaleIdentity();
+}

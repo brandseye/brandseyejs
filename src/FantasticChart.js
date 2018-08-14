@@ -18,6 +18,7 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { colours } from './Colours';
+import { scaleIdentity } from "./Scales";
 
 
 class FantasticChart {
@@ -32,6 +33,9 @@ class FantasticChart {
         this._height = 512;
         this._colour = () => colours.eighteen.midGrey;
         this._size = () => 1;
+        this._scale_x = scaleIdentity();
+        this._scale_y = scaleIdentity();
+        this._colour = () => 1;
     }
 
     /*
@@ -73,12 +77,16 @@ class FantasticChart {
         return this;
     }
 
-    scaleX() {
-        console.log("=> scaleX: not implemented")
+    scaleX(scale) {
+        if (arguments.length === 0) return this._scale_x;
+        this._scale_x = scale;
+        return this;
     }
 
-    scaleY() {
-        console.log("=> scaleY: not implemented")
+    scaleY(scale) {
+        if (arguments.length === 0) return this._scale_y;
+        this._scale_y = scale;
+        return this;
     }
 
     /*
@@ -94,8 +102,11 @@ class FantasticChart {
         console.log("=> size: not implemented")
     }
 
-    colour() {
-        console.log("=> colour: not implemented")
+    colour(colour) {
+        if (arguments.length === 0) return this._colour;
+        if (typeof colour !== 'function') throw new Error("colour must be a function");
+        this._colour = colour;
+        return this;
     }
 
     data(data) {
@@ -159,13 +170,14 @@ class FantasticChart {
                 let node = d3.select(nodes[i]);
                 node.append("g")
                     .attr("class", "geometry")
-                    .attr("transform", "translate(" + geom_left + "," + geom_top + ")");
-
-                this.setupGeom(geom);
-                geom.element(node.select(".geometry"))
-                    .width(geom_width)
-                    .height(geom_height)
-                    .render();
+                    .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
+                    .each((d, i, nodes) => {
+                        this.setupGeom(geom);
+                        geom.element(d3.select(nodes[i]))
+                            .width(geom_width)
+                            .height(geom_height)
+                            .render();
+                    })
             })
     }
 
@@ -177,7 +189,9 @@ class FantasticChart {
         geom.setupX(this._x_getter)
             .setupY(this._y_getter)
             .setupColour(this._colour)
-            .setupSize(this._size);
+            .setupSize(this._size)
+            .setupScaleX(this._scale_x)
+            .setupScaleY(this._scale_y);
         geom.data(this._data);
     }
 

@@ -27,6 +27,8 @@ export class Geometry {
         this._y_getter = null;
         this._colour = null;
         this._size = null;
+        this._scale_x = null;
+        this._scale_y = null;
     }
 
     element(el) {
@@ -87,6 +89,30 @@ export class Geometry {
         return this;
     }
 
+    scaleX(scale) {
+        if (arguments.length === 0) return this._scale_x || this._chart_scale_x;
+        this._scale_x = scale;
+        return this;
+    }
+
+    setupScaleX(scale) {
+        if (arguments.length === 0) return this._chart_scale_x;
+        this._chart_scale_x = scale;
+        return this;
+    }
+
+    scaleY(scale) {
+        if (arguments.length === 0) return this._scale_y || this._chart_scale_y;
+        this._scale_y = scale;
+        return this;
+    }
+
+    setupScaleY(scale) {
+        if (arguments.length === 0) return this._chart_scale_y;
+        this._chart_scale_y = scale;
+        return this;
+    }
+
     width(width) {
         if (arguments.length === 0) return this._width;
         this._width = width;
@@ -116,21 +142,25 @@ export class Geometry {
         data = data || this._data;
         if (!data || !data.length) return [];
 
-        const x = this.x();
-        const y = this.y();
+        const x = this.x(),
+              y = this.y(),
+              scaleX = this.scaleX(),
+              scaleY = this.scaleY();
 
         let mapped = {};
 
         data.forEach(d => {
             const object = Object.assign({
-                _x: x(d),
-                _y: y(d),
+                _x: scaleX.transform(x(d)),
+                _y: scaleY.transform(y(d)),
                 _colour: this.colour()(d),
                 _size: this.size()(d)
             }, d);
 
             const key = getKey(object);
-            let series = mapped[key] || { "_key": key, data: [] };
+            object._key = key;
+
+            let series = mapped[key] || getKeyParameters(object);
             series.data.push(object);
             mapped[key] = series;
         });
@@ -141,5 +171,14 @@ export class Geometry {
 }
 
 function getKey(d) {
-     return "" + d._size + ":" + d._colour;
+    return "" + d._size + ":" + d._colour;
+}
+
+function getKeyParameters(d) {
+    return {
+        _key: getKey(d),
+        _size: d._size,
+        _colour: d._colour,
+        data: []
+    }
 }
