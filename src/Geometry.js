@@ -29,6 +29,7 @@ export class Geometry {
         this._size = null;
         this._scale_x = null;
         this._scale_y = null;
+        this._facet_selector = null;
     }
 
     element(el) {
@@ -128,6 +129,13 @@ export class Geometry {
     data(data) {
         if (arguments.length === 0) return this._data;
         this._data = data;
+        return this;
+    }
+
+    facet(selector) {
+        if (arguments.length === 0) return this._facet_selector;
+        if (typeof selector !== 'function' && selector !== null) throw new Error("Facet selector must be a function");
+        this._facet_selector = selector;
         return this;
     }
 

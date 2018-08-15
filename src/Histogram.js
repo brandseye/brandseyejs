@@ -31,7 +31,8 @@ class Histogram extends Geometry {
         console.log("\tRendering HISTOGRAM");
 
         const element = this._element;
-        const data = this.prepareData();
+        const data = this.prepareData(null, true);
+        const allData = this.prepareData(null, false);
         const width = this._width,
               height = this._height;
 
@@ -50,7 +51,7 @@ class Histogram extends Geometry {
         const xGroup = d3.scaleBand()
                          .padding(0);
 
-        y.domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
+        y.domain([0, d3.max(allData, d => d3.max(d.data, d => d._y))]);
         x.domain(data.map(d => d._key));
         xGroup
               .domain(this.getKeys(data))
@@ -157,7 +158,8 @@ class Histogram extends Geometry {
         return 1;
     }
 
-    prepareData(data) {
+    prepareData(data, faceted) {
+        faceted = !!faceted && this.facet();
         data = Geometry.prototype.prepareData.call(this, data);
 
         let results = {};
@@ -166,6 +168,7 @@ class Histogram extends Geometry {
         Object.keys(data).forEach(key => {
             let values = data[key].data;
             values.forEach(d => {
+                if (faceted && !this.facet()(d)) return;
                 // todo The bucket is currently just the _x value.
                 d._bucket = d._x;
                 let bucket = results[d._bucket] || { _key: d._bucket, data: [] };

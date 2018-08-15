@@ -36,6 +36,7 @@ class FantasticChart {
         this._scale_x = scaleIdentity();
         this._scale_y = scaleIdentity();
         this._colour = () => 1;
+        this._facet_x = null;
     }
 
     /*
@@ -109,6 +110,13 @@ class FantasticChart {
         return this;
     }
 
+    facetX(selector) {
+        if (arguments.length === 0) return this._facet_x;
+        if (typeof selector !== 'function') throw new Error("The facet selector must be a function");
+        this._facet_x = selector;
+        return this;
+    }
+
     data(data) {
         if (arguments.length === 0) return this._data.slice();
         this._data = data;
@@ -137,48 +145,75 @@ class FantasticChart {
         //-----------------------------------------------
         // An area for us to render the geometries in to.
 
-        let geometries = svg.select('.geometries');
+        let drawingArea = svg.select('.drawing-area');
 
-        if (geometries.empty()) {
-            geometries = svg
+        if (drawingArea.empty()) {
+            drawingArea = svg
                 .append("g")
-                .attr("class", "geometries")
+                .attr("class", "drawing-area")
         }
 
-        geometries.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        drawingArea.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+
+        //-----------------------------------------------
+        // Set up small multiples / facets
+
+        const facets = getFacets(this._data, this._facet_x);
+        const singleFacet = facets.length === 1;
+        let facetAreas = drawingArea.selectAll('.facet').data(facets);
+
+        facetAreas.exit().remove();
+
+        const facetBand = d3.scaleBand()
+                            .rangeRound([0, width])
+                            .padding(singleFacet ? 0 : 0.1) // take up full space if the only facet.
+                            .domain(facets);
 
         //-----------------------------------------------
         // Draw individual geometries.
 
-        geometries = geometries.selectAll(".geometry").data(this._geometries);
-
-        geometries.exit().remove();
-
-        geometries.enter()
-            .each((geom, i, nodes) => {
-                const geom_width  = width,
-                      geom_height = height;
-
-                const geom_top    = 0,
-                      geom_bottom = height,
-                      geom_left   = 0,
-                      geom_right  = width;
-
-
-
-                let node = d3.select(nodes[i]);
-                node.append("g")
-                    .attr("class", "geometry")
-                    .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
-                    .each((d, i, nodes) => {
-                        this.setupGeom(geom);
-                        geom.element(d3.select(nodes[i]))
-                            .width(geom_width)
-                            .height(geom_height)
-                            .render();
-                    })
+        facetAreas
+            .enter()
+            .append("g")
+            .attr("class", "facet")
+            .merge(facetAreas)
+            .attr("width", facetBand.bandwidth())
+            .attr("transform", facetId => {
+                if (singleFacet) return "translate(0, 0)";
+                return "translate(" + facetBand(facetId) + ",0)";
             })
+            .each((facet, facet_i, facetNodes) => {
+                const area = d3.select(facetNodes[facet_i]);
+                let geometries = area.selectAll(".geometry").data(this._geometries);
+
+                geometries.exit().remove();
+
+                geometries.enter()
+                          .each((geom, i, nodes) => {
+                              const geom_width  = facetBand.bandwidth(),
+                                    geom_height = height;
+
+                              const geom_top  = 0,
+                                    geom_left = 0;
+
+
+                              let node = d3.select(nodes[i]);
+                              node.append("g")
+                                  .attr("class", "geometry")
+                                  .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
+                                  .each((d, i, nodes) => {
+                                      this.setupGeom(geom);
+                                      geom.element(d3.select(nodes[i]))
+                                          .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                                          .width(geom_width)
+                                          .height(geom_height)
+                                          .render();
+                                  })
+                          })
+            })
+
+
     }
 
 
@@ -195,6 +230,17 @@ class FantasticChart {
         geom.data(this._data);
     }
 
+}
+
+
+/*
+ * Returns the unique facet choices from the data, given a facet selector.
+ */
+function getFacets(data, selector) {
+    if (!selector || !data || !data.length) return [1];
+
+    const keys = new Set(data.map(selector));
+    return [...keys];
 }
 
 
