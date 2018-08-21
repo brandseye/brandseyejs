@@ -165,19 +165,28 @@ class Histogram extends Geometry {
         let results = {};
 
         // We want to calculate what bucket each bit of data belongs to.
+        const buckets = this.scaleX()
+                            .buckets(Object
+                                .values(data)
+                                .map(d => d.data)
+                                .reduce((acc, cur) => acc.concat(cur))
+                                .map(this.x()));
+        console.log("data for buckets", buckets);
+
+        // Sort data in to their appropriate buckets. This may be
+        // specific date buckets, or general buckets for continuous data.
         Object.keys(data).forEach(key => {
             let values = data[key].data;
             values.forEach(d => {
                 if (faceted && !this.facet()(d)) return;
-                // todo The bucket is currently just the _x value.
-                d._bucket = d._x;
+                d._bucket = buckets.bucket(d._x);
                 let bucket = results[d._bucket] || { _key: d._bucket, data: [] };
                 bucket.data.push(d);
                 results[d._bucket] = bucket;
             })
         });
 
-        return Object.values(results);
+        return buckets.consolidateBuckets(Object.values(results));
     }
 
 

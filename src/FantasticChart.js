@@ -184,6 +184,7 @@ class FantasticChart {
                 return "translate(" + facetBand(facetId) + ",0)";
             })
             .each((facet, facet_i, facetNodes) => {
+                console.log("------------ facet ", facet);
                 const area = d3.select(facetNodes[facet_i]);
                 let geometries = area.selectAll(".geometry").data(this._geometries);
 

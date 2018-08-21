@@ -17,36 +17,17 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import {DateBucket, ContinuousBucket} from "./Bucket";
+import iqr from 'compute-iqr';
 
 
-class ScaleTime {
-    transform(val) {
-        if (val instanceof Date) return val;
-        if (typeof val !== 'string') throw new Error("Value is not a string and cannot be converted to a date");
-        return new Date(val);
-    }
-
-    buckets(data) {
-        return new DateBucket(data);
-    }
-}
-
-class ScaleIdentity {
-    transform(val) {
-        return val;
-    }
-
-    buckets(data) {
-        return new ContinuousBucket(data);
-    }
-}
-
-
-export function scaleTime() {
-    return new ScaleTime();
-}
-
-export function scaleIdentity() {
-    return new ScaleIdentity();
+/**
+ * Calculates the number of buckets to split a real value domain
+ * in to when calculating a histogram.
+ *
+ * https://en.wikipedia.org/wiki/Histogram
+ *
+ * @return {number}
+ */
+export function freedmanDiaconis(data) {
+    return 2 * iqr(data) / Math.pow(data.length, 1/3);
 }
