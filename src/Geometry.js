@@ -176,6 +176,14 @@ export class Geometry {
         return Object.values(mapped);
     }
 
+
+    /**
+     * Implement your render code here.
+     */
+    render() {
+        console.warn("RENDER NOT IMPLEMENTED")
+    }
+
 }
 
 function getKey(d) {

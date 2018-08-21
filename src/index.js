@@ -27,4 +27,5 @@ export { colours } from './Colours';
 export { chart } from './FantasticChart';
 export { histogram } from './Histogram';
 export { line } from './Line';
+export { points } from './Points';
 export { scaleTime } from './Scales';

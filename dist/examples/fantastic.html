@@ -163,6 +163,22 @@ graph
     .render();</code></pre>
 
     </div>
+
+    <!-------------------------------------------->
+
+    <div class="banner">
+        <div id="sentiment-engagement-points" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Net sentiment vs Engagement</h3>
+        <p>
+            Having powerful sentiment does not seem to correlate
+            with high engagement.
+        </p>
+
+    </div>
 </div>
 
 
@@ -229,12 +245,30 @@ graph
         d3.csv("engagement.csv").then(data => {
             data.forEach(d => d.count = +d.count); // convert to number
             graph = new b3js.chart();
-            console.log("data", data);
             graph
                 .data(data)
                 .element(document.getElementById('histogram-real'))
                 .x(d => d.count)
                 .geometry(b3js.histogram())
+                .facetX(d => d.aggregate)
+                .render();
+        });
+
+        d3.csv("point-data.csv", d => {
+            return {
+                published: new Date(d.published),
+                mentionCount: +d.mentionCount,
+                totalSentiment: +d.totalSentiment,
+                totalEngagement: +d.totalEngagement
+            }
+        }).then(data => {
+            graph = new b3js.chart();
+            graph
+                .data(data)
+                .element(document.getElementById('sentiment-engagement-points'))
+                .x(d => d.totalSentiment)
+                .y(d => d.totalEngagement)
+                .geometry(b3js.points())
                 .facetX(d => d.aggregate)
                 .render();
         })
