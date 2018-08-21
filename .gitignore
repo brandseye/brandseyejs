@@ -3,7 +3,6 @@
 docs
 old.js
 bob
-dist
 node_modules
 old-package.json
 yarn.lock

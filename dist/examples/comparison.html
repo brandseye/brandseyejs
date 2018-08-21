@@ -1,0 +1,64 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Comparisons in b3js</title>
+
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="../b3js.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+</head>
+
+<body>
+
+<h1>
+    Comparing data
+</h1>
+
+<div class="banner">
+    <div id="graph" style="width: 900px; height: 420px;">
+    </div>
+</div>
+
+<script>
+    window.addEventListener("load", function(event) {
+        let data = [
+          {
+            "key":"Young",
+            "values": [
+              {"x": "Bob", "y": 1163},
+              {"x": "Sally", "y": 1012},
+              {"x": "Hillary", "y": 101},
+              {"x": "Larry", "y": 341},
+              {"x": "Gary", "y": 3431}
+            ]
+          },
+          {
+            "key":"Old",
+            "values": [
+              {"x": "Bob", "y": 116},
+              {"x": "Sally", "y": 101},
+              {"x": "Hillary", "y": 10},
+              {"x": "Larry", "y": 34},
+              {"x": "Gary", "y": 341}
+            ]
+          }
+        ];
+
+        graph = new b3js.ColumnChart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('graph'))
+            .width(900)
+            .showLabels(true)
+            .render();
+
+    });
+</script>
+
+
+</body>
+
+</html>

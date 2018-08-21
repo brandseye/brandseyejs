@@ -1,0 +1,161 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Label sizes</title>
+
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="../b3js.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+    <style>
+      .sizes, .fonts {
+        display: flex;
+      }
+    </style>
+
+    <script type="text/javascript">
+      let graph = null;
+      function more() {
+        let fruit = ["apples", "oranges", "pears", "bananas",
+                     "peach", "plum", "apricot", "yam", "spam",
+                     "kiwi", "strawberry", "grapes", "guava",
+                     "rhubarb", "crannberries", "mango", "pawpaw",
+                     "tomatoes", "tangerine", "pear", "durian",
+                     "pork"]
+        let use = fruit.slice(0, Math.floor(Math.random() * (fruit.length - 2) + 1))
+        let data = use.map(fruit => { return { x: fruit, y: Math.floor(Math.random() * 15) }});
+        graph.data(data)
+          .render();
+      }
+    </script>
+</head>
+
+<body>
+
+<h1>
+    Displaying a basic chart
+</h1>
+
+<div class="fonts">
+  <div id="one" style="width: 180px; height: 159px">
+  </div>
+  <div id="two" style="width: 180px; height: 159px">
+  </div>
+  <div id="three" style="width: 180px; height: 159px">
+  </div>
+  <div id="four" style="width: 180px; height: 159px">
+  </div>
+  <div id="five" style="width: 180px; height: 159px">
+  </div>
+</div>
+
+<div class="sizes">
+  <div id="smallest"  style="width: 180px; height: 159px">
+  </div>
+  <div id="smaller"  style="width: 420px; height: 402px">
+  </div>
+  <div id="small" style="width: 660px; height: 402px">
+  </div>
+</div>
+
+
+<script>
+    function multiplier(data, mult) {
+      let result = [];
+      data.forEach(d => {
+        result.push({
+          x: d.x,
+          y: d.y * mult
+        })
+      })
+
+      return result;
+    }
+
+    window.addEventListener("load", function(event) {
+        let data = [
+            { x: "apples", y: 10 },
+            { x: "oranges", y: 5},
+            { x: "pears", y: 7},
+            { x: "bananas", y: 11}
+        ];
+
+        let one = new b3js.ColumnChart();
+        one
+          .data(data)
+          .width(180)
+          .height(159)
+          .element(document.getElementById('one'))
+          .showLabels(true)
+          .render();
+
+        let two = new b3js.ColumnChart();
+        two
+          .data(multiplier(data, 10))
+          .width(180)
+          .height(159)
+          .element(document.getElementById('two'))
+          .showLabels(true)
+          .render();
+
+        let three = new b3js.ColumnChart();
+        three
+          .data(multiplier(data, 100))
+          .width(180)
+          .height(159)
+          .element(document.getElementById('three'))
+          .showLabels(true)
+          .render();
+
+        let four = new b3js.ColumnChart();
+        four
+          .data(multiplier(data, 1000))
+          .width(180)
+          .height(159)
+          .element(document.getElementById('four'))
+          .showLabels(true)
+          .render();
+
+        let five = new b3js.ColumnChart();
+        five
+          .data(multiplier(data, 10000))
+          .width(180)
+          .height(159)
+          .element(document.getElementById('five'))
+          .showLabels(true)
+          .render();
+
+
+        let smallest = new b3js.ColumnChart();
+        smallest
+          .data(data)
+          .width(180)
+          .height(159)
+          .element(document.getElementById('smallest'))
+          .showLabels(true)
+          .render();
+
+        let smaller = new b3js.ColumnChart();
+        smaller
+          .data(data)
+          .width(420).height(402)
+          .element(document.getElementById('smaller'))
+          .showLabels(false)
+          .render();
+
+        let small = new b3js.ColumnChart();
+        small
+          .data(data)
+          .width(660).height(402)
+          .element(document.getElementById('small'))
+          .showLabels(true)
+          .render();
+
+    });
+</script>
+
+
+</body>
+
+</html>

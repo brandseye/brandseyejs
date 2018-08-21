@@ -1,0 +1,119 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Pie charts</title>
+
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="../b3js.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+    <style>
+        .sizes, .banner {
+            display: flex;
+        }
+    </style>
+
+    <script type="text/javascript">
+        let graph = null;
+
+        function more() {
+            let fruit = ["apples", "oranges", "pears", "bananas",
+                "peach", "plum", "apricot", "yam", "spam",
+                "kiwi", "strawberry", "grapes", "guava",
+                "rhubarb", "crannberries", "mango", "pawpaw",
+                "tomatoes", "tangerine", "pear", "durian",
+                "pork"];
+            let use = fruit.slice(0, Math.floor(Math.random() * (fruit.length - 2) + 1))
+            let data = use.map(fruit => { return { x: fruit, y: Math.floor(Math.random() * 15) }});
+            graph.data(data)
+                .render();
+        }
+
+        function hide() {
+            graph.labels().hide();
+        }
+
+        function show() {
+            graph.labels().show();
+        }
+
+    </script>
+</head>
+
+<body>
+
+<h1>
+    Displaying a basic chart
+</h1>
+
+<div class="banner">
+    <div id="graph" style="width: 900px; height: 420px;">
+    </div>
+    <form>
+        <button type="button" onclick="javascript:more()">Load more data</button>
+        <button type="button" onclick="javascript:hide()">Hide labels</button>
+        <button type="button" onclick="javascript:show()">Show labels</button>
+    </form>
+</div>
+
+<div class="sizes">
+    <div id="smallest" style="width: 180px; height: 159px;">
+    </div>
+    <div id="smaller" style="width: 420px; height: 402px;">
+    </div>
+    <div id="small" style="width: 660px; height: 402px;">
+    </div>
+</div>
+
+
+<script>
+    window.addEventListener("load", function(event) {
+        let data = [
+            { x: "apples", y: 10 },
+            { x: "oranges", y: 5},
+            { x: "pears", y: 7},
+            { x: "bananas", y: 11}
+        ];
+
+        graph = new b3js.PieChart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('graph'))
+            .width(900)
+            .showLabels(true)
+            .render();
+
+        let smallest = new b3js.PieChart();
+        smallest
+            .data(data)
+            .width(180)
+            .height(159)
+            .element(document.getElementById('smallest'))
+            .showLabels(true)
+            .render();
+
+        let smaller = new b3js.PieChart();
+        smaller
+            .data(data)
+            .width(420).height(402)
+            .element(document.getElementById('smaller'))
+            .showLabels(false)
+            .render();
+
+        let small = new b3js.PieChart();
+        small
+            .data(data)
+            .width(660).height(402)
+            .element(document.getElementById('small'))
+            .showLabels(true)
+            .render();
+
+    });
+</script>
+
+
+</body>
+
+</html>

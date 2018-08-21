@@ -1,0 +1,247 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Fantastic charts</title>
+
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="../b3js.js"></script>
+    <script src="prism.js"></script>
+
+    <link href="prism.css" rel="stylesheet">
+
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>
+    Displaying a basic chart
+</h1>
+
+<div class="grid">
+    <div class="banner">
+        <div id="graph" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Date Histogram and line overlay</h3>
+        <p>
+            And here we have a simple overlay of a histogram and
+            a line chart.
+        </p>
+        <pre><code class="language-js">let data = [
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11}
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('graph'))
+    .x(d => d.published)
+    .y(d => d.mentionCount)
+    .geometry(b3js.histogram())
+    .geometry(b3js.line())
+    .scaleX(b3js.scaleTime())
+    .render();</code></pre>
+
+    </div>
+
+
+    <!-------------------------------------------->
+
+    <div class="banner">
+        <div id="histogram-comparison" style="width: 900px; height: 512px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Date Histogram comparison</h3>
+        <p>
+            And here we have a simple overlay of a histogram and
+            a line chart.
+        </p>
+        <pre><code class="language-js">data = [
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: 1},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 6, brand: 2},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('histogram-comparison'))
+    .x(d => d.published)
+    .y(d => d.mentionCount)
+    .colour( d => d.brand )
+    .geometry(b3js.histogram())
+    .scaleX(b3js.scaleTime())
+    .render();</code></pre>
+
+    </div>
+
+    <!-------------------------------------------->
+
+    <div class="banner">
+        <div id="histogram-facet" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Histogram small multiple</h3>
+        <p>
+            And here we have a simple overlay of a histogram and
+            a line chart.
+        </p>
+
+        <pre><code class="language-js">data = [
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: 1},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 6, brand: 2},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('histogram-facet'))
+    .x(d => d.published)
+    .y(d => d.mentionCount)
+    .geometry(b3js.histogram())
+    .scaleX(b3js.scaleTime())
+    .facetX(d => d.brand)
+    .render();</code></pre>
+
+    </div>
+
+    <!-------------------------------------------->
+
+    <div class="banner">
+        <div id="histogram-real" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Histogram of real values</h3>
+        <p>
+            Showing engagement and volume.
+        </p>
+        <pre><code class="language-js">data = [
+    {"published":"2018-07-14T22:00:00Z","aggregate":"mentionCount","count":1763},
+    {"published":"2018-07-15T22:00:00Z","aggregate":"mentionCount","count":1332},
+    // ...
+    {"published":"2018-07-14T22:00:00Z","aggregate":"totalEngagement","count":638},
+    {"published":"2018-07-15T22:00:00Z","aggregate":"totalEngagement","count":345},
+    {"published":"2018-07-16T22:00:00Z","aggregate":"totalEngagement","count":2262}
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('histogram-real'))
+    .x(d => d.count)
+    .geometry(b3js.histogram())
+    .facetX(d => d.aggregate)
+    .render();</code></pre>
+
+    </div>
+</div>
+
+
+
+
+
+<script>
+    window.addEventListener("load", function() {
+        let data = [
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 10 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 5},
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 7},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 11}
+        ];
+
+        let graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('graph'))
+            .x(d => d.published)
+            .y(d => d.mentionCount)
+            .geometry(b3js.histogram())
+            .geometry(b3js.line())
+            .scaleX(b3js.scaleTime())
+            .render();
+
+
+        data = [
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: 1},
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 6, brand: 2},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+        ];
+
+        graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('histogram-comparison'))
+            .x(d => d.published)
+            .y(d => d.mentionCount)
+            .colour( d => d.brand )
+            .geometry(b3js.histogram())
+            .scaleX(b3js.scaleTime())
+            .render();
+
+        graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('histogram-facet'))
+            .x(d => d.published)
+            .y(d => d.mentionCount)
+            .geometry(b3js.histogram())
+            .scaleX(b3js.scaleTime())
+            .facetX(d => d.brand)
+            .render();
+
+        d3.csv("engagement.csv").then(data => {
+            data.forEach(d => d.count = +d.count); // convert to number
+            graph = new b3js.chart();
+            console.log("data", data);
+            graph
+                .data(data)
+                .element(document.getElementById('histogram-real'))
+                .x(d => d.count)
+                .geometry(b3js.histogram())
+                .facetX(d => d.aggregate)
+                .render();
+        })
+    });
+</script>
+
+
+</body>
+
+</html>
