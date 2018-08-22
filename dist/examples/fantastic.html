@@ -136,6 +136,34 @@ graph
     <!-------------------------------------------->
 
     <div class="banner">
+        <div id="multiple-lines" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Multiple lines by colour</h3>
+        <p>
+            Multiple lines separated by colour.
+        </p>
+
+        <pre><code class="language-js">data = [
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: 1},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 6, brand: 2},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+];
+
+</code></pre>
+
+    </div>
+
+    <!-------------------------------------------->
+
+    <div class="banner">
         <div id="histogram-real" style="width: 900px; height: 420px;">
         </div>
     </div>
@@ -240,6 +268,18 @@ graph
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
             .facetX(d => d.brand)
+            .render();
+
+        graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('multiple-lines'))
+            .x(d => d.published)
+            .y(d => d.mentionCount)
+            .geometry(b3js.line())
+            .scaleX(b3js.scaleTime())
+            .colour(d => d.brand)
             .render();
 
         d3.csv("engagement.csv").then(data => {

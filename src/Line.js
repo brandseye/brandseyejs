@@ -29,6 +29,7 @@ class Line extends Geometry {
         const data = this.prepareData();
         const width = this._width,
               height = this._height;
+        const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         element.classed("line-chart", true);
 
@@ -40,12 +41,11 @@ class Line extends Geometry {
                     .range([height, 0])
                     .nice(5);
 
+        const colours = d3.scaleOrdinal(this.colourScale())
+                          .domain(this.getColourDomain(data));
 
-        const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
-        console.log("All data", allData);
         x.domain(d3.extent(allData, d => d._x));
         y.domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)]);
-
 
         //---------------------------------
         // append the lines
@@ -142,10 +142,10 @@ class Line extends Geometry {
             .append("path")
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", d => "red")
+                .attr("stroke", d => d3.hcl(colours(d._colour)).darker())
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
-                .attr("stroke-width", 1.5)
+                .attr("stroke-width", 2)
                 .style("opacity", 0)
             .transition()
                 .style("opacity", 1)
