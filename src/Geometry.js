@@ -30,6 +30,7 @@ export class Geometry {
         this._scale_x = null;
         this._scale_y = null;
         this._facet_selector = null;
+        this._chart_colour_scale = null;
     }
 
     element(el) {
@@ -75,6 +76,20 @@ export class Geometry {
     setupColour(colour) {
         if (arguments.length === 0) return this._chart_colour;
         this._chart_colour = colour;
+        return this;
+    }
+
+    colourScale(colours) {
+        if (arguments.length === 0) return this._chart_colour_scale || this._colour_scale;
+        if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
+        this._colour_scale = colours;
+        return this;
+    }
+
+    setupColourScale(colours) {
+        if (arguments.length === 0) return this._chart_colour_scale;
+        if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
+        this._chart_colour_scale = colours;
         return this;
     }
 
@@ -182,6 +197,28 @@ export class Geometry {
      */
     render() {
         console.warn("RENDER NOT IMPLEMENTED")
+    }
+
+
+    /**
+     * Returns the unique values that the colour function
+     * returns.
+     * @param data
+     * @returns {*}
+     */
+    getColourDomain(data) {
+        if (!data || !data.length) return [];
+
+        const colours = new Set();
+
+        // todo calculate buckets
+        data.forEach(series => {
+            series.data.forEach(d => {
+                colours.add(this.colour()(d))
+            });
+        });
+
+        return [...colours]
     }
 
 }

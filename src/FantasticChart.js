@@ -37,6 +37,7 @@ class FantasticChart {
         this._scale_y = scaleIdentity();
         this._colour = () => 1;
         this._facet_x = null;
+        this._colour_scale = d3.schemeAccent;
     }
 
     /*
@@ -103,10 +104,27 @@ class FantasticChart {
         console.log("=> size: not implemented")
     }
 
+    /**
+     * Defines how to separate data visually using colours. It
+     * does not define what colour to use.
+     * @param colour
+     * @returns {*}
+     */
     colour(colour) {
         if (arguments.length === 0) return this._colour;
         if (typeof colour !== 'function') throw new Error("colour must be a function");
         this._colour = colour;
+        return this;
+    }
+
+    /**
+     * Defines colours to use.
+     * @param colours
+     */
+    colourScale(colours) {
+        if (arguments.length === 0) return this._colour_scale;
+        if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
+        this._colour_scale = colours;
         return this;
     }
 
@@ -227,7 +245,8 @@ class FantasticChart {
             .setupColour(this._colour)
             .setupSize(this._size)
             .setupScaleX(this._scale_x)
-            .setupScaleY(this._scale_y);
+            .setupScaleY(this._scale_y)
+            .setupColourScale(this._colour_scale);
         geom.data(this._data);
     }
 

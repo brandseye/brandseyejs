@@ -38,9 +38,6 @@ class Histogram extends Geometry {
 
         element.classed("histogram", true);
 
-        console.log("data", data);
-        console.log("buckets", this.getBuckets(data));
-
         const x = d3.scaleBand()
                     .rangeRound([0, width]);
 
@@ -51,11 +48,15 @@ class Histogram extends Geometry {
         const xGroup = d3.scaleBand()
                          .padding(0);
 
+        const colours = d3.scaleOrdinal(this.colourScale());
+
+
         y.domain([0, d3.max(allData, d => d3.max(d.data, d => d._y))]);
         x.domain(data.map(d => d._key));
         xGroup
               .domain(this.getKeys(data))
               .rangeRound([0, x.bandwidth()]);
+        colours.domain(this.getColourDomain(allData));
 
         let groups = element.select(".bars").selectAll('.group');
 
@@ -102,11 +103,11 @@ class Histogram extends Geometry {
                   bars.enter()
                       .append("rect")
                           .attr("class", (d, i) => "bar series series-" + i)
-                          .attr("x", d => {console.log("key", d._key); return xGroup(d._key)})
+                          .attr("x", d => xGroup(d._key))
                           .attr("y", 0)
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
-                          .style("fill", d => d._colour === 1 ? "grey" : "green")
+                          .style("fill", d => colours(d._colour))//d => d._colour === 1 ? "grey" : "green")
                           .style("stroke", d => d3.hcl(d._colour).darker())
                           .style("cursor", "pointer")
                       .merge(bars)
@@ -171,7 +172,6 @@ class Histogram extends Geometry {
                                 .map(d => d.data)
                                 .reduce((acc, cur) => acc.concat(cur))
                                 .map(this.x()));
-        console.log("data for buckets", buckets);
 
         // Sort data in to their appropriate buckets. This may be
         // specific date buckets, or general buckets for continuous data.
