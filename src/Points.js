@@ -39,6 +39,9 @@ class Point extends Geometry {
                     .rangeRound([height, 0])
                     .nice();
 
+        const colours = d3.scaleOrdinal(this.colourScale())
+                          .domain(this.getColourDomain(data));
+
         y.domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
             d3.max(data, d => d3.max(d.data, d => d._y))]);
         x.domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
@@ -62,6 +65,7 @@ class Point extends Geometry {
                       .append("circle")
                       .attr("cx", d => x(d._x))
                       .attr("cy", d => y(d._y))
+                      .attr("fill", d => colours(d._colour))
                       .attr("r", 5);
               });
     }
