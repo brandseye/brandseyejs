@@ -161,7 +161,8 @@ export class Geometry {
      * Data is groupped by these fields.
 
      */
-    prepareData(data) {
+    prepareData(data, faceted) {
+        faceted = !!faceted && this.facet();
         data = data || this._data;
         if (!data || !data.length) return [];
 
@@ -173,6 +174,7 @@ export class Geometry {
         let mapped = {};
 
         data.forEach(d => {
+            if (faceted && !this.facet()(d)) return;
             const object = Object.assign({
                 _x: scaleX.transform(x(d)),
                 _y: scaleY.transform(y(d)),

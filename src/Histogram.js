@@ -160,8 +160,7 @@ class Histogram extends Geometry {
     }
 
     prepareData(data, faceted) {
-        faceted = !!faceted && this.facet();
-        data = Geometry.prototype.prepareData.call(this, data);
+        data = Geometry.prototype.prepareData.call(this, data, faceted);
 
         let results = {};
 
@@ -171,14 +170,13 @@ class Histogram extends Geometry {
                                 .values(data)
                                 .map(d => d.data)
                                 .reduce((acc, cur) => acc.concat(cur))
-                                .map(this.x()));
+                                .map(d => d._x));
 
         // Sort data in to their appropriate buckets. This may be
         // specific date buckets, or general buckets for continuous data.
         Object.keys(data).forEach(key => {
             let values = data[key].data;
             values.forEach(d => {
-                if (faceted && !this.facet()(d)) return;
                 d._bucket = buckets.bucket(d._x);
                 let bucket = results[d._bucket] || { _key: d._bucket, data: [] };
                 bucket.data.push(d);
