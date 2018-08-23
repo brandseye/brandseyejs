@@ -217,6 +217,7 @@ class Histogram extends Geometry {
 
         return d3.scaleBand()
                  .rangeRound([0, width])
+                 .padding(data[0].data.length > 1 ? 0.05 : 0)
                  .domain(data.map(d => d._key));
     }
 
