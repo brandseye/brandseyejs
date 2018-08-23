@@ -232,7 +232,8 @@ class FantasticChart {
                     .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                     .getD3XScale();
 
-                const axisHeight = xaxis(area, height, scale.bandwidth(),
+                const axisHeight = xaxis(area, height,
+                    scale.bandwidth ? scale.bandwidth() : facetBand.bandwidth() / scale.domain().length,
                     d3.axisBottom(scale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
 
                 let geoms = area.selectAll(".geometry").data(geometries);

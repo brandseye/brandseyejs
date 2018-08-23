@@ -38,18 +38,16 @@ class Line extends Geometry {
         element.classed("line-chart", true);
 
 
-        const x = d3.scaleTime()
-                    .range([0, width]);
+        const x = this.getD3XScale(allData, width);
 
         const y = d3.scaleLinear()
+                    .domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)])
                     .range([height, 0])
                     .nice(5);
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
 
-        x.domain(d3.extent(allData, d => d._x));
-        y.domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)]);
 
         //---------------------------------
         // append the lines
@@ -158,6 +156,18 @@ class Line extends Geometry {
         lines
             .transition()
             .attr("d", d => line(d.data));
+    }
+
+
+    getD3XScale(data, width) {
+        width = width || this.width();
+        data = data || this.prepareData()
+                           .map(d => d.data)
+                           .reduce((acc, val) => acc.concat(val));
+
+        return d3.scaleTime()
+                    .range([0, width])
+                 .domain(d3.extent(data, d => d._x));
     }
 }
 
