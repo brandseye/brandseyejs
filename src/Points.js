@@ -37,20 +37,16 @@ class Point extends Geometry {
         element.classed("points", true);
 
 
-        const x = d3.scaleLinear()
-                    .rangeRound([0, width]);
+        const x = this.getD3XScale(data, width);
 
         const y = d3.scaleLinear()
+                    .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
+                        d3.max(data, d => d3.max(d.data, d => d._y))])
                     .rangeRound([height, 0])
                     .nice();
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
-
-        y.domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
-            d3.max(data, d => d3.max(d.data, d => d._y))]);
-        x.domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
-            d3.max(data, d => d3.max(d.data, d => d._x))]);
 
         let groups = element.selectAll('.point-groups');
         groups = groups.data(data);
@@ -68,11 +64,22 @@ class Point extends Geometry {
 
                   points.enter()
                       .append("circle")
-                      .attr("cx", d => x(d._x))
-                      .attr("cy", d => y(d._y))
-                      .attr("fill", d => colours(d._colour))
-                      .attr("r", 5);
+                          .style("opacity", 0.4)
+                          .attr("cx", d => x(d._x))
+                          .attr("cy", d => y(d._y))
+                          .attr("fill", d => colours(d._colour))
+                          .attr("r", 5);
               });
+    }
+
+    getD3XScale(data, width) {
+        width = width || this.width();
+        data = data || this.prepareData()
+        return d3.scaleLinear()
+                 .rangeRound([0, width])
+                 .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
+                     d3.max(data, d => d3.max(d.data, d => d._x))]);
+
     }
 }
 
