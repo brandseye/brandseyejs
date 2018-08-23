@@ -19,6 +19,7 @@
 
 import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
+import { xaxis } from "./Axes";
 
 
 class FantasticChart {
@@ -189,6 +190,29 @@ class FantasticChart {
                             .domain(facets);
 
         //-----------------------------------------------
+        // Setup geometry
+        //
+        // Setting up before rendering will allow us to query geometry
+        // for their parameters, such as when we need to figure out what
+        // to render for axes.
+
+        const geometries = this.sortGeometries();
+
+        console.log("geometries", geometries.map(geom => geom.name()));
+
+        facets.forEach(facet => {
+            const geom_width  = facetBand.bandwidth(),
+                  geom_height = height;
+
+            geometries.forEach(geom => {
+                this.setupGeom(geom);
+                geom.width(geom_width)
+                    .height(geom_height);
+            })
+        });
+
+
+        //-----------------------------------------------
         // Draw individual geometries.
 
         facetAreas
@@ -204,14 +228,22 @@ class FantasticChart {
             .each((facet, facet_i, facetNodes) => {
                 console.log("------------ facet ", facet || "single-facet");
                 const area = d3.select(facetNodes[facet_i]);
-                let geometries = area.selectAll(".geometry").data(this._geometries);
+                const scale = geometries[0]
+                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                    .getD3XScale();
 
-                geometries.exit().remove();
+                const axisHeight = xaxis(area, height, scale.bandwidth(),
+                    d3.axisBottom(scale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
 
-                geometries.enter()
+                let geoms = area.selectAll(".geometry").data(geometries);
+
+                geoms.exit().remove();
+
+                geoms.enter()
                           .each((geom, i, nodes) => {
-                              const geom_width  = facetBand.bandwidth(),
-                                    geom_height = height;
+                              const geom_width  = geom.width(),
+                                    geom_height = geom.height();
+                              console.log("Geom hight: " + geom_height, "updated", geom_height - axisHeight);
 
                               const geom_top  = 0,
                                     geom_left = 0;
@@ -222,14 +254,15 @@ class FantasticChart {
                                   .attr("class", "geometry")
                                   .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
                                   .each((d, i, nodes) => {
-                                      this.setupGeom(geom);
                                       geom.element(d3.select(nodes[i]))
                                           .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                                          .width(geom_width)
-                                          .height(geom_height)
+                                          .height(height - axisHeight)
                                           .render();
                                   })
                           })
+
+                // Ensure this is rendered on top of other things.
+                area.select(".x-axis").raise();
             })
 
 
@@ -248,6 +281,23 @@ class FantasticChart {
             .setupScaleY(this._scale_y)
             .setupColourScale(this._colour_scale);
         geom.data(this._data);
+    }
+
+
+    /**
+     * We want to ensure that geometries have a particular order to them.
+     * This is important for rendering: lines should be rendered on top of
+     * large histogram rectangles, for instance, otherwise they will be hidden.
+     */
+    sortGeometries() {
+        if (!this._geometries || !this._geometries.length) return [];
+
+        let geometries = this._geometries.slice(0);
+        geometries.sort((lhs, rhs) => {
+            return lhs.priority() - rhs.priority();
+        });
+
+        return geometries;
     }
 
 }

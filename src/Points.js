@@ -21,6 +21,11 @@ import { Geometry } from './Geometry';
 
 
 class Point extends Geometry {
+
+    constructor() {
+        super("POINT", 3);
+    }
+
     render() {
         console.log("\tRendering POINTS");
 

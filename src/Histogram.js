@@ -23,7 +23,7 @@ import { Geometry } from './Geometry';
 class Histogram extends Geometry {
 
     constructor() {
-        super();
+        super("HISTOGRAM");
         this._BAR_GROWTH = 100;
     }
 
@@ -38,8 +38,7 @@ class Histogram extends Geometry {
 
         element.classed("histogram", true);
 
-        const x = d3.scaleBand()
-                    .rangeRound([0, width]);
+        const x = this.getD3XScale(data, width);
 
         const y = d3.scaleLinear()
                     .rangeRound([height, 0])
@@ -52,7 +51,6 @@ class Histogram extends Geometry {
 
 
         y.domain([0, d3.max(allData, d => d3.max(d.data, d => d._y))]);
-        x.domain(data.map(d => d._key));
         xGroup
               .domain(this.getKeys(data))
               .rangeRound([0, x.bandwidth()]);
@@ -211,6 +209,15 @@ class Histogram extends Geometry {
 
 
         return [...keys]
+    }
+
+    getD3XScale(data, width) {
+        data = data || this.prepareData(null, true);
+        width = width || this._width;
+
+        return d3.scaleBand()
+                 .rangeRound([0, width])
+                 .domain(data.map(d => d._key));
     }
 
 }

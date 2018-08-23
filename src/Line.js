@@ -22,6 +22,10 @@ import { Geometry } from './Geometry';
 
 class Line extends Geometry {
 
+    constructor() {
+        super("LINE", 2);
+    }
+
     render() {
         console.log("\t Rendering LINE");
 

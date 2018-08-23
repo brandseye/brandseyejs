@@ -20,7 +20,8 @@
 
 export class Geometry {
 
-    constructor() {
+    constructor(name, priority) {
+        this._name = name || "[UNNAMED GEOMETRY]";
         this._chart_x_getter = null;
         this._chart_y_getter = null;
         this._x_getter = null;
@@ -31,6 +32,19 @@ export class Geometry {
         this._scale_y = null;
         this._facet_selector = null;
         this._chart_colour_scale = null;
+        this._priority = priority || 1;
+    }
+
+    name() {
+        return this._name;
+    }
+
+    /**
+     * Provides a sort order priority for metrics. Metrics with a higher priority
+     * are drawn on top of lower priority metrics.
+     */
+    priority() {
+        return this._priority;
     }
 
     element(el) {
@@ -158,7 +172,7 @@ export class Geometry {
     /*
      * This takes our array of data, and determines what elements
      * are to be mapped to what aesthetic values, such as colour or size.
-     * Data is groupped by these fields.
+     * Data is grouped by these fields.
 
      */
     prepareData(data, faceted) {
@@ -193,12 +207,16 @@ export class Geometry {
         return Object.values(mapped);
     }
 
+    getD3XScale() {
+        throw new Error("getXScale not implemented for " + this.name());
+    }
+
 
     /**
      * Implement your render code here.
      */
     render() {
-        console.warn("RENDER NOT IMPLEMENTED")
+        throw new Error("RENDER NOT IMPLEMENTED FOR " + this.name());
     }
 
 
