@@ -41,9 +41,13 @@ class Line extends Geometry {
         const x = this.getD3XScale(allData, width);
 
         const y = d3.scaleLinear()
-                    .domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)])
                     .range([height, 0])
-                    .nice(5);
+                    .nice(5)
+                    .domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)]);
+
+
+        console.log("lines y range", y.range());
+        console.log("lines y domain", y.domain());
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
@@ -61,7 +65,9 @@ class Line extends Geometry {
         if (lineGroup.empty()) {
             lineGroup = element
                 .append("g")
-                .attr("class", "lines");
+                .attr("class", "lines")
+                .attr("width", this.width())
+                .attr("height", this.height());
 
             // This is needed to provide area for mouse interactions.
             lineGroup
@@ -136,8 +142,8 @@ class Line extends Geometry {
         lines.exit().remove();
 
         const line = d3.line()
-                       .x(d => {console.log("x", d._x, x(d._x)); return x(d._x)})
-                       .y(d => {console.log("y", d._y, y(d._y)); return y(d._y)});
+                       .x(d => x(d._x))
+                       .y(d => y(d._y));
 
         lines
             .enter()

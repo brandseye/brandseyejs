@@ -40,10 +40,10 @@ class Point extends Geometry {
         const x = this.getD3XScale(data, width);
 
         const y = d3.scaleLinear()
-                    .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
-                        d3.max(data, d => d3.max(d.data, d => d._y))])
                     .rangeRound([height, 0])
-                    .nice();
+                    .nice()
+                    .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
+                        d3.max(data, d => d3.max(d.data, d => d._y))]);
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
