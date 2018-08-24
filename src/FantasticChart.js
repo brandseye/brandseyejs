@@ -198,8 +198,6 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
 
-        console.log("geometries", geometries.map(geom => geom.name()));
-
         facets.forEach(facet => {
             const geom_width  = facetBand.bandwidth(),
                   geom_height = height;
@@ -210,6 +208,37 @@ class FantasticChart {
                     .height(geom_height);
             })
         });
+
+        //-----------------------------------------------
+        // Setup axes.
+        let xAxisArea = drawingArea.select(".x-axis-area");
+        xAxisArea.remove();
+
+        xAxisArea = drawingArea
+            .append("g")
+            .attr("class", "x-axis-area");
+
+        // How high the x axis is.
+        let axisHeight = 0;
+
+        if (geometries.length) {
+            // Draw a little x-axis for every facet.
+            facets.forEach(facet => {
+                const scale = geometries[0]
+                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                    .getD3XScale();
+
+                const area = xAxisArea
+                    .append("g")
+                    .attr("transform", "translate(" + facetBand(facet) + ",0)")
+                    .attr("width", facetBand.bandwidth());
+
+                axisHeight = Math.max(axisHeight,
+                    xaxis(area, height,
+                        scale.bandwidth ? scale.bandwidth() : facetBand.bandwidth() / scale.domain().length,
+                        d3.axisBottom(scale).tickSize(0).tickPadding(5)))//.tickFormat(this._xAxisTickFormat));
+            })
+        }
 
 
         //-----------------------------------------------
@@ -228,14 +257,6 @@ class FantasticChart {
             .each((facet, facet_i, facetNodes) => {
                 console.log("------------ facet ", facet || "single-facet");
                 const area = d3.select(facetNodes[facet_i]);
-                const scale = geometries[0]
-                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                    .getD3XScale();
-
-                const axisHeight = xaxis(area, height,
-                    scale.bandwidth ? scale.bandwidth() : facetBand.bandwidth() / scale.domain().length,
-                    d3.axisBottom(scale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
-
                 let geoms = area.selectAll(".geometry").data(geometries);
 
                 geoms.exit().remove();
@@ -244,7 +265,6 @@ class FantasticChart {
                           .each((geom, i, nodes) => {
                               const geom_width  = geom.width(),
                                     geom_height = geom.height();
-                              console.log("Geom hight: " + geom_height, "updated", geom_height - axisHeight);
 
                               const geom_top  = 0,
                                     geom_left = 0;
@@ -255,6 +275,7 @@ class FantasticChart {
                                   .attr("class", "geometry")
                                   .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
                                   .each((d, i, nodes) => {
+                                      console.log("Setting height for", geom.name(), "to", height - axisHeight);
                                       geom.element(d3.select(nodes[i]))
                                           .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                                           .height(height - axisHeight)

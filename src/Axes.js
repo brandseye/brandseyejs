@@ -59,3 +59,17 @@ export function xaxis(selection, height, width, axisObject) {
     axis.attr("transform", "translate(0," + (height - axisHeight) + ")");
     return axisHeight;
 }
+
+export function yaxis(selection, axis) {
+    selection.select(".y-axis").remove();
+    let x = selection.append("g")
+                     .attr("class", "y-axis")
+                     .call(axis.tickSize(0).tickPadding(10))
+                     .style("opacity", 0)
+                     .transition()
+                     .duration(1000)
+                     .style("opacity", 1);
+
+    x.selectAll("text")
+     .style("fill", colours.eighteen.darkGrey)
+}
