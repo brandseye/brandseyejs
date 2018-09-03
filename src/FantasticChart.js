@@ -19,7 +19,8 @@
 
 import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
-import { xaxis } from "./Axes";
+import { xaxis, yaxis } from "./Axes";
+import {maxBounding} from "./helpers";
 
 
 class FantasticChart {
@@ -146,16 +147,29 @@ class FantasticChart {
         console.log("-------- Rendering ---------");
 
         //-----------------------------------------------
+        // Create initial svg element
+        let svg = d3.select(this._element).select("svg");
+        if (svg.empty()) svg = d3.select(this._element).append("svg");
 
-        const margin = {top: 10, right: 10, bottom: 10, left: 10};
+        //-----------------------------------------------
+        // Calculate the space that various elements will want to take up
+
+        const geometries = this.sortGeometries();
+        geometries.forEach(geom => this.setupGeom(geom));
+        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues()).width + 10 : 0;
+        const axisHeight = geometries.length ? maxBounding(svg, geometries[0].xValues()).width + 10 : 0;
+
+
+        //-----------------------------------------------
+        // Calculate margins and so on.
+
+        const margin = {top: 10, right: 10, bottom: 10 + axisHeight, left: 10 + axisWidth};
 
         const width  = this._width - margin.left - margin.right,
               height = this._height - margin.top - margin.bottom;
 
         //-----------------------------------------------
         // Setup the svg
-        let svg = d3.select(this._element).select("svg");
-        if (svg.empty()) svg = d3.select(this._element).append("svg");
 
         svg
             .style("width", this._width + "px")
@@ -190,41 +204,30 @@ class FantasticChart {
                             .domain(facets);
 
         //-----------------------------------------------
-        // Setup geometry
-        //
-        // Setting up before rendering will allow us to query geometry
-        // for their parameters, such as when we need to figure out what
-        // to render for axes.
-
-        const geometries = this.sortGeometries();
-
-        facets.forEach(facet => {
-            const geom_width  = facetBand.bandwidth(),
-                  geom_height = height;
-
-            geometries.forEach(geom => {
-                this.setupGeom(geom);
-                geom.width(geom_width)
-                    .height(geom_height);
-            })
-        });
-
-        //-----------------------------------------------
         // Setup axes.
-        let xAxisArea = drawingArea.select(".x-axis-area");
-        xAxisArea.remove();
 
+        let xAxisArea = drawingArea.select(".x-axis-area");
+
+        xAxisArea.remove();
         xAxisArea = drawingArea
             .append("g")
             .attr("class", "x-axis-area");
 
-        // How high the x axis is.
-        let axisHeight = 0;
+
+        let yAxisArea = drawingArea.select(".y-axis-area");
+
+        yAxisArea.remove();
+        yAxisArea = drawingArea
+            .append("g")
+            .attr("class", "y-axis-area");
+
 
         if (geometries.length) {
             // Draw a little x-axis for every facet.
             facets.forEach(facet => {
-                const scale = geometries[0]
+                const xScale = geometries[0]
+                    .width(facetBand.bandwidth)
+                    .height(height)
                     .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                     .getD3XScale();
 
@@ -233,11 +236,17 @@ class FantasticChart {
                     .attr("transform", "translate(" + facetBand(facet) + ",0)")
                     .attr("width", facetBand.bandwidth());
 
-                axisHeight = Math.max(axisHeight,
-                    xaxis(area, height,
-                        scale.bandwidth ? scale.bandwidth() : facetBand.bandwidth() / scale.domain().length,
-                        d3.axisBottom(scale).tickSize(0).tickPadding(5)))//.tickFormat(this._xAxisTickFormat));
-            })
+
+                xaxis(area, this._height,
+                    xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                    d3.axisBottom(xScale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
+            });
+
+            const yscale = geometries[0]
+                .height(height)
+                .getD3YScale();
+
+            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5)); //;.tickFormat(this._tickFormat));
         }
 
 
@@ -251,7 +260,7 @@ class FantasticChart {
             .merge(facetAreas)
             .attr("width", facetBand.bandwidth())
             .attr("transform", facetId => {
-                if (singleFacet) return "translate(0, 0)";
+                if (singleFacet) return "translate(" + axisWidth + ",0)";
                 return "translate(" + facetBand(facetId) + ",0)";
             })
             .each((facet, facet_i, facetNodes) => {
@@ -263,8 +272,8 @@ class FantasticChart {
 
                 geoms.enter()
                           .each((geom, i, nodes) => {
-                              const geom_width  = geom.width(),
-                                    geom_height = geom.height();
+                              const geom_width  = facetBand.bandwidth(),
+                                    geom_height = height;
 
                               const geom_top  = 0,
                                     geom_left = 0;
@@ -278,7 +287,8 @@ class FantasticChart {
                                       console.log("Setting height for", geom.name(), "to", height - axisHeight);
                                       geom.element(d3.select(nodes[i]))
                                           .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                                          .height(height - axisHeight)
+                                          .height(geom_height)
+                                          .width(geom_width)
                                           .render();
                                   })
                           })

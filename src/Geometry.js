@@ -208,7 +208,29 @@ export class Geometry {
     }
 
     getD3XScale() {
-        throw new Error("getXScale not implemented for " + this.name());
+        throw new Error("getD3XScale not implemented for " + this.name());
+    }
+
+    getD3YScale() {
+        throw new Error("getD3YScale not implemented for " + this.name());
+    }
+
+    /**
+     * Get all the Y values for this geometry, ignoring faceting.
+     */
+    yValues() {
+        return this.data()
+            .map(d => this.y()(d))
+            .map(d => this.scaleY().transform(d));
+    }
+
+    /**
+     * Get all the Y values for this geometry, ignoring faceting.
+     */
+    xValues() {
+        return this.data()
+                   .map(d => this.x()(d))
+                   .map(d => this.scaleX().transform(d));
     }
 
 

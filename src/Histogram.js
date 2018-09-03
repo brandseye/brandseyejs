@@ -40,21 +40,15 @@ class Histogram extends Geometry {
 
         const x = this.getD3XScale(data, width);
 
-        const y = d3.scaleLinear()
-                    .rangeRound([height, 0])
-                    .nice();
+        const y = this.getD3YScale(allData, height);
 
         const xGroup = d3.scaleBand()
-                         .padding(0);
+                         .padding(0)
+                         .domain(this.getKeys(data))
+                         .rangeRound([0, x.bandwidth()]);
 
-        const colours = d3.scaleOrdinal(this.colourScale());
-
-
-        y.domain([0, d3.max(allData, d => d3.max(d.data, d => d._y))]);
-        xGroup
-              .domain(this.getKeys(data))
-              .rangeRound([0, x.bandwidth()]);
-        colours.domain(this.getColourDomain(allData));
+        const colours = d3.scaleOrdinal(this.colourScale())
+                          .domain(this.getColourDomain(allData));
 
         let groups = element.select(".bars").selectAll('.group');
 
@@ -213,12 +207,22 @@ class Histogram extends Geometry {
 
     getD3XScale(data, width) {
         data = data || this.prepareData(null, true);
-        width = width || this._width;
+        width = width || this.width();
 
         return d3.scaleBand()
                  .rangeRound([0, width])
                  .padding(data[0].data.length > 1 ? 0.05 : 0)
                  .domain(data.map(d => d._key));
+    }
+
+    getD3YScale(data, height) {
+        data = data || this.prepareData(null, false);
+        height = height || this.height();
+
+        return d3.scaleLinear()
+                 .rangeRound([height, 0])
+                 .nice()
+                 .domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
     }
 
 }

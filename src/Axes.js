@@ -71,5 +71,10 @@ export function yaxis(selection, axis) {
                      .style("opacity", 1);
 
     x.selectAll("text")
-     .style("fill", colours.eighteen.darkGrey)
+     .style("fill", colours.eighteen.darkGrey);
+
+    const width = x.node().getBBox().width;
+    x.attr("transform", "translate(" + width + ",0)");
+
+    return width;
 }
