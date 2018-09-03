@@ -19,7 +19,14 @@
 <div class="banner">
     <div id="graph" style="width: 900px; height: 420px;">
     </div>
+
+    <div id="graph2" style="width: 900px; height: 420px;">
+    </div>
 </div>
+
+
+
+
 
 <script>
     window.addEventListener("load", function(event) {
@@ -46,7 +53,7 @@
           }
         ];
 
-        graph = new b3js.ColumnChart();
+        let graph = new b3js.ColumnChart();
 
         graph
             .data(data)
@@ -54,6 +61,20 @@
             .width(900)
             .showLabels(true)
             .render();
+
+        d3.json("comparison.json").then(data => {
+            let graph = new b3js.ColumnChart();
+
+            graph
+                .data(data)
+                .element(document.getElementById('graph2'))
+                .width(900)
+                .showLabels(true)
+                .x(d => d.site)
+                .y(d => Math.round(d.percentage))
+                .showLegend(true)
+                .render();
+        })
 
     });
 </script>

@@ -1,0 +1,108 @@
+[
+  {
+    "key": "Sta-Soft",
+    "values": [
+      {
+        "site": "twitter.com",
+        "count": 245,
+        "authorNames": 227,
+        "ots": 870046,
+        "ave": 195835.35,
+        "engagement": 163,
+        "reshareCount": 89,
+        "replyCount": 74,
+        "percentage": 75.15337423312883
+      },
+      {
+        "site": "www.facebook.com",
+        "count": 78,
+        "authorNames": 67,
+        "ots": 13224,
+        "ave": 3050.4,
+        "engagement": 89,
+        "reshareCount": 0,
+        "replyCount": 89,
+        "percentage": 23.92638036809816
+      },
+      {
+        "site": "www.instagram.com",
+        "count": 3,
+        "authorNames": 0,
+        "ots": 3,
+        "ave": 75.675,
+        "engagement": 0,
+        "reshareCount": 0,
+        "replyCount": 0,
+        "percentage": 0.9202453987730062
+      }
+    ]
+  },
+  {
+    "key": "MAQ Washing Powder",
+    "values": [
+      {
+        "site": "www.facebook.com",
+        "count": 94,
+        "authorNames": 3,
+        "ots": 2924227,
+        "ave": 658026.075,
+        "engagement": 83,
+        "reshareCount": 0,
+        "replyCount": 83,
+        "percentage": 97.91666666666666
+      },
+      {
+        "site": "twitter.com",
+        "count": 2,
+        "authorNames": 2,
+        "ots": 375,
+        "ave": 159.375,
+        "engagement": 0,
+        "reshareCount": 0,
+        "replyCount": 0,
+        "percentage": 2.083333333333333
+      },
+      {
+        "count": 0,
+        "percentage": 0,
+        "ots": 0,
+        "ave": 0,
+        "site": "www.instagram.com"
+      }
+    ]
+  },
+  {
+    "key": "Comfort Washing Powder",
+    "values": [
+      {
+        "site": "www.facebook.com",
+        "count": 152,
+        "authorNames": 1,
+        "ots": 2002104,
+        "ave": 450548.4,
+        "engagement": 61,
+        "reshareCount": 0,
+        "replyCount": 61,
+        "percentage": 95.59748427672956
+      },
+      {
+        "site": "twitter.com",
+        "count": 7,
+        "authorNames": 7,
+        "ots": 41204,
+        "ave": 9345.9,
+        "engagement": 4,
+        "reshareCount": 2,
+        "replyCount": 2,
+        "percentage": 4.40251572327044
+      },
+      {
+        "count": 0,
+        "percentage": 0,
+        "ots": 0,
+        "ave": 0,
+        "site": "www.instagram.com"
+      }
+    ]
+  }
+]

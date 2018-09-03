@@ -737,16 +737,19 @@ export class ColumnChart extends Chart {
 
         let results = [];
 
+        const getX = d => this._xAxisOverride ? this._xAxisOverride[this._x(d)] : this._x(d);
+
         data.forEach((series, s_i) => {
             series.values.forEach((d, d_i) => {
                 if (results.length <= d_i) {
                     results.push({
                         data: [],
-                        key: this._xAxisOverride ? this._xAxisOverride[this._x(d)] : this._x(d)
-                    })
+                        key: getX(d)
+                    });
                 }
 
-                let field = results[d_i];
+                // let field = results[d_i];
+                let field = results.find(bucket => bucket.key === getX(d));
                 field.data.push(Object.assign({
                     _series: series,
                     _s_i: s_i,
@@ -754,7 +757,7 @@ export class ColumnChart extends Chart {
                     _y: this._y(d)
                 }, d));
             })
-        })
+        });
 
         return results;
     }
