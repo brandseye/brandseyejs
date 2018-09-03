@@ -678,15 +678,15 @@ export class BarChart extends Chart {
 
         data.forEach((series, s_i) => {
             series.values.forEach((d, d_i) => {
-                if (results.length <= d_i) {
-                    results.push({
+                let field = results.find(bucket => bucket.key === getX(d));
+                if (!field) {
+                    field = {
                         data: [],
                         key: getX(d)
-                    });
+                    };
+                    results.push(field);
                 }
 
-                // let field = results[d_i];
-                let field = results.find(bucket => bucket.key === getX(d));
                 field.data.push(Object.assign({
                     _series: series,
                     _s_i: s_i,
