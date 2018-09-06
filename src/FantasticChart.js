@@ -162,9 +162,10 @@ class FantasticChart {
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
+        // We can only calculate the final height once we can accurately
+        // determine how to lay out the x-axis.
 
         const margin = {top: 10, right: 10, bottom: 10, left: 10 + axisWidth};
-
         const width  = this._width - margin.left - margin.right;
 
         //-----------------------------------------------
@@ -179,7 +180,9 @@ class FantasticChart {
                             .domain(facets);
 
         //-----------------------------------------------
-        // Determine x-axis height.
+        // Determine x-axis height
+        // We do this by rendering the various x-axes offscreen.
+
         geometries.forEach(geom => geom.width(facetBand.bandwidth()));
         const axisSizeArea = svg.append("g")
             .attr("transform", "translate(-1000, -1000)");
@@ -198,10 +201,6 @@ class FantasticChart {
             axisHeight = Math.max(height, axisHeight);
         });
 
-        console.log("Axis height is: ", axisHeight);
-
-
-        // const axisHeight = geometries.length ? (maxBounding(svg, geometries[0].xValues()).width + 10) * 0.5 : 0;
         axisSizeArea.remove();
 
         //-----------------------------------------------
@@ -267,7 +266,7 @@ class FantasticChart {
 
                 const area = xAxisArea
                     .append("g")
-                    .attr("transform", "translate("+ margin.left + ",0)")// + (this._height - axisHeight) +")")
+                    .attr("transform", "translate(" + (margin.left + facetBand.bandwidth()) + ",0)")// + (this._height - axisHeight) +")")
                     .attr("width", facetBand.bandwidth());
 
 
