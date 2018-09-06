@@ -246,6 +246,8 @@ class FantasticChart {
             .append("g")
             .attr("class", "x-axis-area");
 
+        xAxisArea.attr("transform", "translate(" + margin.left + ",0)");
+
 
         let yAxisArea = svg.select(".y-axis-area");
 
@@ -257,7 +259,7 @@ class FantasticChart {
 
         if (geometries.length) {
             // Draw a little x-axis for every facet.
-            facets.forEach(facet => {
+            facets.forEach((facet, facet_i) => {
                 const xScale = geometries[0]
                     .width(facetBand.bandwidth())
                     .height(height)
@@ -266,7 +268,7 @@ class FantasticChart {
 
                 const area = xAxisArea
                     .append("g")
-                    .attr("transform", "translate(" + (margin.left + facetBand.bandwidth()) + ",0)")// + (this._height - axisHeight) +")")
+                    .attr("transform", "translate(" + (facetBand(facet)) + ",0)")// + (this._height - axisHeight) +")")
                     .attr("width", facetBand.bandwidth());
 
 
