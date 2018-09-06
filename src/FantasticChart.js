@@ -157,19 +157,58 @@ class FantasticChart {
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
         const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues()).width + 10 : 0;
-        const axisHeight = geometries.length ? (maxBounding(svg, geometries[0].xValues()).width + 10) * 0.5 : 0;
 
         console.log("Axis width is:", axisWidth);
+
+        //-----------------------------------------------
+        // Calculate margins without knowing the final height.
+
+        const margin = {top: 10, right: 10, bottom: 10, left: 10 + axisWidth};
+
+        const width  = this._width - margin.left - margin.right;
+
+        //-----------------------------------------------
+        // Determine initial facet / small multiple information
+
+        const facets = getFacets(this._data, this._facet_x);
+        const singleFacet = facets.length === 1;
+
+        const facetBand = d3.scaleBand()
+                            .rangeRound([0, width])
+                            .padding(singleFacet ? 0 : 0.1) // take up full space if the only facet.
+                            .domain(facets);
+
+        //-----------------------------------------------
+        // Determine x-axis height.
+        geometries.forEach(geom => geom.width(facetBand.bandwidth()));
+        const axisSizeArea = svg.append("g")
+            .attr("transform", "translate(-1000, -1000)");
+
+        let axisHeight = 0;
+        facets.forEach(facet => {
+            const xScale = geometries[0]
+                .width(facetBand.bandwidth())
+                .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                .getD3XScale();
+
+            let height = xaxis(axisSizeArea, this._height,
+                xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                d3.axisBottom(xScale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
+
+            axisHeight = Math.max(height, axisHeight);
+        });
+
         console.log("Axis height is: ", axisHeight);
 
 
+        // const axisHeight = geometries.length ? (maxBounding(svg, geometries[0].xValues()).width + 10) * 0.5 : 0;
+        axisSizeArea.remove();
+
         //-----------------------------------------------
-        // Calculate margins and so on.
+        // Update margins and calculate height
 
-        const margin = {top: 10, right: 10, bottom: 10 + axisHeight, left: 10 + axisWidth};
-
-        const width  = this._width - margin.left - margin.right,
-              height = this._height - margin.top - margin.bottom;
+        margin.bottom += axisHeight;
+        const height = this._height - margin.top - margin.bottom;
 
         //-----------------------------------------------
         // Setup the svg
@@ -195,16 +234,8 @@ class FantasticChart {
         //-----------------------------------------------
         // Set up small multiples / facets
 
-        const facets = getFacets(this._data, this._facet_x);
-        const singleFacet = facets.length === 1;
         let facetAreas = drawingArea.selectAll('.facet').data(facets);
-
         facetAreas.exit().remove();
-
-        const facetBand = d3.scaleBand()
-                            .rangeRound([0, width])
-                            .padding(singleFacet ? 0 : 0.1) // take up full space if the only facet.
-                            .domain(facets);
 
         //-----------------------------------------------
         // Setup axes.
