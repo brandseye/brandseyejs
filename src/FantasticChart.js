@@ -157,7 +157,10 @@ class FantasticChart {
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
         const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues()).width + 10 : 0;
-        const axisHeight = geometries.length ? maxBounding(svg, geometries[0].xValues()).width + 10 : 0;
+        const axisHeight = geometries.length ? (maxBounding(svg, geometries[0].xValues()).width + 10) * 0.5 : 0;
+
+        console.log("Axis width is:", axisWidth);
+        console.log("Axis height is: ", axisHeight);
 
 
         //-----------------------------------------------
@@ -206,18 +209,18 @@ class FantasticChart {
         //-----------------------------------------------
         // Setup axes.
 
-        let xAxisArea = drawingArea.select(".x-axis-area");
+        let xAxisArea = svg.select(".x-axis-area");
 
         xAxisArea.remove();
-        xAxisArea = drawingArea
+        xAxisArea = svg
             .append("g")
             .attr("class", "x-axis-area");
 
 
-        let yAxisArea = drawingArea.select(".y-axis-area");
+        let yAxisArea = svg.select(".y-axis-area");
 
         yAxisArea.remove();
-        yAxisArea = drawingArea
+        yAxisArea = svg
             .append("g")
             .attr("class", "y-axis-area");
 
@@ -226,14 +229,14 @@ class FantasticChart {
             // Draw a little x-axis for every facet.
             facets.forEach(facet => {
                 const xScale = geometries[0]
-                    .width(facetBand.bandwidth)
+                    .width(facetBand.bandwidth())
                     .height(height)
                     .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                     .getD3XScale();
 
                 const area = xAxisArea
                     .append("g")
-                    .attr("transform", "translate(" + facetBand(facet) + ",0)")
+                    .attr("transform", "translate("+ margin.left + ",0)")// + (this._height - axisHeight) +")")
                     .attr("width", facetBand.bandwidth());
 
 
@@ -260,7 +263,7 @@ class FantasticChart {
             .merge(facetAreas)
             .attr("width", facetBand.bandwidth())
             .attr("transform", facetId => {
-                if (singleFacet) return "translate(" + axisWidth + ",0)";
+                if (singleFacet) return "translate(0,0)";
                 return "translate(" + facetBand(facetId) + ",0)";
             })
             .each((facet, facet_i, facetNodes) => {

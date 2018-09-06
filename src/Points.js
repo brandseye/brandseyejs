@@ -38,12 +38,7 @@ class Point extends Geometry {
 
 
         const x = this.getD3XScale(data, width);
-
-        const y = d3.scaleLinear()
-                    .rangeRound([height, 0])
-                    .nice()
-                    .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
-                        d3.max(data, d => d3.max(d.data, d => d._y))]);
+        const y = this.getD3YScale(data, height);
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
@@ -79,6 +74,18 @@ class Point extends Geometry {
                  .rangeRound([0, width])
                  .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
                      d3.max(data, d => d3.max(d.data, d => d._x))]);
+
+    }
+
+    getD3YScale(data, height) {
+        data = data || this.prepareData();
+        height = height || this.height();
+
+        return d3.scaleLinear()
+                 .rangeRound([height, 0])
+                 .nice()
+                 .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
+                     d3.max(data, d => d3.max(d.data, d => d._y))]);
 
     }
 }

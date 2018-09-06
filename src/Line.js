@@ -39,12 +39,7 @@ class Line extends Geometry {
 
 
         const x = this.getD3XScale(allData, width);
-
-        const y = d3.scaleLinear()
-                    .range([height, 0])
-                    .nice(5)
-                    .domain([Math.min(0, d3.min(allData, d => d._y)), d3.max(allData, d => d._y)]);
-
+        const y = this.getD3YScale(allData, height);
 
         console.log("lines y range", y.range());
         console.log("lines y domain", y.domain());
@@ -174,6 +169,19 @@ class Line extends Geometry {
         return d3.scaleTime()
                     .range([0, width])
                  .domain(d3.extent(data, d => d._x));
+    }
+
+    getD3YScale(data, height) {
+        data = data || this.prepareData()
+                           .map(d => d.data)
+                           .reduce((acc, val) => acc.concat(val));
+        height = height || this.height();
+
+        return d3.scaleLinear()
+          .range([height, 0])
+          .nice(5)
+          .domain([Math.min(0, d3.min(data, d => d._y)), d3.max(data, d => d._y)]);
+
     }
 }
 
