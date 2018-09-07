@@ -270,7 +270,7 @@ export class BarChart extends Chart {
 
         const y = d3.scaleBand()
             .rangeRound([0, height])
-            .padding(this._data.length > 1 ? 0.08 : 0.02);
+            .padding(this._data.length > 1 ? 0.08 : 0.1);
 
         const yGroup = d3.scaleBand()
             .padding(0);
