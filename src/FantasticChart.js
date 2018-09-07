@@ -259,7 +259,7 @@ class FantasticChart {
 
         if (geometries.length) {
             // Draw a little x-axis for every facet.
-            facets.forEach((facet, facet_i) => {
+            facets.forEach(facet => {
                 const xScale = geometries[0]
                     .width(facetBand.bandwidth())
                     .height(height)
