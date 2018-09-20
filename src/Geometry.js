@@ -32,6 +32,8 @@ export class Geometry {
         this._scale_y = null;
         this._facet_selector = null;
         this._chart_colour_scale = null;
+        this._x_formatter = null;
+        this._chart_x_formatter = null;
         this._priority = priority || 1;
     }
 
@@ -143,6 +145,20 @@ export class Geometry {
         return this;
     }
 
+    formatX(formatter) {
+        if (arguments.length === 0) return this._x_formatter || this._chart_x_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._x_formatter = formatter;
+        return this;
+    }
+
+    setupFormatX(formatter) {
+        if (arguments.length === 0) return this._chart_x_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._chart_x_formatter = formatter;
+        return this;
+    }
+
     width(width) {
         if (arguments.length === 0) return this._width;
         this._width = width;
@@ -163,7 +179,7 @@ export class Geometry {
 
     facet(selector) {
         if (arguments.length === 0) return this._facet_selector;
-        if (typeof selector !== 'function' && selector !== null) throw new Error("Facet selector must be a function");
+        if (selector != null && typeof selector !== 'function' && selector !== null) throw new Error("Facet selector must be a function");
         this._facet_selector = selector;
         return this;
     }

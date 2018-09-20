@@ -40,6 +40,7 @@ class FantasticChart {
         this._colour = () => 1;
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
+        this._x_formatter = d => "" + d;
     }
 
     /*
@@ -106,6 +107,13 @@ class FantasticChart {
         console.log("=> size: not implemented")
     }
 
+    formatX(formatter) {
+        if (arguments.length === 0) return this._x_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._x_formatter = formatter;
+        return this;
+    }
+
     /**
      * Defines how to separate data visually using colours. It
      * does not define what colour to use.
@@ -132,7 +140,7 @@ class FantasticChart {
 
     facetX(selector) {
         if (arguments.length === 0) return this._facet_x;
-        if (typeof selector !== 'function') throw new Error("The facet selector must be a function");
+        if (selector != null && typeof selector !== 'function') throw new Error("The facet selector must be a function");
         this._facet_x = selector;
         return this;
     }
@@ -196,7 +204,7 @@ class FantasticChart {
 
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
+                d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(geometries[0].formatX()));
 
             axisHeight = Math.max(height, axisHeight);
         });
@@ -274,7 +282,7 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).tickSize(0).tickPadding(5))//.tickFormat(this._xAxisTickFormat));
+                    d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(geometries[0].formatX()))
             });
 
             const yscale = geometries[0]
@@ -326,7 +334,7 @@ class FantasticChart {
                                           .width(geom_width)
                                           .render();
                                   })
-                          })
+                          });
 
                 // Ensure this is rendered on top of other things.
                 area.select(".x-axis").raise();
@@ -346,6 +354,7 @@ class FantasticChart {
             .setupSize(this._size)
             .setupScaleX(this._scale_x)
             .setupScaleY(this._scale_y)
+            .setupFormatX(this._x_formatter)
             .setupColourScale(this._colour_scale);
         geom.data(this._data);
     }
