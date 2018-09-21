@@ -26,6 +26,10 @@ import {maxBounding} from "./helpers";
 class FantasticChart {
 
     constructor() {
+        this.reset();
+    }
+
+    reset() {
         this._geometries = [];
         this._x_getter = d => d.x;
         this._y_getter = d => d.y;
@@ -41,6 +45,10 @@ class FantasticChart {
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
         this._x_formatter = d => "" + d;
+        this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
+            'tooltipShow', 'tooltipHide');
+
+        return this;
     }
 
     /*
@@ -143,6 +151,21 @@ class FantasticChart {
         if (selector != null && typeof selector !== 'function') throw new Error("The facet selector must be a function");
         this._facet_x = selector;
         return this;
+    }
+
+    /**
+     * The event handle for the charts. Supports the following events:
+     *
+     * - elementClick
+     * - elementMiddleClick
+     * - elementRightClick
+     * - tooltipShow
+     * - tooltipHide
+     *
+     * @returns {*|Dispatch}
+     */
+    dispatch() {
+        return this._dispatch;
     }
 
     data(data) {
@@ -356,6 +379,10 @@ class FantasticChart {
             .setupScaleY(this._scale_y)
             .setupFormatX(this._x_formatter)
             .setupColourScale(this._colour_scale);
+        geom._dispatch.on("elementClick", (e) => {
+            console.log("Element clicked!!", e);
+            this._dispatch.call("elementClick", this, e);
+        });
         geom.data(this._data);
     }
 

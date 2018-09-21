@@ -35,6 +35,8 @@ export class Geometry {
         this._x_formatter = null;
         this._chart_x_formatter = null;
         this._priority = priority || 1;
+        this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
+            'tooltipShow', 'tooltipHide');
     }
 
     name() {

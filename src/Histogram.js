@@ -102,6 +102,15 @@ class Histogram extends Geometry {
                           .style("fill", d => colours(d._colour))//d => d._colour === 1 ? "grey" : "green")
                           .style("stroke", d => d3.hcl(d._colour).darker())
                           .style("cursor", "pointer")
+                      .on("click auxclick", (d, i, nodes) => {
+                          this._dispatch.call("elementClick", this, {
+                              e: d3.event,
+                              point: d,
+                              series: d._series,
+                              seriesIndex: s_i,
+                              value: d._y
+                          })
+                      })
                       .merge(bars)
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
@@ -131,15 +140,7 @@ class Histogram extends Geometry {
                   //           .style("fill", this.getSeriesColour(i));
                   //         this._dispatch.call("tooltipHide", this);
                   //     })
-                  //     .on("click auxclick", (d, i, nodes) => {
-                  //         this._dispatch.call("elementClick", this, {
-                  //             e: d3.event,
-                  //             point: d,
-                  //             series: d._series,
-                  //             seriesIndex: s_i,
-                  //             value: this._y(d)
-                  //         })
-                  //     })
+
 
 
               })
