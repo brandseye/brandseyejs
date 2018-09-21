@@ -111,6 +111,7 @@ class Histogram extends Geometry {
                               value: d._y
                           })
                       })
+                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")

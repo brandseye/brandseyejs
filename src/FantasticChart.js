@@ -380,7 +380,6 @@ class FantasticChart {
             .setupFormatX(this._x_formatter)
             .setupColourScale(this._colour_scale);
         geom._dispatch.on("elementClick", (e) => {
-            console.log("Element clicked!!", e);
             this._dispatch.call("elementClick", this, e);
         });
         geom.data(this._data);
