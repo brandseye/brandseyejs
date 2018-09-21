@@ -45,8 +45,7 @@ class FantasticChart {
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
         this._x_formatter = d => "" + d;
-        this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
-            'tooltipShow', 'tooltipHide');
+        this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
 
         return this;
     }
@@ -157,8 +156,6 @@ class FantasticChart {
      * The event handle for the charts. Supports the following events:
      *
      * - elementClick
-     * - elementMiddleClick
-     * - elementRightClick
      * - tooltipShow
      * - tooltipHide
      *
@@ -381,6 +378,12 @@ class FantasticChart {
             .setupColourScale(this._colour_scale);
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);
+        });
+        geom._dispatch.on("tooltipHide", () => {
+            this._dispatch.call("tooltipHide", this);
+        });
+        geom._dispatch.on("tooltipShow", (e) => {
+            this._dispatch.call("tooltipShow", this, e);
         });
         geom.data(this._data);
     }
