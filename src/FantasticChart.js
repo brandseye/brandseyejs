@@ -47,6 +47,7 @@ class FantasticChart {
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
+        this._show_labels = true;
 
         return this;
     }
@@ -157,6 +158,16 @@ class FantasticChart {
         if (arguments.length === 0) return this._facet_x;
         if (selector != null && typeof selector !== 'function') throw new Error("The facet selector must be a function");
         this._facet_x = selector;
+        return this;
+    }
+
+    /**
+     * Whether to show labels or not. This is retained mode: it will not show the labels
+     * immediately. Please call #render() again to show the labels.
+     */
+    showLabels(show) {
+        if (arguments.length === 0) return this._show_labels;
+        this._show_labels = !!show;
         return this;
     }
 
@@ -386,7 +397,8 @@ class FantasticChart {
             .setupScaleY(this._scale_y)
             .setupFormatX(this._x_formatter)
             .setupFormatY(this._y_formatter)
-            .setupColourScale(this._colour_scale);
+            .setupColourScale(this._colour_scale)
+            .setupShowLabels(this._show_labels);
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);
         });

@@ -39,6 +39,8 @@ export class Geometry {
         this._priority = priority || 1;
         this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
             'tooltipShow', 'tooltipHide');
+        this._show_labels = null;
+        this._chart_show_labels = null;
     }
 
     name() {
@@ -186,6 +188,18 @@ export class Geometry {
     height(height) {
         if (arguments.length === 0) return this._height;
         this._height = height;
+        return this;
+    }
+
+    showLabels(show) {
+        if (arguments.length === 0) return this._chart_show_labels || this._show_labels;
+        this._show_labels = !!show;
+        return this;
+    }
+
+    setupShowLabels(show) {
+        if (arguments.length === 0) return this._chart_show_labels;
+        this._chart_show_labels = !!show;
         return this;
     }
 

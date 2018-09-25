@@ -18,6 +18,7 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { Geometry } from './Geometry';
+import {colours} from "./Colours";
 
 
 class Histogram extends Geometry {
@@ -151,7 +152,16 @@ class Histogram extends Geometry {
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
                           .style("fill", d => d._colour)
                           .attr("height", d => height - y(d._y));
-              })
+              });
+
+        // Labels loaded after our last bar grows.
+        if (this.showLabels()) {
+            element.transition("bar:growth")
+               .on("end", (d, i, nodes) => {
+                   if (i < nodes.length - 1) return;
+                   this.renderLabels(element, data, x, xGroup, y, colours);
+               })
+        }
     }
 
     calcBarGrowth(i, max) {
@@ -233,6 +243,101 @@ class Histogram extends Geometry {
                  .nice()
                  .domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
     }
+
+    renderLabels(selection, data, xscale, xgroup, yscale, colourScale, animate) {
+        animate = animate === undefined ? true : animate;
+        selection.selectAll(".chart-labels").remove();
+
+        let labels = selection.append("g")
+                              .attr("class", "chart-labels")
+                              // .selectAll(".chart-label")
+                              .selectAll(".label-group")
+                              .data(data);
+
+        let maxWidth = 0;     // For calculating the max width of text.
+        let fontSize = 12;    // Our initial font size.
+        const buffer = 5;     // Buffer space between words and the top of a bar.
+        const calcDy = (ypos) => ypos < 10 ? fontSize + buffer : -buffer;
+
+        // Want to figure out if the label is too dark / light for the
+        // bar.
+        const getInvertedColor = c => {
+            let invertedColor = d3.hcl(colourScale(c));
+            invertedColor.l += Math.min(invertedColor.l + 50, 100);
+            return invertedColor;
+        };
+        const shouldInvert = c => d3.hcl(colourScale(c)).l < 60;
+
+        labels.enter().each((series, s_i, s_nodes) => {
+            let group = d3.select(s_nodes[s_i])
+                          .append("g")
+                          .attr("class", "label-group")
+                          .attr("transform", d => "translate(" + xscale(d._key) + ",0)")
+                          .selectAll(".chart-label")
+                          .data(series.data)
+                          .enter()
+                          .each((d, i, nodes) => {
+                              let ypos = yscale(d._y);
+                              let dy = calcDy(ypos);
+                              let text = d3.select(nodes[i])
+                                           .append("text")
+                                           .text(d._y)
+                                           // .text(this._labelFormat(d._y))
+                                           .attr("class", "chart-label")
+                                           .attr("y", ypos)
+                                           .attr("dx", animate ? -15 : 0)
+                                           .attr("dy", dy)
+                                           .style("opacity", 0)
+                                           .style("pointer-events", "none")
+                                           // .style("font-family", "Open Sans, sans-serif")
+                                           // .style("font-weight", "normal")
+                                           // .style("font-size", fontSize + "px")
+                                           .style("fill", dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : colours.eighteen.darkGrey);
+
+                              // Set the x position, which is based on width.
+                              const width = text.node().getBBox().width;
+                              maxWidth = Math.max(width, maxWidth);
+                              text
+                                  .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+
+                              text
+                                  .transition("labels")
+                                  .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
+                                  .duration(this._duration)
+                                  .attr("dx", 0)
+                                  .style("opacity", 1)
+                          })
+        })
+
+
+        // Figure out if we don't have enough space to show our labels.
+        // We then want to resize, if possible.
+        if (xgroup.bandwidth() < maxWidth * 1.05) {
+            let scale = maxWidth / xgroup.bandwidth() * 1.05;
+            fontSize = Math.floor(fontSize / scale);
+
+            if (fontSize < 8) {
+                // The labels are too small.
+                labels.enter().selectAll("text").remove();
+            } else {
+                labels.enter()
+                      .merge(labels)
+                      .selectAll("text")
+                      .style("font-size", fontSize + "px")
+                      .each((d, i, nodes) => {
+                          const text = d3.select(nodes[i]);
+                          const width = text.node().getBBox().width;
+                          const dy = calcDy(d._y);
+
+                          text
+                              .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
+                              .style("fill", dy > 0 && shouldInvert(i) ? getInvertedColor(i).toString() : colours.eighteen.darkGrey)
+                              .attr("dy", dy);
+                      })
+            }
+        }
+    }
+
 
 }
 
