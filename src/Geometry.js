@@ -33,7 +33,9 @@ export class Geometry {
         this._facet_selector = null;
         this._chart_colour_scale = null;
         this._x_formatter = null;
+        this._y_formatter = null;
         this._chart_x_formatter = null;
+        this._chart_y_formatter = null;
         this._priority = priority || 1;
         this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
             'tooltipShow', 'tooltipHide');
@@ -158,6 +160,20 @@ export class Geometry {
         if (arguments.length === 0) return this._chart_x_formatter;
         if (typeof formatter !== 'function') throw new Error("formatter must be a function");
         this._chart_x_formatter = formatter;
+        return this;
+    }
+
+    formatY(formatter) {
+        if (arguments.length === 0) return this._y_formatter || this._chart_y_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._y_formatter = formatter;
+        return this;
+    }
+
+    setupFormatY(formatter) {
+        if (arguments.length === 0) return this._chart_y_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._chart_y_formatter = formatter;
         return this;
     }
 

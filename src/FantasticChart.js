@@ -45,6 +45,7 @@ class FantasticChart {
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
         this._x_formatter = d => "" + d;
+        this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
 
         return this;
@@ -121,6 +122,13 @@ class FantasticChart {
         return this;
     }
 
+    formatY(formatter) {
+        if (arguments.length === 0) return this._y_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._y_formatter = formatter;
+        return this;
+    }
+
     /**
      * Defines how to separate data visually using colours. It
      * does not define what colour to use.
@@ -184,9 +192,7 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues()).width + 10 : 0;
-
-        console.log("Axis width is:", axisWidth);
+        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues().map(geometries[0].formatY())).width + 10 : 0;
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
@@ -309,7 +315,7 @@ class FantasticChart {
                 .height(height)
                 .getD3YScale();
 
-            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5)); //;.tickFormat(this._tickFormat));
+            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
         }
 
 
@@ -375,6 +381,7 @@ class FantasticChart {
             .setupScaleX(this._scale_x)
             .setupScaleY(this._scale_y)
             .setupFormatX(this._x_formatter)
+            .setupFormatY(this._y_formatter)
             .setupColourScale(this._colour_scale);
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);

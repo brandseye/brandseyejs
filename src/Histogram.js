@@ -22,9 +22,19 @@ import { Geometry } from './Geometry';
 
 class Histogram extends Geometry {
 
-    constructor() {
-        super("HISTOGRAM");
+    constructor(name, padding) {
+        super(name || "HISTOGRAM");
         this._BAR_GROWTH = 100;
+        this._padding = padding || 0;
+    }
+
+    /**
+     * Set the padding between bar groups. 0 padding is a standard histogram.
+     */
+    padding(padding) {
+        if (arguments.length === 0) return this._padding;
+        this._padding = padding;
+        return this;
     }
 
     render() {
@@ -100,7 +110,7 @@ class Histogram extends Geometry {
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("fill", d => colours(d._colour))//d => d._colour === 1 ? "grey" : "green")
-                          .style("stroke", d => d3.hcl(d._colour).darker())
+                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                           .style("cursor", "pointer")
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
@@ -116,7 +126,7 @@ class Histogram extends Geometry {
                             .interrupt("hover:colour")
                             .transition("hover:colour")
                             .duration(400)
-                            .style("fill", d3.hcl(this.getSeriesColour(i)).darker());
+                            .style("fill", d3.hcl(colours(d._colour)).darker());
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d,
@@ -130,7 +140,7 @@ class Histogram extends Geometry {
                             .interrupt("hover:colour")
                             .transition("hover:colour")
                             .duration(400)
-                            .style("fill", this.getSeriesColour(i));
+                            .style("fill", d => colours(d._colour));
                           this._dispatch.call("tooltipHide", this);
                       })
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
@@ -209,7 +219,7 @@ class Histogram extends Geometry {
 
         return d3.scaleBand()
                  .rangeRound([0, width])
-                 .padding(data[0].data.length > 1 ? 0.05 : 0)
+                 .padding((data[0].data.length > 1 ? 0.05 : 0) + this._padding)
                  .domain(data.map(d => d._key));
     }
 
@@ -228,4 +238,8 @@ class Histogram extends Geometry {
 
 export function histogram() {
     return new Histogram();
+}
+
+export function columnChart() {
+    return new Histogram("COLUMN_CHART", 0.1);
 }
