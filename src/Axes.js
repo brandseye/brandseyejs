@@ -19,6 +19,9 @@
 
 import {colours} from "./Colours";
 
+const AXIS_ANIMATION_DURATION = 1000;
+const AXIS_DELAY = 250;
+
 
 export function xaxis(selection, height, width, axisObject) {
     selection.select(".x-axis").remove();
@@ -52,7 +55,8 @@ export function xaxis(selection, height, width, axisObject) {
 
     axis
         .transition()
-        .duration(1000)
+        .duration(AXIS_ANIMATION_DURATION)
+        .delay(AXIS_DELAY)
         .style("opacity", 1);
 
     const axisHeight = axis.node().getBBox().height;
@@ -65,16 +69,18 @@ export function yaxis(selection, axis) {
     let x = selection.append("g")
                      .attr("class", "y-axis")
                      .call(axis.tickSize(0).tickPadding(10))
-                     .style("opacity", 0)
-                     .transition()
-                     .duration(1000)
-                     .style("opacity", 1);
+                     .style("opacity", 0);
 
     x.selectAll("text")
      .style("fill", colours.eighteen.darkGrey);
 
     const width = x.node().getBBox().width;
     x.attr("transform", "translate(" + width + ",0)");
+
+    x.transition()
+     .duration(AXIS_ANIMATION_DURATION)
+     .delay(AXIS_DELAY)
+     .style("opacity", 1);
 
     return width;
 }
