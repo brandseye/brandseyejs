@@ -256,6 +256,7 @@ class FantasticChart {
         let drawingArea = svg.select('.drawing-area');
 
         if (drawingArea.empty()) {
+            console.log("FC: Drawing Area is empty");
             drawingArea = svg
                 .append("g")
                 .attr("class", "drawing-area")
@@ -341,27 +342,29 @@ class FantasticChart {
                 geoms.exit().remove();
 
                 geoms.enter()
-                          .each((geom, i, nodes) => {
-                              const geom_width  = facetBand.bandwidth(),
-                                    geom_height = height;
+                     .append("g")
+                     .attr("class", "geometry")
+                     .merge(geoms)
+                     .each((geom, i, nodes) => {
+                         const geom_width  = facetBand.bandwidth(),
+                               geom_height = height;
 
-                              const geom_top  = 0,
-                                    geom_left = 0;
+                         const geom_top  = 0,
+                               geom_left = 0;
 
 
-                              let node = d3.select(nodes[i]);
-                              node.append("g")
-                                  .attr("class", "geometry")
-                                  .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
-                                  .each((d, i, nodes) => {
-                                      console.log("Setting height for", geom.name(), "to", height - axisHeight);
-                                      geom.element(d3.select(nodes[i]))
-                                          .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                                          .height(geom_height)
-                                          .width(geom_width)
-                                          .render();
-                                  })
-                          });
+                         let node = d3.select(nodes[i]);
+                         node
+                             .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
+                             .each((d, i, nodes) => {
+                                 console.log("Setting height for", geom.name(), "to", height - axisHeight);
+                                 geom.element(d3.select(nodes[i]))
+                                     .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                                     .height(geom_height)
+                                     .width(geom_width)
+                                     .render();
+                             })
+                     });
 
                 // Ensure this is rendered on top of other things.
                 area.select(".x-axis").raise();

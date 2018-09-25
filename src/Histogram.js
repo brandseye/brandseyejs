@@ -63,6 +63,7 @@ class Histogram extends Geometry {
         let groups = element.select(".bars").selectAll('.group');
 
         if (groups.empty()) {
+            console.log("HISTOGRAM: Group is empty");
             groups = element
                 .append("g")
                 .attr("class", "bars")
@@ -94,7 +95,7 @@ class Histogram extends Geometry {
                   let bars = group.selectAll(".bar")
                                   .data(s_d.data);
 
-                  bars.exit().remove();
+                  bars.exit().each((d) => console.log("HISTOGRAM: remove bar", d)).remove();
 
                   bars.interrupt("bar:move")     // Animate the bars to their new position.
                       .transition("bar:move")
