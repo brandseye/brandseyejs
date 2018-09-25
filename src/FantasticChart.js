@@ -21,6 +21,7 @@ import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
 import { xaxis, yaxis } from "./Axes";
 import {maxBounding} from "./helpers";
+import { renderLegend } from "./Legend";
 
 
 class FantasticChart {
@@ -48,6 +49,7 @@ class FantasticChart {
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
         this._show_labels = true;
+        this._show_legend = true;
 
         return this;
     }
@@ -171,6 +173,12 @@ class FantasticChart {
         return this;
     }
 
+    showLegend(show) {
+        if (arguments.length === 0) return this._show_legend;
+        this._show_legend = !!show;
+        return this;
+    }
+
     /**
      * Renders or hides labels as they are requested.
      */
@@ -213,6 +221,12 @@ class FantasticChart {
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
         const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues().map(geometries[0].formatY())).width + 10 : 0;
+
+        //-----------------------------------------------
+        // Draw the legend
+        // const legendHeight = renderLegend(svg, geometries.length ? geometries[0].prepareData(this._data, false) : 0,
+        //     2, this._width, this._height);
+        // console.log("LEGEND HEIGHT IS --------------------------", legendHeight);
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.

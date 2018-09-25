@@ -225,7 +225,6 @@ export class Geometry {
      * This takes our array of data, and determines what elements
      * are to be mapped to what aesthetic values, such as colour or size.
      * Data is grouped by these fields.
-
      */
     prepareData(data, faceted) {
         faceted = !!faceted && this.facet();
