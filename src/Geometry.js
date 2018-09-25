@@ -203,6 +203,10 @@ export class Geometry {
         return this;
     }
 
+    immediatelyRenderLabels(show) {
+        console.warn("#immediatelyRenderLabels not implemented for", this.name());
+    }
+
     data(data) {
         if (arguments.length === 0) return this._data;
         this._data = data;

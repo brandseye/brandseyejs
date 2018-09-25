@@ -50,21 +50,21 @@ class Histogram extends Geometry {
         element.classed("histogram", true);
 
         const x = this.getD3XScale(data, width);
-
         const y = this.getD3YScale(allData, height);
-
-        const xGroup = d3.scaleBand()
-                         .padding(0)
-                         .domain(this.getKeys(data))
-                         .rangeRound([0, x.bandwidth()]);
-
-        const colours = d3.scaleOrdinal(this.colourScale())
-                          .domain(this.getColourDomain(allData));
+        const xGroup = this.getD3XGroupScale(data, x);
+        const colours = this.getD3ColourScale(allData);
 
         let groups = element.select(".bars").selectAll('.group');
 
+        //----------------------------------------------
+        // Get rid of current labels
+
+        element.select(".chart-labels")
+           .remove();
+
+        //----------------------------------------------
+
         if (groups.empty()) {
-            console.log("HISTOGRAM: Group is empty");
             groups = element
                 .append("g")
                 .attr("class", "bars")
@@ -96,7 +96,7 @@ class Histogram extends Geometry {
                   let bars = group.selectAll(".bar")
                                   .data(s_d.data);
 
-                  bars.exit().each((d) => console.log("HISTOGRAM: remove bar", d)).remove();
+                  bars.exit().remove();
 
                   bars.interrupt("bar:move")     // Animate the bars to their new position.
                       .transition("bar:move")
@@ -244,6 +244,18 @@ class Histogram extends Geometry {
                  .domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
     }
 
+    getD3ColourScale(data) {
+        return d3.scaleOrdinal(this.colourScale())
+                 .domain(this.getColourDomain(data));
+    }
+
+    getD3XGroupScale(data, xscale) {
+        return d3.scaleBand()
+                 .padding(0)
+                 .domain(this.getKeys(data))
+                 .rangeRound([0, xscale.bandwidth()]);
+    }
+
     renderLabels(selection, data, xscale, xgroup, yscale, colourScale, animate) {
         animate = animate === undefined ? true : animate;
         selection.selectAll(".chart-labels").remove();
@@ -302,12 +314,11 @@ class Histogram extends Geometry {
 
                               text
                                   .transition("labels")
-                                  .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
-                                  .duration(this._duration)
+                                  .delay(() => animate ? this.calcBarGrowth(s_i, nodes.length) : 0) // Delay in lockstep with bar growth.
                                   .attr("dx", 0)
                                   .style("opacity", 1)
                           })
-        })
+        });
 
 
         // Figure out if we don't have enough space to show our labels.
@@ -336,6 +347,39 @@ class Histogram extends Geometry {
                       })
             }
         }
+    }
+
+
+    immediatelyRenderLabels(show) {
+        const element = this.element();
+        if (!element) return;
+
+        if (!show) { // Hides the labels
+            element
+              .select('.chart-labels')
+              .interrupt("labels")
+              .interrupt("labels:fade")
+              .transition("labels:fade")
+              .style("opacity", 0)
+              .on("end", (d, i, nodes) => {
+                  d3.select(nodes[i]).remove();
+              })
+        } else {
+            let labels = element.select('.chart-labels');
+            if (!labels.empty()) return;
+
+            const data = this.prepareData(null, true);
+            const allData = this.prepareData(null, false);
+
+            const xscale = this.getD3XScale(data),
+                  xgroup = this.getD3XGroupScale(data, xscale),
+                  yscale = this.getD3YScale(data),
+                  colourScale = this.getD3ColourScale(allData);
+
+            labels.remove();
+            this.renderLabels(element, data, xscale, xgroup, yscale, colourScale, false);
+        }
+
     }
 
 

@@ -172,6 +172,15 @@ class FantasticChart {
     }
 
     /**
+     * Renders or hides labels as they are requested.
+     */
+    immediatelyRenderLabels(show) {
+        if (this._geometries) {
+            this._geometries.forEach(geom => geom.immediatelyRenderLabels(!!show))
+        }
+    }
+
+    /**
      * The event handle for the charts. Supports the following events:
      *
      * - elementClick
@@ -267,7 +276,6 @@ class FantasticChart {
         let drawingArea = svg.select('.drawing-area');
 
         if (drawingArea.empty()) {
-            console.log("FC: Drawing Area is empty");
             drawingArea = svg
                 .append("g")
                 .attr("class", "drawing-area")
