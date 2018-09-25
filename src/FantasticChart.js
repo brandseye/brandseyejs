@@ -288,7 +288,8 @@ class FantasticChart {
         yAxisArea.remove();
         yAxisArea = svg
             .append("g")
-            .attr("class", "y-axis-area");
+            .attr("class", "y-axis-area")
+            .attr("transform", "translate(0," + margin.top + ")");
 
 
         if (geometries.length) {
