@@ -19,7 +19,7 @@
 
 import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
-import { xaxis, yaxis } from "./Axes";
+import { xaxis, yaxis, grid } from "./Axes";
 import {maxBounding} from "./helpers";
 import { renderLegend } from "./Legend";
 
@@ -220,7 +220,7 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues().map(geometries[0].formatY())).width + 10 : 0;
+        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues().map(geometries[0].formatY())).width + 20 : 0;
 
         //-----------------------------------------------
         // Draw the legend
@@ -233,7 +233,14 @@ class FantasticChart {
         // We can only calculate the final height once we can accurately
         // determine how to lay out the x-axis.
 
-        const margin = {top: 10, right: 10, bottom: 10, left: 10 + axisWidth};
+        const outerPadding = 20;
+
+        const margin = {
+            top: outerPadding,
+            right: outerPadding,
+            bottom: outerPadding,
+            left: outerPadding + axisWidth
+        };
         const width  = this._width - margin.left - margin.right;
 
         //-----------------------------------------------
@@ -314,7 +321,7 @@ class FantasticChart {
             .append("g")
             .attr("class", "x-axis-area");
 
-        xAxisArea.attr("transform", "translate(" + margin.left + ",0)");
+        xAxisArea.attr("transform", "translate(" + margin.left + "," + -outerPadding +")");
 
 
         let yAxisArea = svg.select(".y-axis-area");
@@ -323,10 +330,14 @@ class FantasticChart {
         yAxisArea = svg
             .append("g")
             .attr("class", "y-axis-area")
-            .attr("transform", "translate(0," + margin.top + ")");
+            .attr("transform", "translate(" + outerPadding +"," + margin.top + ")");
 
 
+        const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
+            // Draw the yaxis.
+            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
+
             // Draw a little x-axis for every facet.
             facets.forEach(facet => {
                 const xScale = geometries[0]
@@ -346,11 +357,6 @@ class FantasticChart {
                     d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(geometries[0].formatX()))
             });
 
-            const yscale = geometries[0]
-                .height(height)
-                .getD3YScale();
-
-            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
         }
 
 
@@ -370,6 +376,9 @@ class FantasticChart {
             .each((facet, facet_i, facetNodes) => {
                 console.log("------------ facet ", facet || "single-facet");
                 const area = d3.select(facetNodes[facet_i]);
+
+                grid(area, facetBand.bandwidth(), d3.axisLeft(yscale).ticks(5));
+
                 let geoms = area.selectAll(".geometry").data(geometries);
 
                 geoms.exit().remove();
@@ -384,7 +393,6 @@ class FantasticChart {
 
                          const geom_top  = 0,
                                geom_left = 0;
-
 
                          let node = d3.select(nodes[i]);
                          node
@@ -402,6 +410,7 @@ class FantasticChart {
                 // Ensure this is rendered on top of other things.
                 area.select(".x-axis").raise();
             })
+
 
 
     }

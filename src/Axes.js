@@ -82,5 +82,28 @@ export function yaxis(selection, axis) {
      .delay(AXIS_DELAY)
      .style("opacity", 1);
 
-    return width;
+    return width + 20;
+}
+
+export function grid(selection, width, axis) {
+    selection.select(".grid").remove();
+
+    let grid = selection.append("g")
+                        .attr("class", "grid")
+                        .call(axis
+                            .tickSize(-width)
+                            .tickFormat("")
+                        );
+
+    grid.selectAll("line")
+        .style("stroke", colours.eighteen.lightGrey);
+    grid.selectAll(".domain").remove();
+
+    grid
+        .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
+        .style("opacity", 0)
+        .transition()
+        .delay(AXIS_DELAY)
+        .duration(AXIS_ANIMATION_DURATION)
+        .style("opacity", 1);
 }
