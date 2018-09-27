@@ -19,7 +19,7 @@
 
 import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
-import { xaxis, yaxis, grid } from "./Axes";
+import { xaxis, yaxis, grid, yAxisLabel } from "./Axes";
 import {maxBounding} from "./helpers";
 import { renderLegend } from "./Legend";
 
@@ -50,6 +50,7 @@ class FantasticChart {
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
         this._show_labels = true;
         this._show_legend = true;
+        this._y_axis_label = null;
 
         return this;
     }
@@ -129,6 +130,12 @@ class FantasticChart {
         if (arguments.length === 0) return this._y_formatter;
         if (typeof formatter !== 'function') throw new Error("formatter must be a function");
         this._y_formatter = formatter;
+        return this;
+    }
+
+    yAxisLabel(label) {
+        if (arguments.length === 0) return this._y_axis_label;
+        this._y_axis_label = label;
         return this;
     }
 
@@ -241,7 +248,9 @@ class FantasticChart {
             bottom: outerPadding,
             left: outerPadding + axisWidth
         };
+        if (this._y_axis_label) margin.left += 20;
         const width  = this._width - margin.left - margin.right;
+        const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
 
         //-----------------------------------------------
         // Determine initial facet / small multiple information
@@ -330,7 +339,7 @@ class FantasticChart {
         yAxisArea = svg
             .append("g")
             .attr("class", "y-axis-area")
-            .attr("transform", "translate(" + outerPadding +"," + margin.top + ")");
+            .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")");
 
 
         const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
@@ -358,6 +367,11 @@ class FantasticChart {
             });
 
         }
+
+        //-----------------------------------------------
+        // Setup labels
+
+        yAxisLabel(svg, height, margin, this._y_axis_label);
 
 
         //-----------------------------------------------
@@ -410,8 +424,6 @@ class FantasticChart {
                 // Ensure this is rendered on top of other things.
                 area.select(".x-axis").raise();
             })
-
-
 
     }
 

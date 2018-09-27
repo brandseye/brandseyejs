@@ -107,3 +107,34 @@ export function grid(selection, width, axis) {
         .duration(AXIS_ANIMATION_DURATION)
         .style("opacity", 1);
 }
+
+export function yAxisLabel(element, height, margins, label) {
+
+    element.selectAll(".y-axis-label").remove();
+
+    if (!label) return;
+    let text = label;
+    if (text.long) text = text.long;
+
+    let x = -(margins.top + height / 2);
+
+    let labelElement = element.append("g")
+                              .attr("class", "y-axis-label")
+                              .append("text")
+                              .text(text)
+                              .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
+                              .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+
+    let width = labelElement.node().getBBox().width;
+    if (width >= height && label.short) {
+        labelElement.text(label.short);
+        width = labelElement.node().getBBox().width;
+    }
+
+    labelElement.attr("dx", -width / 2)
+        .style("opacity", 0)
+        .transition()
+        .delay(AXIS_DELAY)
+        .duration(AXIS_ANIMATION_DURATION)
+            .style("opacity", 1)
+}
