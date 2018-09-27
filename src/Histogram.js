@@ -111,9 +111,11 @@ class Histogram extends Geometry {
                           .attr("y", 0)
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
-                          .style("fill", d => colours(d._colour))//d => d._colour === 1 ? "grey" : "green")
-                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                           .style("cursor", "pointer")
+                          .style("fill", d => colours(d._colour))
+                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
+                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                      .merge(bars)
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
@@ -145,12 +147,11 @@ class Histogram extends Geometry {
                             .style("fill", d => colours(d._colour));
                           this._dispatch.call("tooltipHide", this);
                       })
-                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                      .merge(bars)
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
-                          .style("fill", d => d._colour)
+                          .style("fill", d => colours(d._colour))
+                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                           .attr("height", d => height - y(d._y));
               });
 
