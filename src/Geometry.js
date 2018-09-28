@@ -41,6 +41,7 @@ export class Geometry {
             'tooltipShow', 'tooltipHide');
         this._show_labels = null;
         this._chart_show_labels = null;
+        this._d3_colour_scale = null;
     }
 
     name() {
@@ -112,6 +113,12 @@ export class Geometry {
         if (arguments.length === 0) return this._chart_colour_scale;
         if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
         this._chart_colour_scale = colours;
+        return this;
+    }
+
+    d3ColourScale(scale) {
+        if (arguments.length === 0) return this._d3_colour_scale;
+        this._d3_colour_scale = scale;
         return this;
     }
 

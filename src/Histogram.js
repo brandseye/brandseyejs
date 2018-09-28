@@ -52,7 +52,7 @@ class Histogram extends Geometry {
         const x = this.getD3XScale(data, width);
         const y = this.getD3YScale(allData, height);
         const xGroup = this.getD3XGroupScale(data, x);
-        const colours = this.getD3ColourScale(allData);
+        const colours = this.d3ColourScale();
 
         let groups = element.select(".bars").selectAll('.group');
 
@@ -199,17 +199,6 @@ class Histogram extends Geometry {
         return buckets.consolidateBuckets(Object.values(results));
     }
 
-
-    getBuckets(data) {
-        if (!data || !data.length) return [];
-
-        // todo calculate buckets
-        let buckets = new Set(data.map(d => d._key));
-
-
-        return [...buckets]
-    }
-
     getKeys(data) {
         if (!data || !data.length) return [];
 
@@ -245,11 +234,6 @@ class Histogram extends Geometry {
                  .domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
     }
 
-    getD3ColourScale(data) {
-        return d3.scaleOrdinal(this.colourScale())
-                 .domain(this.getColourDomain(data));
-    }
-
     getD3XGroupScale(data, xscale) {
         return d3.scaleBand()
                  .padding(0)
@@ -263,7 +247,6 @@ class Histogram extends Geometry {
 
         let labels = selection.append("g")
                               .attr("class", "chart-labels")
-                              // .selectAll(".chart-label")
                               .selectAll(".label-group")
                               .data(data);
 
@@ -280,6 +263,7 @@ class Histogram extends Geometry {
             return invertedColor;
         };
         const shouldInvert = c => d3.hcl(colourScale(c)).l < 60;
+        const fillColour = d3.hcl(colours.eighteen.darkGrey);
 
         labels.enter().each((series, s_i, s_nodes) => {
             let group = d3.select(s_nodes[s_i])
@@ -295,17 +279,14 @@ class Histogram extends Geometry {
                               let text = d3.select(nodes[i])
                                            .append("text")
                                            .text(d._y)
-                                           // .text(this._labelFormat(d._y))
+                                           .text(this.formatY()(d._y))
                                            .attr("class", "chart-label")
                                            .attr("y", ypos)
                                            .attr("dx", animate ? -15 : 0)
                                            .attr("dy", dy)
                                            .style("opacity", 0)
                                            .style("pointer-events", "none")
-                                           // .style("font-family", "Open Sans, sans-serif")
-                                           // .style("font-weight", "normal")
-                                           // .style("font-size", fontSize + "px")
-                                           .style("fill", dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : colours.eighteen.darkGrey);
+                                           .style("fill", dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : fillColour);
 
                               // Set the x position, which is based on width.
                               const width = text.node().getBBox().width;
@@ -324,8 +305,8 @@ class Histogram extends Geometry {
 
         // Figure out if we don't have enough space to show our labels.
         // We then want to resize, if possible.
-        if (xgroup.bandwidth() < maxWidth * 1.05) {
-            let scale = maxWidth / xgroup.bandwidth() * 1.05;
+        if (xgroup.bandwidth() < maxWidth * 1.10) {
+            let scale = maxWidth / xgroup.bandwidth() * 1.10;
             fontSize = Math.floor(fontSize / scale);
 
             if (fontSize < 8) {
@@ -343,7 +324,7 @@ class Histogram extends Geometry {
 
                           text
                               .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                              .style("fill", dy > 0 && shouldInvert(i) ? getInvertedColor(i).toString() : colours.eighteen.darkGrey)
+                              .style("fill", dy > 0 && shouldInvert(i) ? getInvertedColor(i).toString() : fillColour)
                               .attr("dy", dy);
                       })
             }
@@ -375,7 +356,7 @@ class Histogram extends Geometry {
             const xscale = this.getD3XScale(data),
                   xgroup = this.getD3XGroupScale(data, xscale),
                   yscale = this.getD3YScale(data),
-                  colourScale = this.getD3ColourScale(allData);
+                  colourScale = this.d3ColourScale();
 
             labels.remove();
             this.renderLabels(element, data, xscale, xgroup, yscale, colourScale, false);

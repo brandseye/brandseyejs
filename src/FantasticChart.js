@@ -21,7 +21,7 @@ import { colours } from './Colours';
 import { scaleIdentity } from "./Scales";
 import { xaxis, yaxis, grid, yAxisLabel } from "./Axes";
 import {maxBounding} from "./helpers";
-import { renderLegend } from "./Legend";
+import { renderLegend, buckets } from "./Legend";
 
 
 class FantasticChart {
@@ -45,6 +45,7 @@ class FantasticChart {
         this._colour = () => 1;
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
+        this._d3_colour_scale = d3.schemeAccent;
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
@@ -223,6 +224,13 @@ class FantasticChart {
         if (svg.empty()) svg = d3.select(this._element).append("svg");
 
         //-----------------------------------------------
+        // Setup initial data
+
+        const bs = buckets(this._data, this._colour, this._size);
+        const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale())
+                                                      .domain(Array.from(bs.colours));
+
+        //-----------------------------------------------
         // Calculate the space that various elements will want to take up
 
         const geometries = this.sortGeometries();
@@ -231,9 +239,8 @@ class FantasticChart {
 
         //-----------------------------------------------
         // Draw the legend
-        // const legendHeight = renderLegend(svg, geometries.length ? geometries[0].prepareData(this._data, false) : 0,
-        //     2, this._width, this._height);
-        // console.log("LEGEND HEIGHT IS --------------------------", legendHeight);
+        const legendHeight = renderLegend(svg, bs, colourScale, this._width, this._height);
+        console.log("LEGEND HEIGHT IS --------------------------", legendHeight);
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
@@ -245,12 +252,13 @@ class FantasticChart {
         const margin = {
             top: outerPadding,
             right: outerPadding,
-            bottom: outerPadding,
+            bottom: outerPadding + legendHeight,
             left: outerPadding + axisWidth
         };
         if (this._y_axis_label) margin.left += 20;
         const width  = this._width - margin.left - margin.right;
         const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
+        const bottomOuterPadding = outerPadding + legendHeight;
 
         //-----------------------------------------------
         // Determine initial facet / small multiple information
@@ -330,7 +338,7 @@ class FantasticChart {
             .append("g")
             .attr("class", "x-axis-area");
 
-        xAxisArea.attr("transform", "translate(" + margin.left + "," + -outerPadding +")");
+        xAxisArea.attr("transform", "translate(" + margin.left + "," + -bottomOuterPadding +")");
 
 
         let yAxisArea = svg.select(".y-axis-area");
@@ -441,7 +449,8 @@ class FantasticChart {
             .setupFormatX(this._x_formatter)
             .setupFormatY(this._y_formatter)
             .setupColourScale(this._colour_scale)
-            .setupShowLabels(this._show_labels);
+            .setupShowLabels(this._show_labels)
+            .d3ColourScale(this._d3_colour_scale);
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);
         });

@@ -36,7 +36,7 @@ export function xaxis(selection, height, width, axisObject) {
     let max = 0;
     const fontSize = 12;
     axis.selectAll("text")
-        .style("fill", colours.eighteen.darkGrey)
+        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter())
         .nodes()
         .forEach(text => max = Math.max(max, text.getBBox().width));
 
@@ -66,18 +66,21 @@ export function xaxis(selection, height, width, axisObject) {
 
 export function yaxis(selection, axis) {
     selection.select(".y-axis").remove();
-    let x = selection.append("g")
+    let y = selection.append("g")
                      .attr("class", "y-axis")
                      .call(axis.tickSize(0).tickPadding(10))
                      .style("opacity", 0);
 
-    x.selectAll("text")
-     .style("fill", colours.eighteen.darkGrey);
+    y.selectAll("text")
+     .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
 
-    const width = x.node().getBBox().width;
-    x.attr("transform", "translate(" + width + ",0)");
+    y.selectAll(".domain")
+     .style("stroke", colours.eighteen.midGrey); // d3.hcl(colours.eighteen.darkGrey).brighter());
 
-    x.transition()
+    const width = y.node().getBBox().width;
+    y.attr("transform", "translate(" + width + ",0)");
+
+    y.transition()
      .duration(AXIS_ANIMATION_DURATION)
      .delay(AXIS_DELAY)
      .style("opacity", 1);
@@ -109,7 +112,6 @@ export function grid(selection, width, axis) {
 }
 
 export function yAxisLabel(element, height, margins, label) {
-
     element.selectAll(".y-axis-label").remove();
 
     if (!label) return;

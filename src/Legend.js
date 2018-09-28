@@ -1,22 +1,25 @@
 import {maxBounding} from "./helpers";
-import {colours} from "./Colours";
+import {colours as schema} from "./Colours";
 
 
-export function renderLegend(element, data, min, width, height, getter) {
+export function renderLegend(element, buckets, colourScale, width, height, min) {
+    min = min || 2;
+    console.log("Buckets are", buckets);
     element.selectAll(".legend").remove();
-    getter = getter || (d => d._bucket);
 
     // Only if we have multiple series.
-    if (!data || data.length < min) return 0;
-    console.log("rebder is:", data);
+    if (!buckets || !buckets.colours.size) return 0;
 
-    let maxWidth = maxBounding(element, data.map(getter)).width;
+    const colours = Array.from(buckets.colours);
+    if (colours.length < min) return 0;
+
+    const maxWidth = maxBounding(element, colours).width;
 
     const legend = element.append("g")
-                      .attr("class", "legend");
+                          .attr("class", "legend");
 
     let elements = legend.selectAll(".legend-element")
-                         .data(data);
+                         .data(colours);
 
     const position_start = 20;
     let position = position_start;
@@ -35,18 +38,15 @@ export function renderLegend(element, data, min, width, height, getter) {
                        .attr("rx", 2)
                        .attr("ry", 2)
                        .attr("y", -10)
-                       // .style("fill", () => this.getSeriesColour(i));
+                       .style("fill", d => colourScale(d));
 
                 element.append("text")
-                       .text(getter)
+                       .text(d => d)
                        .attr("dx", 12)
-                       .style("font-family", "Open Sans, sans-serif")
-                       .style("font-weight", "normal")
-                       .style("font-size", "12px")
-                       .style("fill", colours.eighteen.darkGrey);
+                       .style("fill", schema.eighteen.darkGrey);
 
                 element.append("title")
-                       .text(getter);
+                       .text(d => d);
 
                 element.attr("transform", "translate(" + position + "," + position_height +")");
                 const positionDelta = maxWidth + 20; // element.node().getBBox().width + 10;
@@ -80,4 +80,30 @@ export function renderLegend(element, data, min, width, height, getter) {
     const legendHeight = legend.node().getBBox().height;
     legend.attr("transform", "translate(0," + (height - legendHeight) + ")");
     return legendHeight;
+}
+
+/**
+ * Figures out what buckets we may be using in our data set, based on
+ * colour and size differentiation. This may have to be run for each
+ * geom and merged.
+ * @param data
+ * @param colour
+ * @param size
+ * @returns {{colours: Set, sizes: Set}}
+ */
+export function buckets(data, colour, size) {
+    if (!data || !data.length) return { colours: new Set(), sizes: new Set()};
+
+    const byColour = new Set(),
+          bySize = new Set();
+
+    data.forEach(d => {
+        byColour.add(colour(d));
+        bySize.add(size(d));
+    });
+
+    return {
+        colours: byColour,
+        sizes: bySize
+    }
 }
