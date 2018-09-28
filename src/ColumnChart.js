@@ -576,7 +576,7 @@ export class ColumnChart extends Chart {
                     .each((d, i, nodes) => {
                         const text = d3.select(nodes[i]);
                         const width = text.node().getBBox().width;
-                        const dy = calcDy(d._y);
+                        const dy = calcDy(yscale(d._y));
 
                         text
                             .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
