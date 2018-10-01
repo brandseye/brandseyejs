@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Fantastic charts</title>
 
-    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <script src="../b3js.js"></script>
     <script src="prism.js"></script>
 
@@ -94,6 +94,22 @@ graph
     .geometry(b3js.histogram())
     .scaleX(b3js.scaleTime())
     .render();</code></pre>
+
+    </div>
+
+    <div class="banner">
+        <div id="histogram-comparison-missing" style="width: 900px; height: 512px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Date Histogram comparison with missing data</h3>
+        <p>
+            Here, the dates have groups that are missing, and we
+            would like them to be filled in automatically.
+        </p>
+        <pre><code class="language-js">
+</code></pre>
 
     </div>
 
@@ -234,7 +250,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .yAxisLabel("Mention volume")
-            .render();
+            // .render();
 
 
         data = [
@@ -258,6 +274,29 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
+            // .render();
+
+
+        data = [
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+        ];
+
+
+        graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('histogram-comparison-missing'))
+            .x(d => d.published)
+            .y(d => d.mentionCount)
+            .colour( d => d.brand )
+            .geometry(b3js.histogram())
+            .scaleX(b3js.scaleTime())
             .render();
 
         graph = new b3js.chart();
@@ -270,7 +309,7 @@ graph
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
             .facetX(d => d.brand)
-            .render();
+            // .render();
 
         graph = new b3js.chart();
 
@@ -282,7 +321,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .colour(d => d.brand)
-            .render();
+            // .render();
 
         d3.csv("engagement.csv").then(data => {
             data.forEach(d => d.count = +d.count); // convert to number
@@ -293,7 +332,7 @@ graph
                 .x(d => d.count)
                 .geometry(b3js.histogram())
                 .facetX(d => d.aggregate)
-                .render();
+                // .render();
         });
 
         d3.csv("point-data.csv", d => {
@@ -312,7 +351,7 @@ graph
                 .y(d => d.totalEngagement)
                 .geometry(b3js.points())
                 .facetX(d => d.aggregate)
-                .render();
+                // .render();
         })
     });
 </script>

@@ -4,7 +4,6 @@ import {colours as schema} from "./Colours";
 
 export function renderLegend(element, buckets, colourScale, width, height, min) {
     min = min || 2;
-    console.log("Buckets are", buckets);
     element.selectAll(".legend").remove();
 
     // Only if we have multiple series.
@@ -61,7 +60,7 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
 
             })
             .on("mouseover", (d, i, nodes) => {
-                element.selectAll(".series:not(.series-" + i + ")")
+                element.selectAll(".series:not(.series-" + toColourKey(d) + ")")
                    .interrupt("legend:highlight")
                    .transition("legend:highlight")
                    .style("opacity", 0.3);
@@ -106,4 +105,9 @@ export function buckets(data, colour, size) {
         colours: byColour,
         sizes: bySize
     }
+}
+
+export function toColourKey(colour) {
+    // TODO this is not internationalised, and may break on things like brand names.
+    return "colour-" + colour.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-b0-9]/g, '');
 }

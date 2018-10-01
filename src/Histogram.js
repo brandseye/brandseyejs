@@ -17,8 +17,9 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { Geometry } from './Geometry';
-import {colours} from "./Colours";
+import { Geometry, fromKey } from './Geometry';
+import { colours } from "./Colours";
+import { toColourKey } from "./Legend";
 
 
 class Histogram extends Geometry {
@@ -107,13 +108,13 @@ class Histogram extends Geometry {
 
                   bars.enter()
                       .append("rect")
-                          .attr("class", (d, i) => "bar series series-" + i)
+                          .attr("class", (d, i) => "bar series series-" + toColourKey(d._colour))
                           .attr("x", d => xGroup(d._key))
                           .attr("y", 0)
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
-                          .style("fill", d => colours(d._colour))
+                          .style("fill", d => { console.log("\tHISTOGRAM ADDING", d); return colours(d._colour)})
                           .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
@@ -269,18 +270,40 @@ class Histogram extends Geometry {
         const findColour = (dy, labelText, i) => dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : (labelText === "0" ? lighterFillColour : fillColour);
 
         labels.enter().each((series, s_i, s_nodes) => {
+            // We want to determine which groups may have missing values, and provide them.
+            console.log("We are working on group", series, "and the groups that we need are:", xgroup.domain());
+            console.log("thingies:", xgroup.domain().map(fromKey));
+
+            const requiredGroups = {};
+            xgroup.domain().map(fromKey).forEach(d => {
+                requiredGroups[d._colour] = d;
+            });
+
+            series.data.forEach(d => {
+                delete requiredGroups[d._colour]
+            });
+
+            const missingGroups = Object.values(requiredGroups);
+            missingGroups.forEach(d => {
+                d._x = series._key;
+                d._y = 0;
+            });
+
+            console.log("Missing thingies:", Object.values(missingGroups));
+
+
+
             let group = d3.select(s_nodes[s_i])
                           .append("g")
                           .attr("class", "label-group")
                           .attr("transform", d => "translate(" + xscale(d._key) + ",0)")
                           .selectAll(".chart-label")
-                          .data(series.data)
+                          .data(series.data.concat(Object.values(missingGroups)))
                           .enter()
                           .each((d, i, nodes) => {
                               const labelText = this.formatY()(d._y);
                               let ypos = yscale(d._y);
                               let dy = calcDy(ypos);
-                              console.log("for", labelText, "ypos", ypos, "dy", dy);
                               let text = d3.select(nodes[i])
                                            .append("text")
                                            .text(labelText)

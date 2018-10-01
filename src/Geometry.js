@@ -323,8 +323,18 @@ export class Geometry {
 
 }
 
-function getKey(d) {
+export function getKey(d) {
+    // TODO we probably need to encode this better so we can split on the :
     return "" + d._size + ":" + d._colour;
+}
+
+export function fromKey(key) {
+    const split = key.split(":");
+    return {
+        _size: split[0],
+        _colour: split[1],
+        _key: key
+    }
 }
 
 function getKeyParameters(d) {
