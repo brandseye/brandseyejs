@@ -110,7 +110,8 @@ class Histogram extends Geometry {
                       .append("rect")
                           .attr("class", (d, i) => "bar series series-" + toColourKey(d._colour))
                           .attr("x", d => xGroup(d._key))
-                          .attr("y", 0)
+                          // .attr("y", d => height - y(Math.min(0, d._y)))
+                      .attr("y", height - y(0))
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
@@ -154,7 +155,10 @@ class Histogram extends Geometry {
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
                           .style("fill", d => colours(d._colour))
                           .style("stroke", d => d3.hcl(colours(d._colour)).darker())
-                          .attr("height", d => height - y(d._y));
+                          .attr("y", d => height - y(Math.min(0, d._y)))
+                      // .attr("y", height - y(0))
+                      //     .attr("y", d => height - y(Math.min(0, d._y)))
+                          .attr("height", d => (Math.abs(y(0) - y(d._y))));
               });
 
         // Labels loaded after our last bar grows.
@@ -230,10 +234,13 @@ class Histogram extends Geometry {
         data = data || this.prepareData(null, false);
         height = height || this.height();
 
+
+        const max = Math.max(d3.max(data, d => d3.max(d.data, d => d._y)), 0);
+        const min = Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y)));
         return d3.scaleLinear()
                  .rangeRound([height, 0])
                  .nice()
-                 .domain([0, d3.max(data, d => d3.max(d.data, d => d._y))]);
+                 .domain([min, max]);
     }
 
     getD3XGroupScale(data, xscale) {

@@ -63,6 +63,41 @@ graph
 
     <!-------------------------------------------->
 
+
+    <div class="banner">
+        <div id="graph-negative" style="width: 900px; height: 420px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Date histogram with positive and negative values</h3>
+        <p>
+            For instance, when showing net sentiment
+        </p>
+        <pre><code class="language-js">let data = [
+    { published: "2018-03-02T00:37:40.133Z", totalSentiment: 101 },
+    { published: "2018-03-03T00:37:40.133Z", totalSentiment: 51},
+    { published: "2018-03-04T00:37:40.133Z", totalSentiment: -74},
+    { published: "2018-03-05T00:37:40.133Z", totalSentiment: -110},
+    { published: "2018-03-06T00:37:40.133Z", totalSentiment: 10}
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('graph'))
+    .x(d => d.published)
+    .y(d => d.totalSentiment)
+    .geometry(b3js.histogram())
+    .scaleX(b3js.scaleTime())
+    .yAxisLabel("Net Sentiment")
+    .render();</code></pre>
+
+    </div>
+
+
+    <!-------------------------------------------->
+
+
     <div class="banner">
         <div id="histogram-comparison" style="width: 900px; height: 512px;">
         </div>
@@ -250,7 +285,28 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .yAxisLabel("Mention volume")
-            // .render();
+            .render();
+
+
+        data = [
+            { published: "2018-03-02T00:37:40.133Z", totalSentiment: 101 },
+            { published: "2018-03-03T00:37:40.133Z", totalSentiment: 51},
+            { published: "2018-03-04T00:37:40.133Z", totalSentiment: -74},
+            { published: "2018-03-05T00:37:40.133Z", totalSentiment: -110},
+            { published: "2018-03-06T00:37:40.133Z", totalSentiment: 10}
+        ];
+
+        graph = new b3js.chart();
+
+        graph
+            .data(data)
+            .element(document.getElementById('graph-negative'))
+            .x(d => d.published)
+            .y(d => d.totalSentiment)
+            .geometry(b3js.histogram())
+            .scaleX(b3js.scaleTime())
+            .yAxisLabel("Net Sentiment")
+            .render();
 
 
         data = [
@@ -274,7 +330,7 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
-            // .render();
+            .render();
 
 
         data = [
@@ -309,7 +365,7 @@ graph
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
             .facetX(d => d.brand)
-            // .render();
+            .render();
 
         graph = new b3js.chart();
 
@@ -321,7 +377,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .colour(d => d.brand)
-            // .render();
+            .render();
 
         d3.csv("engagement.csv").then(data => {
             data.forEach(d => d.count = +d.count); // convert to number
@@ -332,7 +388,7 @@ graph
                 .x(d => d.count)
                 .geometry(b3js.histogram())
                 .facetX(d => d.aggregate)
-                // .render();
+                .render();
         });
 
         d3.csv("point-data.csv", d => {
@@ -351,7 +407,7 @@ graph
                 .y(d => d.totalEngagement)
                 .geometry(b3js.points())
                 .facetX(d => d.aggregate)
-                // .render();
+                .render();
         })
     });
 </script>
