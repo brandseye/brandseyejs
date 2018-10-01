@@ -285,7 +285,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .yAxisLabel("Mention volume")
-            .render();
+            // .render();
 
 
         data = [
@@ -330,7 +330,7 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
-            .render();
+            // .render();
 
 
         data = [
@@ -353,7 +353,7 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
-            .render();
+            // .render();
 
         graph = new b3js.chart();
 
@@ -365,7 +365,7 @@ graph
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
             .facetX(d => d.brand)
-            .render();
+            // .render();
 
         graph = new b3js.chart();
 
@@ -377,7 +377,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .colour(d => d.brand)
-            .render();
+            // .render();
 
         d3.csv("engagement.csv").then(data => {
             data.forEach(d => d.count = +d.count); // convert to number
@@ -388,7 +388,7 @@ graph
                 .x(d => d.count)
                 .geometry(b3js.histogram())
                 .facetX(d => d.aggregate)
-                .render();
+                // .render();
         });
 
         d3.csv("point-data.csv", d => {
@@ -407,7 +407,7 @@ graph
                 .y(d => d.totalEngagement)
                 .geometry(b3js.points())
                 .facetX(d => d.aggregate)
-                .render();
+                // .render();
         })
     });
 </script>

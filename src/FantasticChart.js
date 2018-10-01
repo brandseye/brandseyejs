@@ -240,7 +240,6 @@ class FantasticChart {
         //-----------------------------------------------
         // Draw the legend
         const legendHeight = renderLegend(svg, bs, colourScale, this._width, this._height);
-        console.log("LEGEND HEIGHT IS --------------------------", legendHeight);
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.

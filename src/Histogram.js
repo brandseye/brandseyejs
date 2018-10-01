@@ -262,7 +262,7 @@ class Histogram extends Geometry {
         let maxWidth = 0;     // For calculating the max width of text.
         let fontSize = 12;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
-        const calcDy = (ypos) => ypos < 10 ? fontSize + 2: -buffer;
+        const calcDy = (y, ypos) => ((y >= 0 && ypos < 10) || ( y < 0 && this._height - ypos > 10)) ? fontSize + 2: -buffer;
 
         // Want to figure out if the label is too dark / light for the
         // bar.
@@ -274,7 +274,7 @@ class Histogram extends Geometry {
         const shouldInvert = c => d3.hcl(colourScale(c)).l < 60;
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
-        const findColour = (dy, labelText, i) => dy > 0 && shouldInvert(i)? getInvertedColor(i).toString() : (labelText === "0" ? lighterFillColour : fillColour);
+        const findColour = (y, dy, labelText, i) => (y >= 0 && dy > 0 || y < 0 && dy < 0) && shouldInvert(i)? getInvertedColor(i).toString() : (labelText === "0" ? lighterFillColour : fillColour);
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
@@ -293,40 +293,40 @@ class Histogram extends Geometry {
                 d._y = 0;
             });
 
-            let group = d3.select(s_nodes[s_i])
-                          .append("g")
-                          .attr("class", "label-group")
-                          .attr("transform", d => "translate(" + xscale(d._key) + ",0)")
-                          .selectAll(".chart-label")
-                          .data(series.data.concat(Object.values(missingGroups)))
-                          .enter()
-                          .each((d, i, nodes) => {
-                              const labelText = this.formatY()(d._y);
-                              let ypos = yscale(d._y);
-                              let dy = calcDy(ypos);
-                              let text = d3.select(nodes[i])
-                                           .append("text")
-                                           .text(labelText)
-                                           .attr("class", "chart-label")
-                                           .attr("y", ypos)
-                                           .attr("dx", animate ? -15 : 0)
-                                           .attr("dy", dy)
-                                           .style("opacity", 0)
-                                           .style("pointer-events", "none")
-                                           .style("fill", findColour(dy, labelText, i));
+            d3.select(s_nodes[s_i])
+              .append("g")
+              .attr("class", "label-group")
+              .attr("transform", d => "translate(" + xscale(d._key) + ",0)")
+              .selectAll(".chart-label")
+              .data(series.data.concat(Object.values(missingGroups)))
+              .enter()
+              .each((d, i, nodes) => {
+                  const labelText = this.formatY()(d._y);
+                  let ypos = yscale(d._y);
+                  let dy = calcDy(d._y, ypos);
+                  let text = d3.select(nodes[i])
+                               .append("text")
+                               .text(labelText)
+                               .attr("class", "chart-label")
+                               .attr("y", ypos)
+                               .attr("dx", animate ? -15 : 0)
+                               .attr("dy", dy)
+                               .style("opacity", 0)
+                               .style("pointer-events", "none")
+                               .style("fill", d => findColour(d._y, dy, labelText, i));
 
-                              // Set the x position, which is based on width.
-                              const width = text.node().getBBox().width;
-                              maxWidth = Math.max(width, maxWidth);
-                              text
-                                  .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+                  // Set the x position, which is based on width.
+                  const width = text.node().getBBox().width;
+                  maxWidth = Math.max(width, maxWidth);
+                  text
+                      .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
 
-                              text
-                                  .transition("labels")
-                                  .delay(() => animate ? this.calcBarGrowth(s_i, nodes.length) : 0) // Delay in lockstep with bar growth.
-                                  .attr("dx", 0)
-                                  .style("opacity", 1)
-                          })
+                  text
+                      .transition("labels")
+                      .delay(() => animate ? this.calcBarGrowth(s_i, nodes.length) : 0) // Delay in lockstep with bar growth.
+                      .attr("dx", 0)
+                      .style("opacity", 1)
+              })
         });
 
 
@@ -347,11 +347,11 @@ class Histogram extends Geometry {
                       .each((d, i, nodes) => {
                           const text = d3.select(nodes[i]);
                           const width = text.node().getBBox().width;
-                          const dy = calcDy(yscale(d._y));
+                          const dy = calcDy(d._y, yscale(d._y));
 
                           text
                               .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                              .style("fill", findColour(dy, text.text(), i))
+                              .style("fill", d => findColour(d._y, dy, text.text(), i))
                               .attr("dy", dy);
                       })
             }
