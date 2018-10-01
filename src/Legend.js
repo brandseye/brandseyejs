@@ -109,5 +109,5 @@ export function buckets(data, colour, size) {
 
 export function toColourKey(colour) {
     // TODO this is not internationalised, and may break on things like brand names.
-    return "colour-" + colour.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-b0-9]/g, '');
+    return "colour-" + colour.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9]/g, '');
 }

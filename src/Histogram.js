@@ -114,7 +114,7 @@ class Histogram extends Geometry {
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
-                          .style("fill", d => { console.log("\tHISTOGRAM ADDING", d); return colours(d._colour)})
+                          .style("fill", d => colours(d._colour))
                           .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
@@ -271,9 +271,6 @@ class Histogram extends Geometry {
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
-            console.log("We are working on group", series, "and the groups that we need are:", xgroup.domain());
-            console.log("thingies:", xgroup.domain().map(fromKey));
-
             const requiredGroups = {};
             xgroup.domain().map(fromKey).forEach(d => {
                 requiredGroups[d._colour] = d;
@@ -288,10 +285,6 @@ class Histogram extends Geometry {
                 d._x = series._key;
                 d._y = 0;
             });
-
-            console.log("Missing thingies:", Object.values(missingGroups));
-
-
 
             let group = d3.select(s_nodes[s_i])
                           .append("g")
