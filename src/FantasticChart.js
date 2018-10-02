@@ -26,7 +26,10 @@ import { renderLegend, buckets } from "./Legend";
 
 class FantasticChart {
 
-    constructor() {
+    constructor(name) {
+        this._counter = this._counter || 0;
+        this._counter++;
+        this._name = name || ("Chart " + this._counter);
         this.reset();
     }
 
@@ -215,8 +218,16 @@ class FantasticChart {
         return this;
     }
 
+    /**
+     * The chart's name, as defined in the constructor
+     * @returns {String}
+     */
+    name() {
+        return this._name;
+    }
+
     render() {
-        console.log("-------- Rendering ---------");
+        console.info("-------- RENDERING " + this.name() + " ---------");
 
         //-----------------------------------------------
         // Create initial svg element
@@ -493,8 +504,11 @@ function getFacets(data, selector) {
 }
 
 
-
-
-export function chart() {
-    return new FantasticChart();
+/**
+ * Create a new chart object.
+ * @param name An optional name for the chart.
+ * @returns {FantasticChart}
+ */
+export function chart(name) {
+    return new FantasticChart(name);
 }

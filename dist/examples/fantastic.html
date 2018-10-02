@@ -132,6 +132,8 @@ graph
 
     </div>
 
+    <!-------------------------------------------->
+
     <div class="banner">
         <div id="histogram-comparison-missing" style="width: 900px; height: 512px;">
         </div>
@@ -144,6 +146,43 @@ graph
             would like them to be filled in automatically.
         </p>
         <pre><code class="language-js">
+</code></pre>
+
+    </div>
+
+    <!-------------------------------------------->
+
+
+    <div class="banner">
+        <div id="histogram-brand-name" style="width: 900px; height: 512px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>A bar chart of volume by brand name</h3>
+        <p>
+            We can show discrete, non-date values on the x-axis.
+            Notice that it intelligently groups repeated x-axis groups.
+        </p>
+        <pre><code class="language-js">data = [
+    { mentionCount: 10, brand: "Brand One" },
+    { mentionCount: 2, brand: "Brand Two" },
+    { mentionCount: 4, brand: "Brand Three"},
+    { mentionCount: 8, brand: "Brand Four"},
+    { mentionCount: 5, brand: "Brand Five"},
+    { mentionCount: 5, brand: "Brand Five"}
+
+];
+
+graph
+    .data(data)
+    .element(document.getElementById('histogram-brand-name'))
+    .x(d => d.brand)
+    .y(d => d.mentionCount)
+    .geometry(b3js.columnChart())
+    .scaleX(b3js.scaleDiscrete())
+    .yAxisLabel("Brand Volume")
+    .render();
 </code></pre>
 
     </div>
@@ -285,7 +324,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .yAxisLabel("Mention volume")
-            // .render();
+            .render();
 
 
         data = [
@@ -330,7 +369,7 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
-            // .render();
+            .render();
 
 
         data = [
@@ -353,9 +392,46 @@ graph
             .colour( d => d.brand )
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
-            // .render();
+            .render();
 
-        graph = new b3js.chart();
+
+
+        data = [
+            { mentionCount: 10, brand: "Brand One" },
+            { mentionCount: 2, brand: "Brand Two" },
+            { mentionCount: 4, brand: "Brand Three"},
+            { mentionCount: 8, brand: "Brand Four"},
+            { mentionCount: 5, brand: "Brand Five"},
+            { mentionCount: 5, brand: "Brand Five"}
+
+        ];
+
+
+        graph = new b3js.chart("Histogram Brand Name");
+
+        graph
+            .data(data)
+            .element(document.getElementById('histogram-brand-name'))
+            .x(d => d.brand)
+            .y(d => d.mentionCount)
+            .geometry(b3js.columnChart())
+            .scaleX(b3js.scaleDiscrete())
+            .yAxisLabel("Brand Volume")
+            .render();
+
+        data = [
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: 1 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: 1},
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: 1},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: 1},
+            { published: "2018-03-02T00:37:40.133Z", mentionCount: 2, brand: 2 },
+            { published: "2018-03-03T00:37:40.133Z", mentionCount: 4, brand: 2},
+            { published: "2018-03-04T00:37:40.133Z", mentionCount: 6, brand: 2},
+            { published: "2018-03-05T00:37:40.133Z", mentionCount: 8, brand: 2}
+        ];
+
+
+        graph = new b3js.chart("Histogram Facet");
 
         graph
             .data(data)
@@ -365,7 +441,7 @@ graph
             .geometry(b3js.histogram())
             .scaleX(b3js.scaleTime())
             .facetX(d => d.brand)
-            // .render();
+            .render();
 
         graph = new b3js.chart();
 
@@ -377,7 +453,7 @@ graph
             .geometry(b3js.line())
             .scaleX(b3js.scaleTime())
             .colour(d => d.brand)
-            // .render();
+            .render();
 
         d3.csv("engagement.csv").then(data => {
             data.forEach(d => d.count = +d.count); // convert to number
@@ -388,7 +464,7 @@ graph
                 .x(d => d.count)
                 .geometry(b3js.histogram())
                 .facetX(d => d.aggregate)
-                // .render();
+                .render();
         });
 
         d3.csv("point-data.csv", d => {
@@ -407,7 +483,7 @@ graph
                 .y(d => d.totalEngagement)
                 .geometry(b3js.points())
                 .facetX(d => d.aggregate)
-                // .render();
+                .render();
         })
     });
 </script>

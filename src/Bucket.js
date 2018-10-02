@@ -19,14 +19,28 @@
 
 import {freedmanDiaconis} from "./Statistics";
 
+
+class Bucket {
+    constructor(data) { this._data = data; }
+
+    /**
+     * Given a data point, this returns the bucket that the data point is a part of.
+     */
+    bucket(d) { return d; }
+
+    /**
+     * Given data that has had its buckets set up in each item's _key field,
+     * this consolidates the data in to a single collection of buckets.
+     */
+    consolidateBuckets(data) { return data; }
+
+}
+
 /**
  * The bucket of a Date object is just itself. We assume that
  * dates are their own buckets.
  */
-export class DateBucket {
-    constructor(data) {
-
-    }
+export class DateBucket extends Bucket {
 
     // A noop: each date is its own bucket.
     bucket(d) {
@@ -39,11 +53,43 @@ export class DateBucket {
     }
 }
 
+export class DiscreteBucket extends Bucket {
 
-export class ContinuousBucket {
+    bucket(d) {
+        return d;
+    }
+
+    consolidateBuckets(data) {
+        console.log("CONSOLIDATING THE BUCKETS", data);
+        data.forEach(bucket => {
+            const counts = {};
+            const examples = {};
+            // Count everything grouped by their keys
+            // (i.e. count individual series
+            bucket.data.forEach(d => {
+                counts[d._key] = (counts[d._key] || 0) + d._y;
+                examples[d._key] = d;
+            });
+            // Provide one summary per series, but preserve
+            // any extra data, such as colour and so on.
+            bucket.data = Object.keys(counts).map(key => {
+                const example = examples[key];
+                return Object.assign({}, example, {
+                    _y: counts[key]
+                })
+            })
+        });
+
+        return data;
+    }
+}
+
+
+export class ContinuousBucket extends Bucket {
     // We calculate buckets based on the Freedman-Draconis
     // inter-quartile range method.
     constructor(data) {
+        super(data);
         this._bucketWidth = freedmanDiaconis(data);
     }
 

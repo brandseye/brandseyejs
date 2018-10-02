@@ -17,7 +17,7 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import {DateBucket, ContinuousBucket} from "./Bucket";
+import {DateBucket, ContinuousBucket, DiscreteBucket} from "./Bucket";
 
 
 class ScaleTime {
@@ -42,6 +42,16 @@ class ScaleIdentity {
     }
 }
 
+class ScaleDiscrete {
+    transform(val) {
+        return val;
+    }
+
+    buckets(data) {
+        return new DiscreteBucket(data);
+    }
+}
+
 
 export function scaleTime() {
     return new ScaleTime();
@@ -49,4 +59,8 @@ export function scaleTime() {
 
 export function scaleIdentity() {
     return new ScaleIdentity();
+}
+
+export function scaleDiscrete() {
+    return new ScaleDiscrete();
 }

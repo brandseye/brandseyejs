@@ -51,6 +51,7 @@ class Histogram extends Geometry {
         element.classed("histogram", true);
 
         console.log("histgoram with", width, "height", height);
+        console.log("\tdata", data);
         const x = this.getD3XScale(data, width);
         const y = this.getD3YScale(allData, height);
         const xGroup = this.getD3XGroupScale(data, x);
@@ -179,6 +180,7 @@ class Histogram extends Geometry {
 
     prepareData(data, faceted) {
         data = Geometry.prototype.prepareData.call(this, data, faceted);
+        console.log("geometry prepared data", data);
 
         let results = {};
 
