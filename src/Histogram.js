@@ -157,8 +157,6 @@ class Histogram extends Geometry {
                           .style("fill", d => colours(d._colour))
                           .style("stroke", d => d3.hcl(colours(d._colour)).darker())
                           .attr("y", d => height - y(Math.min(0, d._y)))
-                      // .attr("y", height - y(0))
-                      //     .attr("y", d => height - y(Math.min(0, d._y)))
                           .attr("height", d => (Math.abs(y(0) - y(d._y))));
               });
 
@@ -173,6 +171,7 @@ class Histogram extends Geometry {
     }
 
     calcBarGrowth(i, max) {
+        console.log("Bar growth --------------", i, max);
         if (max < 10) return i * this._BAR_GROWTH / 2;
         if (max < 35) return i * this._BAR_GROWTH / 4;
         return 1;
@@ -227,7 +226,7 @@ class Histogram extends Geometry {
 
         return d3.scaleBand()
                  .rangeRound([0, width])
-                 .padding((data[0].data.length > 1 ? 0.05 : 0) + this._padding)
+                 .padding((data[0].data.length > 1 ? 0.2 : 0) + this._padding)
                  .domain(data.map(d => d._key));
     }
 
@@ -324,7 +323,7 @@ class Histogram extends Geometry {
 
                   text
                       .transition("labels")
-                      .delay(() => animate ? this.calcBarGrowth(s_i, nodes.length) : 0) // Delay in lockstep with bar growth.
+                      .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
                       .attr("dx", 0)
                       .style("opacity", 1)
               })
