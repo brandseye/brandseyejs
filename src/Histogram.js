@@ -179,6 +179,11 @@ class Histogram extends Geometry {
     prepareData(data, faceted) {
         data = Geometry.prototype.prepareData.call(this, data, faceted);
 
+        const sortOrder = {};
+        this.xValues().forEach((d, i) => {
+            sortOrder[d] = sortOrder[d] || i;
+        });
+
         let results = {};
 
         // We want to calculate what bucket each bit of data belongs to.
@@ -201,7 +206,10 @@ class Histogram extends Geometry {
             })
         });
 
-        return buckets.consolidateBuckets(Object.values(results));
+        return buckets.consolidateBuckets(Object.values(results))
+            .sort((lhs, rhs) => {
+                return sortOrder[lhs._key] - sortOrder[rhs._key];
+            });
     }
 
     getKeys(data) {
