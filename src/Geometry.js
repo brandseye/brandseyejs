@@ -36,6 +36,8 @@ export class Geometry {
         this._y_formatter = null;
         this._chart_x_formatter = null;
         this._chart_y_formatter = null;
+        this._label_formatter = null;
+        this._chart_label_formatter = null;
         this._priority = priority || 1;
         this._dispatch = d3.dispatch('elementClick', 'elementMiddleClick', 'elementRightClick',
             'tooltipShow', 'tooltipHide');
@@ -185,6 +187,20 @@ export class Geometry {
         this._chart_y_formatter = formatter;
         return this;
     }
+
+    formatLabel(formatter) {
+        if (arguments.length === 0) return this._label_formatter || this._chart_label_formatter || this.formatY();
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._label_formatter = formatter;
+        return this;
+    }
+
+    setupFormatLabel(formatter) {
+        if (arguments.length === 0) return this._chart_label_formatter;
+        this._chart_label_formatter = formatter;
+        return this;
+    }
+
 
     width(width) {
         if (arguments.length === 0) return this._width;

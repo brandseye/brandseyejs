@@ -55,6 +55,7 @@ class FantasticChart {
         this._show_labels = true;
         this._show_legend = true;
         this._y_axis_label = null;
+        this._label_formatter = null;
 
         return this;
     }
@@ -134,6 +135,13 @@ class FantasticChart {
         if (arguments.length === 0) return this._y_formatter;
         if (typeof formatter !== 'function') throw new Error("formatter must be a function");
         this._y_formatter = formatter;
+        return this;
+    }
+
+    formatLabel(formatter) {
+        if (arguments.length === 0) return this._label_formatter;
+        if (typeof formatter !== 'function') throw new Error("formatter must be a function");
+        this._label_formatter = formatter;
         return this;
     }
 
@@ -458,6 +466,7 @@ class FantasticChart {
             .setupScaleY(this._scale_y)
             .setupFormatX(this._x_formatter)
             .setupFormatY(this._y_formatter)
+            .setupFormatLabel(this._label_formatter)
             .setupColourScale(this._colour_scale)
             .setupShowLabels(this._show_labels)
             .d3ColourScale(this._d3_colour_scale);
