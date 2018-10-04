@@ -18,7 +18,7 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { colours } from './Colours';
-import { scaleIdentity } from "./Scales";
+import {chooseScale, scaleIdentity} from "./Scales";
 import { xaxis, yaxis, grid, yAxisLabel } from "./Axes";
 import {maxBounding} from "./helpers";
 import { renderLegend, buckets } from "./Legend";

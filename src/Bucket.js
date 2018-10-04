@@ -60,7 +60,6 @@ export class DiscreteBucket extends Bucket {
     }
 
     consolidateBuckets(data) {
-        console.log("CONSOLIDATING THE BUCKETS", data);
         data.forEach(bucket => {
             const counts = {};
             const examples = {};

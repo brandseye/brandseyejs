@@ -180,7 +180,6 @@ class Histogram extends Geometry {
 
     prepareData(data, faceted) {
         data = Geometry.prototype.prepareData.call(this, data, faceted);
-        console.log("geometry prepared data", data);
 
         let results = {};
 

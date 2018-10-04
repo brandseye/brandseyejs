@@ -28,4 +28,4 @@ export { chart } from './FantasticChart';
 export { histogram, columnChart } from './Histogram';
 export { line } from './Line';
 export { points } from './Points';
-export { scaleTime, scaleIdentity, scaleDiscrete } from './Scales';
+export { scaleTime, scaleIdentity, scaleDiscrete, chooseScale } from './Scales';
