@@ -171,7 +171,6 @@ class Histogram extends Geometry {
     }
 
     calcBarGrowth(i, max) {
-        console.log("Bar growth --------------", i, max);
         if (max < 10) return i * this._BAR_GROWTH / 2;
         if (max < 35) return i * this._BAR_GROWTH / 4;
         return 1;
