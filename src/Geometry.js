@@ -140,7 +140,7 @@ export class Geometry {
     }
 
     getD3Colour(d) {
-        return this.individualColours()[d._x] || this.d3ColourScale()(d._colour);
+        return this.individualColours()(d) || this.d3ColourScale()(d._colour);
     }
 
     size(size) {

@@ -82,6 +82,17 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
 }
 
 /**
+ * Given a data point, this determines its colours.
+ * @param d
+ * @param individualColours
+ * @param colourScale
+ * @returns {*}
+ */
+export function getColour(d, individualColours, colourScale) {
+    return individualColours(d) || colourScale(d._colour);
+}
+
+/**
  * Figures out what buckets we may be using in our data set, based on
  * colour and size differentiation. This may have to be run for each
  * geom and merged.

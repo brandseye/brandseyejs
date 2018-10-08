@@ -49,12 +49,13 @@ class FantasticChart {
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
         this._d3_colour_scale = d3.schemeAccent;
-        this._individual_colours = {};
+        this._individual_colours = () => null;
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
         this._show_labels = true;
         this._show_legend = true;
+        this._legend_colours = () => null;
         this._y_axis_label = null;
         this._label_formatter = null;
 
@@ -177,13 +178,16 @@ class FantasticChart {
     }
 
     /**
-     * Provide a map of x-value fields and the colours that they should be mapped to. This overrides
+     * Provide a function mapping x-value fields to a colour. The function is passed
+     * the given data value, after it has been annotated with _x, _y, _colour, and so on.
+     * This overrides
      * the colour scale. The colour scale will be used for values not defined by this map.
      * @param colourMap
      * @returns {*}
      */
     individualColours(colourMap) {
         if (arguments.length === 0) return this._individual_colours;
+        if (typeof colourMap !== 'function') throw new Error("colourMap must be a function");
         this._individual_colours = colourMap;
         return this;
     }
@@ -208,6 +212,16 @@ class FantasticChart {
     showLegend(show) {
         if (arguments.length === 0) return this._show_legend;
         this._show_legend = !!show;
+        return this;
+    }
+
+    /**
+     * Provide a function to override the mapping of legend names to colours.
+     */
+    legendColours(colourMap) {
+        if (arguments.length === 0) return this._legend_colours;
+        if (typeof colourMap !== 'function') throw new Error("colourMap must be a function");
+        this._legend_colours = colourMap;
         return this;
     }
 
@@ -271,7 +285,7 @@ class FantasticChart {
 
         //-----------------------------------------------
         // Draw the legend
-        const legendHeight = renderLegend(svg, bs, colourScale, this._width, this._height);
+        const legendHeight = renderLegend(svg, bs, (d) => this._legend_colours(d) || colourScale(d), this._width, this._height);
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
