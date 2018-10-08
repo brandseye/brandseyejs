@@ -181,7 +181,7 @@ class Histogram extends Geometry {
 
         const sortOrder = {};
         this.xValues().forEach((d, i) => {
-            sortOrder[d] = sortOrder[d] || i;
+            sortOrder[d] = sortOrder[d] || ("" + i);
         });
 
         let results = {};
@@ -208,7 +208,7 @@ class Histogram extends Geometry {
 
         return buckets.consolidateBuckets(Object.values(results))
             .sort((lhs, rhs) => {
-                return sortOrder[lhs._key] - sortOrder[rhs._key];
+                return sortOrder["" + lhs._key] - sortOrder["" + rhs._key];
             });
     }
 
