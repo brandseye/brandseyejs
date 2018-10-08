@@ -49,6 +49,7 @@ class FantasticChart {
         this._facet_x = null;
         this._colour_scale = d3.schemeAccent;
         this._d3_colour_scale = d3.schemeAccent;
+        this._individual_colours = {};
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
@@ -172,6 +173,18 @@ class FantasticChart {
         if (arguments.length === 0) return this._colour_scale;
         if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
         this._colour_scale = colours;
+        return this;
+    }
+
+    /**
+     * Provide a map of x-value fields and the colours that they should be mapped to. This overrides
+     * the colour scale. The colour scale will be used for values not defined by this map.
+     * @param colourMap
+     * @returns {*}
+     */
+    individualColours(colourMap) {
+        if (arguments.length === 0) return this._individual_colours;
+        this._individual_colours = colourMap;
         return this;
     }
 
@@ -468,6 +481,7 @@ class FantasticChart {
             .setupFormatY(this._y_formatter)
             .setupFormatLabel(this._label_formatter)
             .setupColourScale(this._colour_scale)
+            .setupIndividualColours(this._individual_colours)
             .setupShowLabels(this._show_labels)
             .d3ColourScale(this._d3_colour_scale);
         geom._dispatch.on("elementClick", (e) => {

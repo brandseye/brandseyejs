@@ -32,6 +32,9 @@ export class Geometry {
         this._scale_y = null;
         this._facet_selector = null;
         this._chart_colour_scale = null;
+        this._colour_scale = null;
+        this._individual_colours = null;
+        this._chart_individual_colours = null;
         this._x_formatter = null;
         this._y_formatter = null;
         this._chart_x_formatter = null;
@@ -118,10 +121,26 @@ export class Geometry {
         return this;
     }
 
+    individualColours(colourMap) {
+        if (arguments.length === 0) return this._chart_individual_colours || this._individual_colours;
+        this._individual_colours = colourMap;
+        return this;
+    }
+
+    setupIndividualColours(colourMap) {
+        if (arguments.length === 0) return this._chart_individual_colours;
+        this._chart_individual_colours = colourMap;
+        return this;
+    }
+
     d3ColourScale(scale) {
         if (arguments.length === 0) return this._d3_colour_scale;
         this._d3_colour_scale = scale;
         return this;
+    }
+
+    getD3Colour(d) {
+        return this.individualColours()[d._x] || this.d3ColourScale()(d._colour);
     }
 
     size(size) {

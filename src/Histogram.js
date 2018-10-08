@@ -116,8 +116,8 @@ class Histogram extends Geometry {
                           .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
-                          .style("fill", d => colours(d._colour))
-                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
+                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
+                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .on("click auxclick", (d, i, nodes) => {
@@ -134,7 +134,7 @@ class Histogram extends Geometry {
                             .interrupt("hover:colour")
                             .transition("hover:colour")
                             .duration(400)
-                            .style("fill", d3.hcl(colours(d._colour)).darker());
+                            .style("fill", d3.hcl(this.getD3Colour(d)).darker());
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d,
@@ -148,14 +148,14 @@ class Histogram extends Geometry {
                             .interrupt("hover:colour")
                             .transition("hover:colour")
                             .duration(400)
-                            .style("fill", d => colours(d._colour));
+                            .style("fill", d => this.getD3Colour(d));
                           this._dispatch.call("tooltipHide", this);
                       })
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
-                          .style("fill", d => colours(d._colour))
-                          .style("stroke", d => d3.hcl(colours(d._colour)).darker())
+                          .style("fill", d => this.getD3Colour(d)) //colours(d._colour))
+                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                           .attr("y", d => height - y(Math.min(0, d._y)))
                           .attr("height", d => (Math.abs(y(0) - y(d._y))));
               });
@@ -273,15 +273,15 @@ class Histogram extends Geometry {
 
         // Want to figure out if the label is too dark / light for the
         // bar.
-        const getInvertedColor = c => {
-            let invertedColor = d3.hcl(colourScale(c));
+        const getInvertedColor = d => {
+            let invertedColor = d3.hcl(this.getD3Colour(d));
             invertedColor.l += Math.min(invertedColor.l + 50, 100);
             return invertedColor;
         };
-        const shouldInvert = c => d3.hcl(colourScale(c)).l < 60;
+        const shouldInvert = d => d3.hcl(this.getD3Colour(d)).l < 60;
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
-        const findColour = (y, dy, labelText, i) => (y >= 0 && dy > 0 || y < 0 && dy < 0) && shouldInvert(i)? getInvertedColor(i).toString() : (labelText === "0" ? lighterFillColour : fillColour);
+        const findColour = (d, dy, labelText) => (d._y >= 0 && dy > 0 || d._y < 0 && dy < 0) && shouldInvert(d)? getInvertedColor(d).toString() : (labelText === "0" ? lighterFillColour : fillColour);
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
@@ -320,7 +320,7 @@ class Histogram extends Geometry {
                                .attr("dy", dy)
                                .style("opacity", 0)
                                .style("pointer-events", "none")
-                               .style("fill", d => findColour(d._y, dy, labelText, i));
+                               .style("fill", d => findColour(d, dy, labelText));
 
                   // Set the x position, which is based on width.
                   const width = text.node().getBBox().width;
@@ -358,7 +358,7 @@ class Histogram extends Geometry {
 
                           text
                               .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                              .style("fill", d => findColour(d._y, dy, text.text(), i))
+                              .style("fill", d => findColour(d, dy, text.text()))
                               .attr("dy", dy);
                       })
             }
