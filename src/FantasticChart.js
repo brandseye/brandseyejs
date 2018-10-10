@@ -18,10 +18,11 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { colours } from './Colours';
-import {chooseScale, scaleIdentity} from "./Scales";
+import { scaleIdentity } from "./Scales";
 import { xaxis, yaxis, grid, yAxisLabel } from "./Axes";
 import {maxBounding} from "./helpers";
 import { renderLegend, buckets } from "./Legend";
+import { restrictLength } from "./Strings";
 
 
 class FantasticChart {
@@ -333,7 +334,7 @@ class FantasticChart {
 
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(geometries[0].formatX()));
+                d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(d => restrictLength(geometries[0].formatX()(d), 25)));
 
             axisHeight = Math.max(height, axisHeight);
         });
@@ -416,7 +417,7 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(geometries[0].formatX()))
+                    d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(d => restrictLength(geometries[0].formatX()(d), 25)))
             });
 
         }
