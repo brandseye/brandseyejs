@@ -210,6 +210,12 @@ class FantasticChart {
         return this;
     }
 
+    /**
+     * Indicates whether to show the legend or not. This is retained mode: you need to
+     * call render after setting this to see a change.
+     * @param show
+     * @returns {*}
+     */
     showLegend(show) {
         if (arguments.length === 0) return this._show_legend;
         this._show_legend = !!show;

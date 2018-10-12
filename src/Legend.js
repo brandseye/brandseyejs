@@ -44,7 +44,7 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
 
     elements.enter()
             .append("g")
-            .attr("class", (d, i) => "legend-element series series-" + i)
+            .attr("class", (d, i) => "legend-element series series-" + toColourKey(d))
             .style("cursor", "default")
             .each((d, i, nodes) => {
                 let element = d3.select(nodes[i]);
