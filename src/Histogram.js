@@ -314,7 +314,7 @@ class Histogram extends Geometry {
                   let text = d3.select(nodes[i])
                                .append("text")
                                .text(labelText)
-                               .attr("class", "chart-label")
+                               .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
                                .attr("y", ypos)
                                .attr("dx", animate ? -15 : 0)
                                .attr("dy", dy)
