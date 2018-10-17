@@ -308,7 +308,7 @@ class Histogram extends Geometry {
               .data(series.data.concat(Object.values(missingGroups)))
               .enter()
               .each((d, i, nodes) => {
-                  const labelText = this.formatLabel()(d._y);
+                  const labelText = this.formatLabel()(d._y, d);
                   let ypos = yscale(d._y);
                   let dy = calcDy(d._y, ypos);
                   let text = d3.select(nodes[i])
