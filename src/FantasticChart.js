@@ -340,7 +340,7 @@ class FantasticChart {
 
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(d => restrictLength(geometries[0].formatX()(d), 25)));
+                d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)));
 
             axisHeight = Math.max(height, axisHeight);
         });
@@ -423,7 +423,7 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat(d => restrictLength(geometries[0].formatX()(d), 25)))
+                    d3.axisBottom(xScale).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)))
             });
 
         }
