@@ -138,5 +138,6 @@ export function buckets(data, colour, size) {
 
 export function toColourKey(colour) {
     // TODO this is not internationalised, and may break on things like brand names.
+    colour = colour || "unknown-element";
     return "colour-" + colour.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9]/g, '');
 }
