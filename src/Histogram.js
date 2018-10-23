@@ -119,7 +119,7 @@ class Histogram extends Geometry {
                           .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                      .attr("class", (d, i) => "bar series series-" + toColourKey(d._colour))
+                        .attr("class", d => "bar series series-" + toColourKey(d._colour))
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
