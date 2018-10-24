@@ -24,8 +24,8 @@ export { LineChart as LineChart } from './LineChart';
 export { colours } from './Colours';
 
 // For the Fantastic Chart
-export { chart } from './FantasticChart';
-export { histogram, columnChart } from './Histogram';
-export { line } from './Line';
-export { points } from './Points';
-export { scaleTime, scaleIdentity, scaleDiscrete, chooseScale } from './Scales';
+export { chart } from './chart/FantasticChart';
+export { histogram, columnChart } from './chart/Histogram';
+export { line } from './chart/Line';
+export { points } from './chart/Points';
+export { scaleTime, scaleIdentity, scaleDiscrete, chooseScale } from './chart/Scales';

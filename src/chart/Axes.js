@@ -17,7 +17,7 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { colours } from "./Colours";
+import { colours } from "../Colours";
 
 const AXIS_ANIMATION_DURATION = 1000;
 const AXIS_DELAY = 250;

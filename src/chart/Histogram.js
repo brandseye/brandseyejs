@@ -18,8 +18,8 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { Geometry, fromKey } from './Geometry';
-import { colours } from "./Colours";
-import { toColourKey } from "./Legend";
+import { colours } from "../Colours";
+import { toColourKey } from "../Legend";
 
 
 class Histogram extends Geometry {

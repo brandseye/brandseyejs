@@ -17,12 +17,12 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { colours } from './Colours';
+import { colours } from '../Colours';
 import { scaleIdentity } from "./Scales";
 import { xaxis, yaxis, grid, yAxisLabel } from "./Axes";
-import {maxBounding} from "./helpers";
-import { renderLegend, buckets } from "./Legend";
-import { restrictLength } from "./Strings";
+import {maxBounding} from "../helpers";
+import { renderLegend, buckets } from "../Legend";
+import { restrictLength } from "../Strings";
 
 
 class FantasticChart {
