@@ -36,11 +36,12 @@ export function maxBounding(selection, text, font, fontSize) {
         .data(text)
         .enter()
         .append("text")
-        .text(d => d)
+        .text(d => {console.log("raw: ", d); return d})
         .each((d, i, nodes) => {
             let node = nodes[i];
             let bb = node.getBBox();
             width = Math.max(width, bb.width);
+            console.log("width calc", d, width);
             height = Math.max(height, bb.height)
         });
 

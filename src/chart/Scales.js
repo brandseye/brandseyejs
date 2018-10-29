@@ -30,6 +30,8 @@ class ScaleTime {
     buckets(data) {
         return new DateBucket(data);
     }
+
+    isShowGrid() { return false };
 }
 
 class ScaleIdentity {
@@ -40,6 +42,8 @@ class ScaleIdentity {
     buckets(data) {
         return new ContinuousBucket(data);
     }
+
+    isShowGrid() { return true };
 }
 
 class ScaleDiscrete {
@@ -50,6 +54,8 @@ class ScaleDiscrete {
     buckets(data) {
         return new DiscreteBucket(data);
     }
+
+    isShowGrid() { return false };
 }
 
 

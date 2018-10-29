@@ -87,11 +87,11 @@ export function yaxis(selection, axis) {
     return width + 20;
 }
 
-export function grid(selection, width, axis) {
-    selection.select(".grid").remove();
+export function yGrid(selection, width, axis) {
+    selection.select(".yGrid").remove();
 
     let grid = selection.append("g")
-                        .attr("class", "grid")
+                        .attr("class", "yGrid")
                         .call(axis
                             .tickSize(-width)
                             .tickFormat("")
@@ -103,6 +103,29 @@ export function grid(selection, width, axis) {
 
     grid
         .lower() // Always ensure that this is earlier in the dom. Things must be drawn on top of it.
+        .style("opacity", 0)
+        .transition()
+        .delay(AXIS_DELAY)
+        .duration(AXIS_ANIMATION_DURATION)
+        .style("opacity", 1);
+}
+
+export function xGrid(selection, height, axis) {
+    selection.select(".xGrid").remove();
+
+    let grid = selection.append("g")
+                        .attr("class", "xGrid")
+                        .call(axis
+                            .tickSize(height)
+                            .tickFormat("")
+                        );
+
+    grid.selectAll("line")
+        .style("stroke", colours.eighteen.lightGrey);
+    grid.selectAll(".domain").remove();
+
+    grid
+        .lower()
         .style("opacity", 0)
         .transition()
         .delay(AXIS_DELAY)
