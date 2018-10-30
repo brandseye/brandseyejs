@@ -20,6 +20,7 @@
 import { Geometry, fromKey } from './Geometry';
 import { colours } from "../Colours";
 import { toColourKey } from "../Legend";
+import { labelIsZero } from "../helpers";
 
 
 class BarHistogram extends Geometry {
@@ -50,7 +51,7 @@ class BarHistogram extends Geometry {
 
         element.classed("histogram", true);
 
-        console.log("histgogram with", width, "height", height);
+        console.log("bar histogram with", width, "height", height);
         console.log("\tdata", data);
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(data, height);
@@ -108,7 +109,6 @@ class BarHistogram extends Geometry {
                       .attr("x", 0)
                       .attr("y", d => yGroup(d._key));
 
-                  console.log("should be ", width, x(0), width - x(0));
                   bars.enter()
                       .append("rect")
                       .attr("y", d => yGroup(d._key))
@@ -183,7 +183,7 @@ class BarHistogram extends Geometry {
         data = Geometry.prototype.prepareData.call(this, data, faceted);
 
         const sortOrder = {};
-        this.xValues().forEach((d, i) => {
+        this.yValues().forEach((d, i) => {
             sortOrder[d] = sortOrder[d] || ("" + i);
         });
 
@@ -284,7 +284,7 @@ class BarHistogram extends Geometry {
         const shouldInvert = d => d3.hcl(this.getD3Colour(d)).l < 60;
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
-        const findColour = (d, onBar, labelText) => onBar && shouldInvert(d) ? getInvertedColor(d).toString() : (labelText === "0" ? lighterFillColour : fillColour);
+        const findColour = (d, onBar, labelText) => onBar && shouldInvert(d) ? getInvertedColor(d).toString() : (labelIsZero(labelText) ? lighterFillColour : fillColour);
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
@@ -306,10 +306,7 @@ class BarHistogram extends Geometry {
             d3.select(s_nodes[s_i])
               .append("g")
               .attr("class", "label-group")
-              .attr("transform", d => {
-                  console.log("\tlabel transform for", d._x, d._key, yGroup(d._key), d);
-                  return "translate(0," + yscale(d._key) + ")"
-              })
+              .attr("transform", d => "translate(0," + yscale(d._key) + ")")
               .selectAll(".chart-label")
               .data(series.data.concat(Object.values(missingGroups)))
               .enter()

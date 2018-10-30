@@ -77,14 +77,30 @@ graph
         <p>
             A bar graph of counts. Similar to the above, but rotated.
         </p>
-        <pre><code class="language-js">let data = [
-    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10 },
-    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5},
-    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7},
-    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11}
+        <pre><code class="language-js">data = [
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 10, brand: "one"},
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 5, brand: "one"},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 7, brand: "one"},
+    { published: "2018-03-05T00:37:40.133Z", mentionCount: 11, brand: "one"},
+    { published: "2018-03-02T00:37:40.133Z", mentionCount: 12, brand: "two"},
+    { published: "2018-03-03T00:37:40.133Z", mentionCount: 8, brand: "two"},
+    { published: "2018-03-04T00:37:40.133Z", mentionCount: 1, brand: "two"}
 ];
 
-</code></pre>
+
+graph = new b3js.chart();
+
+graph
+    .data(data)
+    .element(document.getElementById('bar-graph'))
+    .x(d => d.mentionCount)
+    .y(d => d.published)
+    .colour(d => d.brand )
+    .geometry(b3js.barChart())
+    .scaleY(b3js.scaleTime())
+    .yAxisLabel("Brand")
+    .xAxisLabel("Mention count")
+    .render();</code></pre>
 
     </div>
 
@@ -377,10 +393,9 @@ graph
             .colour(d => d.brand )
             .geometry(b3js.barChart())
             .scaleY(b3js.scaleTime())
-            .yAxisLabel("Mention volume")
+            .yAxisLabel("Brand")
+            .xAxisLabel("Mention count")
             .render();
-
-        return
 
         data = [
             { published: "2018-03-02T00:37:40.133Z", totalSentiment: 101 },

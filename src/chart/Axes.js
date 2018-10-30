@@ -87,8 +87,10 @@ export function yaxis(selection, axis) {
     return width + 20;
 }
 
-export function yGrid(selection, width, axis) {
+export function yGrid(selection, width, show, axis) {
     selection.select(".yGrid").remove();
+
+    if (!show) return;
 
     let grid = selection.append("g")
                         .attr("class", "yGrid")
@@ -110,8 +112,10 @@ export function yGrid(selection, width, axis) {
         .style("opacity", 1);
 }
 
-export function xGrid(selection, height, axis) {
+export function xGrid(selection, height, show, axis) {
     selection.select(".xGrid").remove();
+
+    if (!show) return;
 
     let grid = selection.append("g")
                         .attr("class", "xGrid")
@@ -156,9 +160,40 @@ export function yAxisLabel(element, height, margins, label) {
     }
 
     labelElement.attr("dx", -width / 2)
-        .style("opacity", 0)
-        .transition()
-        .delay(AXIS_DELAY)
-        .duration(AXIS_ANIMATION_DURATION)
-            .style("opacity", 1)
+                .style("opacity", 0)
+                .transition()
+                .delay(AXIS_DELAY)
+                .duration(AXIS_ANIMATION_DURATION)
+                .style("opacity", 1)
+}
+
+export function xAxisLabel(element, width, height, margins, label) {
+    element.selectAll(".x-axis-label").remove();
+
+    if (!label) return;
+    let text = label;
+    if (text.long) text = text.long;
+
+    let x = margins.left + width / 2;
+    let y = margins.top + height + 40;
+
+    let labelElement = element.append("g")
+                              .attr("class", "x-axis-label")
+                              .append("text")
+                              .text(text)
+                              .attr("transform", "translate(" + x + ", " + y + ")")
+                              .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+
+    let textWidth = labelElement.node().getBBox().width;
+    if (textWidth >= height && label.short) {
+        labelElement.text(label.short);
+        textWidth = labelElement.node().getBBox().width;
+    }
+
+    labelElement.attr("dx", -textWidth / 2)
+                .style("opacity", 0)
+                .transition()
+                .delay(AXIS_DELAY)
+                .duration(AXIS_ANIMATION_DURATION)
+                .style("opacity", 1)
 }

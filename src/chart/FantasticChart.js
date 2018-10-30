@@ -19,8 +19,8 @@
 
 import { colours } from '../Colours';
 import { scaleIdentity } from "./Scales";
-import { xaxis, yaxis, yGrid, xGrid, yAxisLabel } from "./Axes";
-import {maxBounding} from "../helpers";
+import { xaxis, yaxis, yGrid, xGrid, yAxisLabel, xAxisLabel } from "./Axes";
+import { maxBounding } from "../helpers";
 import { renderLegend, buckets } from "../Legend";
 import { restrictLength } from "../Strings";
 
@@ -58,6 +58,7 @@ class FantasticChart {
         this._show_legend = true;
         this._legend_colours = () => null;
         this._y_axis_label = null;
+        this._x_axis_label = null;
         this._label_formatter = null;
 
         return this;
@@ -151,6 +152,12 @@ class FantasticChart {
     yAxisLabel(label) {
         if (arguments.length === 0) return this._y_axis_label;
         this._y_axis_label = label;
+        return this;
+    }
+
+    xAxisLabel(label) {
+        if (arguments.length === 0) return this._x_axis_label;
+        this._x_axis_label = label;
         return this;
     }
 
@@ -301,7 +308,6 @@ class FantasticChart {
 
         const outerPadding = 20;
 
-        console.log("Axis with for y-axis is", axisWidth);
         const margin = {
             top: outerPadding,
             right: outerPadding,
@@ -309,9 +315,10 @@ class FantasticChart {
             left: outerPadding + axisWidth
         };
         if (this._y_axis_label) margin.left += 20;
+        if (this._x_axis_label) margin.bottom += 40;
         const width  = this._width - margin.left - margin.right;
         const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
-        const bottomOuterPadding = outerPadding + legendHeight;
+        const bottomOuterPadding = outerPadding + legendHeight + (this._x_axis_label ? 40 : 0);
 
         //-----------------------------------------------
         // Determine initial facet / small multiple information
@@ -329,7 +336,6 @@ class FantasticChart {
         // We do this by rendering the various x-axes offscreen.
 
         const xTickCount = Math.floor(width / 90);
-        console.log("Width is currently", width, xTickCount);
 
         geometries.forEach(geom => geom.width(facetBand.bandwidth()));
         const axisSizeArea = svg.append("g")
@@ -436,7 +442,7 @@ class FantasticChart {
         // Setup labels
 
         yAxisLabel(svg, height, margin, this._y_axis_label);
-
+        xAxisLabel(svg, width, height, margin, this._x_axis_label);
 
         //-----------------------------------------------
         // Draw individual geometries.
@@ -461,8 +467,8 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                if (this.scaleY().isShowGrid()) yGrid(area, geom_width, d3.axisLeft(yscale).ticks(5));
-                if (this.scaleX().isShowGrid()) xGrid(area, geom_height, d3.axisBottom(xscale).ticks(xTickCount));
+                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(5));
+                xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();
 
@@ -479,7 +485,6 @@ class FantasticChart {
                          node
                              .attr("transform", "translate(" + geom_left + "," + geom_top + ")")
                              .each((d, i, nodes) => {
-                                 console.log("Setting height for", geom.name(), "to", height - axisHeight);
                                  geom.element(d3.select(nodes[i]))
                                      .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                                      .height(geom_height)

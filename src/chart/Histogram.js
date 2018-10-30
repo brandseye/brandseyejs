@@ -20,6 +20,7 @@
 import { Geometry, fromKey } from './Geometry';
 import { colours } from "../Colours";
 import { toColourKey } from "../Legend";
+import { labelIsZero } from "../helpers";
 
 
 class Histogram extends Geometry {
@@ -281,7 +282,7 @@ class Histogram extends Geometry {
         const shouldInvert = d => d3.hcl(this.getD3Colour(d)).l < 60;
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
-        const findColour = (d, dy, labelText) => (d._y >= 0 && dy > 0 || d._y < 0 && dy < 0) && shouldInvert(d)? getInvertedColor(d).toString() : (labelText === "0" ? lighterFillColour : fillColour);
+        const findColour = (d, dy, labelText) => (d._y >= 0 && dy > 0 || d._y < 0 && dy < 0) && shouldInvert(d)? getInvertedColor(d).toString() : (labelIsZero(labelText) ? lighterFillColour : fillColour);
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
