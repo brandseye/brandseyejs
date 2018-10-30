@@ -404,6 +404,7 @@ class FantasticChart {
 
 
         let yAxisArea = svg.select(".y-axis-area");
+        const yTickCount = Math.floor(height / 90);
 
         yAxisArea.remove();
         yAxisArea = svg
@@ -415,7 +416,7 @@ class FantasticChart {
         const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
-            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(5).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
+            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(yTickCount).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
 
             // Draw a little x-axis for every facet.
             facets.forEach(facet => {
@@ -467,7 +468,7 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(5));
+                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
                 xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();

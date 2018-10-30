@@ -284,7 +284,13 @@ class BarHistogram extends Geometry {
         const shouldInvert = d => d3.hcl(this.getD3Colour(d)).l < 60;
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
-        const findColour = (d, onBar, labelText) => onBar && shouldInvert(d) ? getInvertedColor(d).toString() : (labelIsZero(labelText) ? lighterFillColour : fillColour);
+        const findColour = (d, onBar, labelText) => {
+            return onBar && shouldInvert(d)
+                ? getInvertedColor(d).toString()
+                : (labelIsZero(labelText)
+                    ? lighterFillColour
+                    : (onBar ? d3.hcl(fillColour).darker() : fillColour));
+        };
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
