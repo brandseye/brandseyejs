@@ -376,10 +376,17 @@ class BarHistogram extends Geometry {
                           const text = d3.select(nodes[i]);
                           const width = text.node().getBBox().width;
 
+                          let xpos = xscale(d._x);
+                          let effectiveBuffer = buffer;
+                          if (xpos + width >= this._width) {
+                              xpos = Math.max(0, xpos - width);
+                              effectiveBuffer = -buffer;
+                          }
+
                           text
-                              .attr("x", yGroup(d._key) + yGroup.bandwidth() / 2 - width / 2)
-                              .style("fill", d => findColour(d, 0, text.text())) // todo
-                              .attr("dx", "0px"); // todo
+                              .attr("x", xpos)
+                              .style("fill", d => findColour(d, effectiveBuffer < 0, text.text())) // todo
+                              .attr("dx", effectiveBuffer); // todo
                       })
             }
         }
