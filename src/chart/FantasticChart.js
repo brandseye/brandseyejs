@@ -106,12 +106,21 @@ class FantasticChart {
     scaleX(scale) {
         if (arguments.length === 0) return this._scale_x;
         this._scale_x = scale;
+        if (scale) {
+            scale.setCountGetter(d => d._y);
+            scale.setCountSetter((d, v) => d._y = v);
+        }
         return this;
     }
 
     scaleY(scale) {
         if (arguments.length === 0) return this._scale_y;
         this._scale_y = scale;
+        if (scale) {
+            scale.setCountGetter(d => d._x);
+            scale.setCountSetter((d, v) => d._x = v);
+        }
+
         return this;
     }
 

@@ -19,8 +19,25 @@
 
 import {DateBucket, ContinuousBucket, DiscreteBucket} from "./Bucket";
 
+class Scale {
+    constructor() {
+        this.getCount = d => d._y;
+        this.setCount = (d, v) => d._y = v;
+    }
 
-class ScaleTime {
+    setCountGetter(y) {
+        this.getCount = y;
+        return this;
+    }
+
+    setCountSetter(y) {
+        this.setCount = y;
+        return this;
+    }
+}
+
+
+class ScaleTime extends Scale {
     transform(val) {
         if (val instanceof Date) return val;
         if (typeof val !== 'string') throw new Error("Value is not a string and cannot be converted to a date");
@@ -28,31 +45,37 @@ class ScaleTime {
     }
 
     buckets(data) {
-        return new DateBucket(data);
+        return new DateBucket(data)
+            .setCountSetter(this.setCount)
+            .setCountGetter(this.getCount);
     }
 
     isShowGrid() { return false };
 }
 
-class ScaleIdentity {
+class ScaleIdentity extends Scale  {
     transform(val) {
         return val;
     }
 
     buckets(data) {
-        return new ContinuousBucket(data);
+        return new ContinuousBucket(data)
+            .setCountSetter(this.setCount)
+            .setCountGetter(this.getCount)
     }
 
     isShowGrid() { return true };
 }
 
-class ScaleDiscrete {
+class ScaleDiscrete extends Scale  {
     transform(val) {
         return val;
     }
 
     buckets(data) {
-        return new DiscreteBucket(data);
+        return new DiscreteBucket(data)
+            .setCountSetter(this.setCount)
+            .setCountGetter(this.getCount)
     }
 
     isShowGrid() { return false };

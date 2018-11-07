@@ -21,7 +21,16 @@ import {freedmanDiaconis} from "../Statistics";
 
 
 class Bucket {
-    constructor(data) { this._data = data; }
+    constructor(data) {
+        this._data = data;
+
+        this.getCount = d => d._y;
+        this.setCount = (d, v) => d._y = v;
+    }
+
+    setCountGetter(y) { this.getCount = y; return this; }
+    setCountSetter(y) { this.setCount = y; return this; }
+
 
     /**
      * Given a data point, this returns the bucket that the data point is a part of.
@@ -66,16 +75,16 @@ export class DiscreteBucket extends Bucket {
             // Count everything grouped by their keys
             // (i.e. count individual series
             bucket.data.forEach(d => {
-                counts[d._key] = (counts[d._key] || 0) + d._y;
+                counts[d._key] = (counts[d._key] || 0) + this.getCount(d);
                 examples[d._key] = d;
             });
             // Provide one summary per series, but preserve
             // any extra data, such as colour and so on.
             bucket.data = Object.keys(counts).map(key => {
                 const example = examples[key];
-                return Object.assign({}, example, {
-                    _y: counts[key]
-                })
+                const result =  Object.assign({}, example);
+                this.setCount(result, counts[key])
+                return result;
             })
         });
 
@@ -111,9 +120,9 @@ export class ContinuousBucket extends Bucket {
             // any extra data, such as colour and so on.
             bucket.data = Object.keys(counts).map(key => {
                 const example = examples[key];
-                return Object.assign({}, example, {
-                    _y: counts[key]
-                })
+                const result = Object.assign({}, example);
+                this.setCount(result, counts[key]);
+                return result;
             })
         });
 
