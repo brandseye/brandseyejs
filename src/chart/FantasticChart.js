@@ -300,11 +300,18 @@ class FantasticChart {
                                                       .domain(Array.from(bs.colours));
 
         //-----------------------------------------------
-        // Calculate the space that various elements will want to take up
+        // Calculate the space that various elements will want to take up. We also
+        // restrict the y axis by a proportion of the width of the metric.
+
+        const yAxisRestriction = Math.max((this._width * 0.10), 25);
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length ? maxBounding(svg, geometries[0].yValues().map(geometries[0].formatY())).width + 20 : 0;
+        const axisWidth = geometries.length
+            ? maxBounding(svg, geometries[0].yValues()
+                                            .map(geometries[0].formatY())
+                                            .map(d => restrictLength(d, yAxisRestriction))).width + 20
+            : 0;
 
         //-----------------------------------------------
         // Draw the legend
@@ -425,7 +432,7 @@ class FantasticChart {
         const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
-            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(yTickCount).tickFormat(geometries[0].formatY())); //;.tickFormat(this._tickFormat));
+            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(yTickCount).tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction))); //;.tickFormat(this._tickFormat));
 
             // Draw a little x-axis for every facet.
             facets.forEach(facet => {

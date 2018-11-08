@@ -25,6 +25,7 @@
  */
 export function restrictLength(text, length) {
     if (!text) return text;
+    text = "" + text;
     if (text.length <= length) return text;
 
     var result = [];
