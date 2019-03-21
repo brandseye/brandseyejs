@@ -134,7 +134,7 @@ class FantasticChart {
     }
 
     size() {
-        console.log("=> size: not implemented")
+        console.warn("=> size: not implemented")
     }
 
     formatX(formatter) {
@@ -285,8 +285,6 @@ class FantasticChart {
     }
 
     render() {
-        console.info("-------- RENDERING " + this.name() + " ---------");
-
         //-----------------------------------------------
         // Create initial svg element
         let svg = d3.select(this._element).select("svg");
@@ -475,7 +473,6 @@ class FantasticChart {
                 return "translate(" + facetBand(facetId) + ",0)";
             })
             .each((facet, facet_i, facetNodes) => {
-                console.log("------------ facet ", facet || "single-facet");
                 const area = d3.select(facetNodes[facet_i]);
 
                 let geoms = area.selectAll(".geometry").data(geometries);

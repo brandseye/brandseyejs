@@ -27,8 +27,6 @@ class Point extends Geometry {
     }
 
     render() {
-        console.log("\tRendering POINTS");
-
         const element = this._element;
         const data = this.prepareData();
         const width = this._width,

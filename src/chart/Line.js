@@ -27,8 +27,6 @@ class Line extends Geometry {
     }
 
     render() {
-        console.log("\t Rendering LINE");
-
         const element = this._element;
         const data = this.prepareData();
         const width = this._width,
@@ -40,9 +38,6 @@ class Line extends Geometry {
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(allData, height);
-
-        console.log("lines y range", y.range());
-        console.log("lines y domain", y.domain());
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));

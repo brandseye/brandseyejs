@@ -41,8 +41,6 @@ class Histogram extends Geometry {
     }
 
     render() {
-        console.log("\tRendering HISTOGRAM");
-
         const element = this._element;
         const data = this.prepareData(null, true);
         const allData = this.prepareData(null, false);
@@ -51,8 +49,6 @@ class Histogram extends Geometry {
 
         element.classed("histogram", true);
 
-        console.log("histgoram with", width, "height", height);
-        console.log("\tdata", data);
         const x = this.getD3XScale(data, width);
         const y = this.getD3YScale(allData, height);
         const xGroup = this.getD3XGroupScale(data, x);

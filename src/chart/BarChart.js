@@ -41,8 +41,6 @@ class BarHistogram extends Geometry {
     }
 
     render() {
-        console.log("\tRendering", this.name());
-
         const element = this._element;
         const data = this.prepareData(null, true);
         const allData = this.prepareData(null, false);
@@ -51,8 +49,6 @@ class BarHistogram extends Geometry {
 
         element.classed("histogram", true);
 
-        console.log("bar histogram with", width, "height", height);
-        console.log("\tdata", data);
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(data, height);
         const yGroup = this.getD3GroupScale(data, y);
