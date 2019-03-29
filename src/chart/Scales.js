@@ -95,6 +95,18 @@ export function scaleDiscrete() {
 }
 
 export function chooseScale(exampleValue) {
+    if (Array.isArray(exampleValue)) {
+        const scales = new Set();
+        for (const example of exampleValue) {
+            scales.add(example.constructor);
+        }
+
+        if (scales.size === 1) {
+            return scales.values().next().value.call();
+        }
+        throw new Error("Example values all require a different scale");
+    }
+
     if (exampleValue === undefined) throw new Error("No value provided for chooseScale");
     if (Date.parse(exampleValue)) return scaleTime();
     if (exampleValue instanceof Date) return scaleTime();
