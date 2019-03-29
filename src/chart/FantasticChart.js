@@ -301,7 +301,7 @@ class FantasticChart {
         // Calculate the space that various elements will want to take up. We also
         // restrict the y axis by a proportion of the width of the metric.
 
-        const yAxisRestriction = Math.max((this._width * 0.10), 25);
+        const yAxisRestriction = Math.max((this._width * 0.07), 25);
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
