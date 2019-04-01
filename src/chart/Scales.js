@@ -98,13 +98,26 @@ export function chooseScale(exampleValue) {
     if (Array.isArray(exampleValue)) {
         const scales = new Set();
         for (const example of exampleValue) {
-            scales.add(example.constructor);
+            scales.add(chooseScale(example).constructor);
+        }
+
+        if (scales.size === 0) {
+            throw new Error("Unable to determine scales");
         }
 
         if (scales.size === 1) {
-            return scales.values().next().value.call();
+            return new (scales.values().next().value);
         }
-        throw new Error("Example values all require a different scale");
+
+        // There is a priority amongst the scale types.
+        let scale = null;
+        for (const s of scales) {
+            if (s === ScaleIdentity) scale = scaleIdentity();
+            else if (s === ScaleDiscrete) scale = scaleDiscrete();
+            else scale = scaleTime();
+        }
+
+        return scale;
     }
 
     if (exampleValue === undefined) throw new Error("No value provided for chooseScale");
