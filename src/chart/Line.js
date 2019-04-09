@@ -110,6 +110,15 @@ class Line extends Geometry {
                     .attr("r", 10)
                     .attr("fill", d._colour)
                     .style("opacity", 0.1)
+                    .on("click auxclick", (d, i, nodes) => {
+                        this._dispatch.call("elementClick", this, {
+                            e: d3.event,
+                            point: min,
+                            series: data[min._s_i],
+                            seriesIndex: min._s_i,
+                            value: min._y
+                        })
+                    })
                     .on("mouseover", () => {
                         this._dispatch.call("tooltipShow", this, {
                             e: d3.event,
