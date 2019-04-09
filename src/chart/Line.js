@@ -18,6 +18,7 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { Geometry } from './Geometry';
+import { toColourKey } from "../Legend";
 
 
 class Line extends Geometry {
@@ -127,9 +128,12 @@ class Line extends Geometry {
             });
 
         let lines = lineGroup.selectAll('.line');
-        lines = lines.data(data);
+        lines = lines.data(data, d => toColourKey(d._colour));
 
-        lines.exit().remove();
+        lines.exit()
+             .transition()
+             .style("opacity", 0)
+             .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
 
         const line = d3.line()
                        .x(d => x(d._x))
@@ -138,13 +142,17 @@ class Line extends Geometry {
         lines
             .enter()
             .append("path")
-                .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", d => d3.hcl(colours(d._colour)).darker())
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
                 .attr("stroke-width", 2)
                 .style("opacity", 0)
+            .merge(lines)
+                .attr("class", d => {
+                    console.log("d is", d);
+                    return "line series series-" + toColourKey(d._colour)
+                })
+                .attr("stroke", d => d3.hcl(colours(d._colour)).darker())
             .transition()
                 .style("opacity", 1)
                 .attr("d", d => line(d.data));
