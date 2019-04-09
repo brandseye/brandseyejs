@@ -155,12 +155,17 @@ class Line extends Geometry {
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
                 .attr("stroke-width", 2)
+                .attr("stroke", d => {
+                    console.log("D is", d);
+                    console.log(`And the color is ${this.getD3Colour(d)}`);
+                    return d3.hcl(this.getD3Colour(d)).darker()
+                })
                 .style("opacity", 0)
             .merge(lines)
                 .attr("class", d => "line series series-" + toColourKey(d._colour))
-                .attr("stroke", d => d3.hcl(colours(d._colour)).darker())
             .transition()
                 .style("opacity", 1)
+                .attr("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                 .attr("d", d => line(d.data));
 
         lines
