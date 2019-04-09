@@ -51,6 +51,7 @@ class FantasticChart {
         this._colour_scale = d3.schemeAccent;
         this._d3_colour_scale = d3.schemeAccent;
         this._individual_colours = () => null;
+        this._modify_colour = c => c;
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
@@ -207,6 +208,13 @@ class FantasticChart {
         if (arguments.length === 0) return this._individual_colours;
         if (typeof colourMap !== 'function') throw new Error("colourMap must be a function");
         this._individual_colours = colourMap;
+        return this;
+    }
+
+    modifyColour(modifier) {
+        if (arguments.length === 0) return this._modify_colour;
+        if (typeof colourMap !== 'function') throw new Error("modifier must be a function");
+        this._modify_colour = modifier;
         return this;
     }
 
@@ -531,6 +539,7 @@ class FantasticChart {
             .setupFormatLabel(this._label_formatter)
             .setupColourScale(this._colour_scale)
             .setupIndividualColours(this._individual_colours)
+            .setupModifyColour(this._modify_colour)
             .setupShowLabels(this._show_labels)
             .d3ColourScale(this._d3_colour_scale);
         geom._dispatch.on("elementClick", (e) => {

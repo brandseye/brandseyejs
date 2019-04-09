@@ -35,6 +35,8 @@ export class Geometry {
         this._colour_scale = null;
         this._individual_colours = null;
         this._chart_individual_colours = null;
+        this._modify_colour = null;
+        this._chart_modify_colour = null;
         this._x_formatter = null;
         this._y_formatter = null;
         this._chart_x_formatter = null;
@@ -136,7 +138,7 @@ export class Geometry {
     }
 
     individualColours(colourMap) {
-        if (arguments.length === 0) return this._chart_individual_colours || this._individual_colours;
+        if (arguments.length === 0) return this._individual_colours || this._chart_individual_colours;
         this._individual_colours = colourMap;
         return this;
     }
@@ -144,6 +146,18 @@ export class Geometry {
     setupIndividualColours(colourMap) {
         if (arguments.length === 0) return this._chart_individual_colours;
         this._chart_individual_colours = colourMap;
+        return this;
+    }
+
+    modifyColour(modifier) {
+        if (arguments.length === 0) return this._modify_colour || this._chart_modify_colour;
+        this._modify_colour = modifier;
+        return this;
+    }
+
+    setupModifyColour(modifier) {
+        if (arguments.length === 0) return this._chart_modify_colour;
+        this._chart_modify_colour = modifier;
         return this;
     }
 
