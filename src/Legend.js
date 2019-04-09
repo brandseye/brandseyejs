@@ -20,9 +20,13 @@
 import { maxBounding } from "./helpers";
 import { colours as schema } from "./Colours";
 
+export function removeLegend(element) {
+    element.selectAll(".legend").remove();
+}
+
 export function renderLegend(element, buckets, colourScale, width, height, min) {
     min = min || 2;
-    element.selectAll(".legend").remove();
+    removeLegend(element);
 
     // Only if we have multiple series.
     if (!buckets || !buckets.colours.size) return 0;

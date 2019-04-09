@@ -21,7 +21,7 @@ import { colours } from '../Colours';
 import { scaleIdentity } from "./Scales";
 import { xaxis, yaxis, yGrid, xGrid, yAxisLabel, xAxisLabel } from "./Axes";
 import { maxBounding } from "../helpers";
-import { renderLegend, buckets } from "../Legend";
+import { removeLegend, renderLegend, buckets } from "../Legend";
 import { restrictLength } from "../Strings";
 
 
@@ -314,6 +314,7 @@ class FantasticChart {
 
         //-----------------------------------------------
         // Draw the legend
+        if (!this._show_legend) removeLegend(svg);
         const legendHeight = this._show_legend ? renderLegend(svg, bs, (d) => this._legend_colours(d) || colourScale(d), this._width, this._height) : 0;
 
         //-----------------------------------------------
