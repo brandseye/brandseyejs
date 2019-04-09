@@ -47,10 +47,24 @@ export class Geometry {
         this._show_labels = null;
         this._chart_show_labels = null;
         this._d3_colour_scale = null;
+        this._index = 0;  // Used for generating unique keys
     }
 
     name() {
         return this._name;
+    }
+
+    /**
+     * Used for generating a unique key.
+     */
+    index(i) {
+        if (arguments.length === 0) return this._index;
+        this._index = i;
+        return this;
+    }
+
+    key() {
+        return `${this._index}:${this._name}`
     }
 
     /**

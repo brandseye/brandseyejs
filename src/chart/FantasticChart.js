@@ -124,11 +124,12 @@ class FantasticChart {
         return this;
     }
 
-    /*
+    /**
      * Add geometry to render. Multiple geometries can be added.
      */
     geometry(geom) {
         if (arguments.length === 0) return this._geometries.slice(0);
+        geom.index(this._geometries.length);
         this._geometries.push(geom);
         return this;
     }
@@ -475,7 +476,7 @@ class FantasticChart {
             .each((facet, facet_i, facetNodes) => {
                 const area = d3.select(facetNodes[facet_i]);
 
-                let geoms = area.selectAll(".geometry").data(geometries);
+                let geoms = area.selectAll(".geometry").data(geometries, d => d.key());
 
                 const xscale = geometries[0].getD3XScale();
                 const geom_width  = facetBand.bandwidth(),
