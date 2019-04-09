@@ -157,10 +157,7 @@ class Line extends Geometry {
                 .attr("stroke-width", 2)
                 .style("opacity", 0)
             .merge(lines)
-                .attr("class", d => {
-                    console.log("d is", d);
-                    return "line series series-" + toColourKey(d._colour)
-                })
+                .attr("class", d => "line series series-" + toColourKey(d._colour))
                 .attr("stroke", d => d3.hcl(colours(d._colour)).darker())
             .transition()
                 .style("opacity", 1)
