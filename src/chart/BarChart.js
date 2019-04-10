@@ -75,7 +75,7 @@ class BarHistogram extends Geometry {
         element.select(".bars")
                .attr("transform", "translate(0,0)");
 
-        groups = groups.data(data);
+        groups = groups.data(data, d => d._key);
 
         groups.exit().remove();
 
@@ -85,7 +85,6 @@ class BarHistogram extends Geometry {
               .attr("transform", d => "translate(0," + y(d._key) +")")
               .attr("width", "100%")
               .attr("height", y.bandwidth())
-              .style("fill", "red")
               .merge(groups)
               .interrupt("groups:move")
               .transition("groups:move")
@@ -95,14 +94,13 @@ class BarHistogram extends Geometry {
                   let group = d3.select(nodes[s_i]);
 
                   let bars = group.selectAll(".bar")
-                                  .data(s_d.data);
+                                  .data(s_d.data, d => d._y);
 
                   bars.exit().remove();
 
                   bars.interrupt("bar:move")     // Animate the bars to their new position.
                       .transition("bar:move")
-                      .attr("width", yGroup.bandwidth())
-                      .attr("x", 0)
+                      .attr("width", d => (Math.abs(x(0) - x(d._x))))
                       .attr("y", d => yGroup(d._key));
 
                   bars.enter()
