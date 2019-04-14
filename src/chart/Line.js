@@ -180,9 +180,9 @@ class Line extends Geometry {
                            .map(d => d.data)
                            .reduce((acc, val) => acc.concat(val));
 
-        return d3.scaleTime()
-                    .range([0, width])
-                 .domain(d3.extent(data, d => d._x));
+        return d3.scaleBand()
+            .rangeRound([0, width])
+            .domain(data.map(d => d._x));
     }
 
     getD3YScale(data, height) {
