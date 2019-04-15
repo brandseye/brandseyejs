@@ -39,10 +39,7 @@ class Line extends Geometry {
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(allData, height);
-
-        const colours = d3.scaleOrdinal(this.colourScale())
-                          .domain(this.getColourDomain(data));
-
+        const invert = d3.scaleQuantize().domain(x.range()).range(x.domain());
 
         //---------------------------------
         // append the lines
@@ -72,7 +69,7 @@ class Line extends Geometry {
             .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
                 const mouse = d3.mouse(nodes[i]);
 
-                const xval = x.invert(mouse[0]);
+                const xval = invert(mouse[0]);
                 const yval = y.invert(mouse[1]);
                 // let min = this.getClosestPoint(xval, yval, this.getTransformedData()[0].data);
 
@@ -105,10 +102,10 @@ class Line extends Geometry {
                 lastMin = min;
                 lineGroup
                     .append("circle")
-                    .attr("cx", x(min._x))
+                    .attr("cx", x(min._x) + x.bandwidth() / 2)
                     .attr("cy", y(min._y))
                     .attr("r", 10)
-                    .attr("fill", d._colour)
+                    .attr("fill", this.getD3Colour(d))
                     .style("opacity", 0.1)
                     .on("click auxclick", (d, i, nodes) => {
                         this._dispatch.call("elementClick", this, {
@@ -137,7 +134,7 @@ class Line extends Geometry {
             });
 
         let lines = lineGroup.selectAll('.line');
-        lines = lines.data(data, d => toColourKey(d._colour));
+        lines = lines.data(data, d => d._key);
 
         lines.exit()
              .transition()
@@ -145,7 +142,7 @@ class Line extends Geometry {
              .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
 
         const line = d3.line()
-                       .x(d => x(d._x))
+                       .x(d => x(d._x) + x.bandwidth() / 2)
                        .y(d => y(d._y));
 
         lines
@@ -156,16 +153,18 @@ class Line extends Geometry {
                 .attr("stroke-linecap", "round")
                 .attr("stroke-width", 2)
                 .attr("stroke", d => {
-                    console.log("D is", d);
-                    console.log(`And the color is ${this.getD3Colour(d)}`);
-                    return d3.hcl(this.getD3Colour(d)).darker()
+                    console.log("d is", d.data[0]);
+                    return d3.hcl(this.getD3Colour(d.data[0])).darker()
                 })
                 .style("opacity", 0)
             .merge(lines)
-                .attr("class", d => "line series series-" + toColourKey(d._colour))
+                .attr("class", d => "line series series-" + toColourKey(d.data[0]._colour))
             .transition()
                 .style("opacity", 1)
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
+                .attr("stroke", d => {
+                    console.log("d is", d.data[0]);
+                    return d3.hcl(this.getD3Colour(d.data[0])).darker()
+                })
                 .attr("d", d => line(d.data));
 
         lines
@@ -179,6 +178,7 @@ class Line extends Geometry {
         data = data || this.prepareData()
                            .map(d => d.data)
                            .reduce((acc, val) => acc.concat(val));
+
 
         return d3.scaleBand()
             .rangeRound([0, width])
