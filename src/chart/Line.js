@@ -207,6 +207,12 @@ class Line extends Geometry {
                                      .flat();
 
                                  if (inSelection.length) {
+                                     this._dispatch.call("tooltipShow", this, {
+                                         e: d3.event,
+                                         point: inSelection[0],
+                                         points: inSelection
+                                     });
+
                                      selector
                                          .selectAll(".line-highlight")
                                          .data(inSelection)
@@ -246,8 +252,6 @@ class Line extends Geometry {
                                              .delay(300)
                                              .attr("r", RADIUS)
                                              .style("opacity", STANDARD_OPACITY);
-
-
                                  }
 
 
