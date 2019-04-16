@@ -67,8 +67,13 @@ class Point extends Geometry {
 
     getD3XScale(data, width) {
         width = width || this.width();
-        data = data || this.prepareData()
-        return d3.scaleLinear()
+        data = data || this.prepareData();
+        // return d3.scaleLinear()
+        //          .rangeRound([0, width])
+        //          .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
+        //              d3.max(data, d => d3.max(d.data, d => d._x))]);
+
+        return d3.scaleBand()
                  .rangeRound([0, width])
                  .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
                      d3.max(data, d => d3.max(d.data, d => d._x))]);
