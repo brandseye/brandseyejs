@@ -238,18 +238,21 @@ class Line extends Geometry {
                                              });
 
                                              d3.select(nodes[i])
+                                               .interrupt()
                                                .transition()
                                                .style("opacity", 1)
                                                .attr("r", 15);
                                          })
                                          .on("mouseout", (d, i, nodes) => {
                                              d3.select(nodes[i])
+                                               .interrupt()
                                                .transition()
                                                .style("opacity", STANDARD_OPACITY)
                                                .attr("r", RADIUS);
                                          })
                                          .transition()
                                              .delay(300)
+                                             .duration(500)
                                              .attr("r", RADIUS)
                                              .style("opacity", STANDARD_OPACITY);
                                  }
@@ -264,10 +267,11 @@ class Line extends Geometry {
                                      .style("opacity", 0);
 
                                  selector.selectAll(".line-highlight")
-                                     .transition()
-                                     .style("opacity", 0)
-                                     .attr("r", 1)
-                                     .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+                                         .interrupt()
+                                         .transition()
+                                         .style("opacity", 0)
+                                         .attr("r", 1)
+                                         .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
                              });
                      })
 
