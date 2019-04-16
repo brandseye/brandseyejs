@@ -19,6 +19,7 @@
 
 import { Geometry } from './Geometry';
 import { toColourKey } from "../Legend";
+import { equals } from "../helpers";
 
 
 class Line extends Geometry {
@@ -65,73 +66,75 @@ class Line extends Geometry {
                 .attr("height", "100%");
         }
 
-        lineGroup
-            .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
-                const mouse = d3.mouse(nodes[i]);
+        if (this.scaleX().isContinuous()) {
+            lineGroup
+                .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
+                    const mouse = d3.mouse(nodes[i]);
 
-                const xval = invert(mouse[0]);
-                const yval = y.invert(mouse[1]);
-                // let min = this.getClosestPoint(xval, yval, this.getTransformedData()[0].data);
+                    const xval = invert(mouse[0]);
+                    const yval = y.invert(mouse[1]);
+                    // let min = this.getClosestPoint(xval, yval, this.getTransformedData()[0].data);
 
-                let mins = data.map(d => getClosestPoint(xval, yval, d.data));
-                mins.forEach(d => d._dist =  [x(d._x), y(d._y)]);
+                    let mins = data.map(d => getClosestPoint(xval, yval, d.data));
+                    mins.forEach(d => d._dist =  [x(d._x), y(d._y)]);
 
-                mins = mins.filter(min => {
-                    const minScreenDist = Math.sqrt((mouse[0] - min._dist[0]) ** 2 + (mouse[1] - min._dist[1]) ** 2);
-                    min._min_screen = minScreenDist;
-                    return minScreenDist < 100;
+                    mins = mins.filter(min => {
+                        const minScreenDist = Math.sqrt((mouse[0] - min._dist[0]) ** 2 + (mouse[1] - min._dist[1]) ** 2);
+                        min._min_screen = minScreenDist;
+                        return minScreenDist < 100;
+                    });
+
+
+                    if (!mins || !mins.length) {
+                        lastMouse = null;
+                        lineGroup.selectAll("circle").remove();
+                        return;
+                    }
+
+                    mins = mins.sort((lhs, rhs) => lhs._min_screen - rhs._min_screen);
+                    let min = mins[0];
+
+                    if (circle) {
+                        if (lastMin && min._x.getTime() === lastMin._x.getTime()) return;
+                        lineGroup.selectAll("circle").remove();
+                    }
+
+                    circle = true;
+                    lastMouse = mouse;
+                    lastMin = min;
+                    lineGroup
+                        .append("circle")
+                        .attr("cx", x(min._x) + x.bandwidth() / 2)
+                        .attr("cy", y(min._y))
+                        .attr("r", 10)
+                        .attr("fill", this.getD3Colour(d))
+                        .style("opacity", 0.1)
+                        .on("click auxclick", (d, i, nodes) => {
+                            this._dispatch.call("elementClick", this, {
+                                e: d3.event,
+                                point: min,
+                                series: data[min._s_i],
+                                seriesIndex: min._s_i,
+                                value: min._y
+                            })
+                        })
+                        .on("mouseover", () => {
+                            this._dispatch.call("tooltipShow", this, {
+                                e: d3.event,
+                                point: min,
+                                series: data[min._s_i],
+                                seriesIndex: min._s_i,
+                                value: min._y
+                            })
+                        })
+                        .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+                            this._dispatch.call("tooltipHide", this);
+                        })
+                        .transition()
+                        .style("opacity", 0.5)
+
                 });
-
-
-                if (!mins || !mins.length) {
-                    lastMouse = null;
-                    lineGroup.selectAll("circle").remove();
-                    return;
-                }
-
-                mins = mins.sort((lhs, rhs) => lhs._min_screen - rhs._min_screen);
-                let min = mins[0];
-
-                if (circle) {
-                    if (lastMin && min._x.getTime() === lastMin._x.getTime()) return;
-                    lineGroup.selectAll("circle").remove();
-                }
-
-                circle = true;
-                lastMouse = mouse;
-                lastMin = min;
-                lineGroup
-                    .append("circle")
-                    .attr("cx", x(min._x) + x.bandwidth() / 2)
-                    .attr("cy", y(min._y))
-                    .attr("r", 10)
-                    .attr("fill", this.getD3Colour(d))
-                    .style("opacity", 0.1)
-                    .on("click auxclick", (d, i, nodes) => {
-                        this._dispatch.call("elementClick", this, {
-                            e: d3.event,
-                            point: min,
-                            series: data[min._s_i],
-                            seriesIndex: min._s_i,
-                            value: min._y
-                        })
-                    })
-                    .on("mouseover", () => {
-                        this._dispatch.call("tooltipShow", this, {
-                            e: d3.event,
-                            point: min,
-                            series: data[min._s_i],
-                            seriesIndex: min._s_i,
-                            value: min._y
-                        })
-                    })
-                    .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-                        this._dispatch.call("tooltipHide", this);
-                    })
-                    .transition()
-                    .style("opacity", 0.5)
-
-            });
+        }
 
         let lines = lineGroup.selectAll('.line');
         lines = lines.data(data, d => d._key);
@@ -164,6 +167,84 @@ class Line extends Geometry {
         lines
             .transition()
             .attr("d", d => line(d.data));
+
+
+        element.selectAll(".domain-selector").remove();
+        if (this.scaleX().isDiscrete()) {
+            const selectors = element
+                .selectAll(".domain-selector")
+                .data(x.domain());
+
+            selectors.enter()
+                     .append("g")
+                     .attr("class", "domain-selector")
+                     .each((d, i, nodes) => {
+                         const selector = d3.select(nodes[i]);
+                         selector.append("rect")
+                             .attr("x", d => x(d))
+                             .attr("y", y.range()[1])
+                             .attr("width", x.bandwidth() + "px")
+                             .attr("height", Math.abs(y.range()[0] - y.range()[1]))
+                             .style("fill", d3.color("#487329"))
+                             .style("opacity", 0);
+
+                         selector.on("mouseenter", d => {
+                                 const rect = selector.select("rect");
+                                 rect.interrupt("selector:highlight")
+                                     .transition("selector:highlight")
+                                     .duration(500)
+                                     .style("opacity", 0.2);
+
+                                 var inSelection = data
+                                     .map(line => {
+                                         return line.data.filter(p => {
+                                             return equals(p._x, d);
+                                         })
+                                     })
+                                     .flat();
+
+                                 if (inSelection.length) {
+                                     selector
+                                         .selectAll(".line-highlight")
+                                         .data(inSelection)
+                                         .enter()
+                                         .append("circle")
+                                             .attr("class", "line-highlight")
+                                             .attr("cx", d => x(d._x) + x.bandwidth() / 2)
+                                             .attr("cy", d => y(d._y))
+                                             .attr("r", 1)
+                                             .style("cursor", "pointer")
+                                             .style("opacity", 0)
+                                             .style("fill", d => this.getD3Colour(d))
+                                         .on("click auxclick", d => {
+                                             this._dispatch.call("elementClick", this, {
+                                                 e: d3.event,
+                                                 point: d,
+                                                 value: d._y
+                                             })
+                                         })
+                                         .transition()
+                                             .delay(300)
+                                             .attr("r", 10)
+                                             .style("opacity", 0.9);
+                                 }
+
+                             })
+                             .on("mouseleave", d => {
+                                 const rect = selector.select("rect");
+                                 rect.interrupt("selector:highlight")
+                                     .transition()
+                                     .style("opacity", 0);
+
+                                 selector.selectAll(".line-highlight")
+                                     .transition()
+                                     .style("opacity", 0)
+                                     .attr("r", 1)
+                                     .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+                             });
+                     })
+
+        }
     }
 
 

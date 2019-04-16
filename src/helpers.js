@@ -57,3 +57,11 @@ export function labelIsZero(label) {
     label = "" + label;
     return label === "0" || label === "0%" || label === "0.0%"
 }
+
+export function equals(lhs, rhs) {
+    if (lhs instanceof Date && rhs instanceof Date) {
+        return lhs.getTime() === rhs.getTime();
+    }
+
+    return lhs === rhs;
+}

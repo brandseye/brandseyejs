@@ -25,6 +25,10 @@ class Scale {
         this.setCount = (d, v) => d._y = v;
     }
 
+    transform(val) {
+        return val;
+    }
+
     setCountGetter(y) {
         this.getCount = y;
         return this;
@@ -34,6 +38,11 @@ class Scale {
         this.setCount = y;
         return this;
     }
+
+    isShowGrid() { return true };
+
+    isContinuous() { return !this.isDiscrete() };
+    isDiscrete() { throw new Error("Not implemented") };
 }
 
 
@@ -51,6 +60,7 @@ class ScaleTime extends Scale {
     }
 
     isShowGrid() { return false };
+    isDiscrete() { return true };
 }
 
 class ScaleIdentity extends Scale  {
@@ -65,6 +75,7 @@ class ScaleIdentity extends Scale  {
     }
 
     isShowGrid() { return true };
+    isDiscrete() { return false };
 }
 
 class ScaleDiscrete extends Scale  {
@@ -79,6 +90,7 @@ class ScaleDiscrete extends Scale  {
     }
 
     isShowGrid() { return false };
+    isDiscrete() { return true };
 }
 
 
