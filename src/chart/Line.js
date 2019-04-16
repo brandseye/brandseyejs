@@ -188,6 +188,9 @@ class Line extends Geometry {
                              .style("fill", d3.color("#487329"))
                              .style("opacity", 0);
 
+                         const STANDARD_OPACITY = 0.7;
+                         const RADIUS = 10;
+
                          selector.on("mouseenter", d => {
                                  const rect = selector.select("rect");
                                  rect.interrupt("selector:highlight")
@@ -219,15 +222,35 @@ class Line extends Geometry {
                                          .on("click auxclick", d => {
                                              this._dispatch.call("elementClick", this, {
                                                  e: d3.event,
-                                                 point: d,
-                                                 value: d._y
+                                                 point: d
                                              })
+                                         })
+                                         .on("mouseover", (d, i, nodes) => {
+                                             this._dispatch.call("tooltipShow", this, {
+                                                 e: d3.event,
+                                                 point: d
+                                             });
+
+                                             d3.select(nodes[i])
+                                               .transition()
+                                               .style("opacity", 1)
+                                               .attr("r", 15);
+                                         })
+                                         .on("mouseout", (d, i, nodes) => {
+                                             d3.select(nodes[i])
+                                               .transition()
+                                               .style("opacity", STANDARD_OPACITY)
+                                               .attr("r", RADIUS);
                                          })
                                          .transition()
                                              .delay(300)
-                                             .attr("r", 10)
-                                             .style("opacity", 0.9);
+                                             .attr("r", RADIUS)
+                                             .style("opacity", STANDARD_OPACITY);
+
+
                                  }
+
+
 
                              })
                              .on("mouseleave", d => {
