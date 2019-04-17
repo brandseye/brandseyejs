@@ -213,11 +213,11 @@ class Line extends Geometry {
                                      .flat();
 
                                  if (inSelection.length) {
-                                     this._dispatch.call("tooltipShow", this, {
-                                         e: d3.event,
-                                         point: inSelection[0],
-                                         points: inSelection
-                                     });
+                                     // this._dispatch.call("tooltipShow", this, {
+                                     //     e: d3.event,
+                                     //     point: inSelection[0],
+                                     //     points: inSelection
+                                     // });
 
                                      selector
                                          .selectAll(".line-highlight")
