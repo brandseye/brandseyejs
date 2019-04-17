@@ -149,18 +149,23 @@ class Line extends Geometry {
                        .x(d => x(d._x) + x.bandwidth() / 2)
                        .y(d => y(d._y));
 
+        const determineStroke = d => d.data.length <= 1 ? 20 : 2;
         lines
             .enter()
+            .each((d, i, nodes) => {
+                console.log("d is", d);
+            })
             .append("path")
                 .attr("fill", "none")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
-                .attr("stroke-width", 2)
+                .style("stroke-width", determineStroke) // Want to make a circle if we have a line with only a single data point
                 .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
                 .style("opacity", 0)
             .merge(lines)
                 .attr("class", d => "line series series-" + toColourKey(d.data[0]._colour))
                 .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
+                .style("stroke-width", determineStroke)
             .transition()
                 .style("opacity", 1)
                 .attr("d", d => line(d.data));
