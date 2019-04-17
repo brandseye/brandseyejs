@@ -109,6 +109,7 @@ class Line extends Geometry {
                         .attr("r", 10)
                         .attr("fill", this.getD3Colour(d))
                         .style("opacity", 0.1)
+                        .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                         .on("click auxclick", (d, i, nodes) => {
                             this._dispatch.call("elementClick", this, {
                                 e: d3.event,
@@ -225,6 +226,7 @@ class Line extends Geometry {
                                              .style("cursor", "pointer")
                                              .style("opacity", 0)
                                              .style("fill", d => this.getD3Colour(d))
+                                         .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                                          .on("click auxclick", d => {
                                              this._dispatch.call("elementClick", this, {
                                                  e: d3.event,
