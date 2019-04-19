@@ -87,25 +87,37 @@ class Point extends Geometry {
                           .style("fill", d => this.getD3Colour(d))
                           .style("stroke", determineStroke)
                           .style("cursor", "pointer")
+                          .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                          .on("mouseover", (d, i, nodes) => {
+                              this._dispatch.call("tooltipShow", this, {
+                                  e: d3.event,
+                                  point: d
+                              });
+
+                              const point = d3.select(nodes[i]);
+
+                              point.interrupt("point:grow")
+                                  .transition("point:grow")
+                                  .duration(250)
+                                  .style("opacity", 1)
+                                  .attr("r", 10);
+                          })
+                          .on("mouseout", (d, i, nodes) => {
+                              const point = d3.select(nodes[i]);
+
+                              point.interrupt("point:grow")
+                                  .transition("point:grow")
+                                  .duration(250)
+                                  .style("opacity", 0.5)
+                                  .attr("r", 5);
+                          })
+                          .on("click auxclick", d => {
+                              this._dispatch.call("elementClick", this, {
+                                  e: d3.event,
+                                  point: d
+                              })
+                          })
                       .merge(points)
-                      .on("mouseover", (d, i, nodes) => {
-                          const point = d3.select(nodes[i]);
-
-                          point.interrupt("point:grow")
-                              .transition("point:grow")
-                              .duration(250)
-                              .style("opacity", 1)
-                              .attr("r", 10);
-                      })
-                      .on("mouseout", (d, i, nodes) => {
-                          const point = d3.select(nodes[i]);
-
-                          point.interrupt("point:grow")
-                              .transition("point:grow")
-                              .duration(250)
-                              .style("opacity", 0.5)
-                              .attr("r", 5);
-                      })
                       .transition("point:grow")
                       .duration(800)
                       .delay(points.size() > 0 ? 200 : 0)
