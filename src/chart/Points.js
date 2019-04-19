@@ -31,12 +31,17 @@ class Point extends Geometry {
         const data = this.prepareData();
         const width = this._width,
               height = this._height;
+        const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         element.classed("points", true);
+        console.log("point data is", data);
 
 
-        const x = this.getD3XScale(data, width);
-        const y = this.getD3YScale(data, height);
+
+        const x = this.getD3XScale(allData, width);
+        const y = this.getD3YScale(allData, height);
+
+        console.log("x domain is", x.domain());
 
         const colours = d3.scaleOrdinal(this.colourScale())
                           .domain(this.getColourDomain(data));
@@ -67,28 +72,27 @@ class Point extends Geometry {
 
     getD3XScale(data, width) {
         width = width || this.width();
-        data = data || this.prepareData();
-        // return d3.scaleLinear()
-        //          .rangeRound([0, width])
-        //          .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
-        //              d3.max(data, d => d3.max(d.data, d => d._x))]);
+        data = data || this.prepareData()
+            .map(d => d.data)
+            .reduce((acc, val) => acc.concat(val));
+
+        console.log("prepare data data", data);
 
         return d3.scaleBand()
-                 .rangeRound([0, width])
-                 .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x))),
-                     d3.max(data, d => d3.max(d.data, d => d._x))]);
-
+            .rangeRound([0, width])
+            .domain(data.map(d => d._x));
     }
 
     getD3YScale(data, height) {
-        data = data || this.prepareData();
+        data = data || this.prepareData()
+            .map(d => d.data)
+            .reduce((acc, val) => acc.concat(val));
         height = height || this.height();
 
         return d3.scaleLinear()
-                 .rangeRound([height, 0])
-                 .nice()
-                 .domain([Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y))),
-                     d3.max(data, d => d3.max(d.data, d => d._y))]);
+            .range([height, 0])
+            .nice(5)
+            .domain([Math.min(0, d3.min(data, d => d._y)), d3.max(data, d => d._y)]);
 
     }
 }
