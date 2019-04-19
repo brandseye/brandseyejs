@@ -43,30 +43,69 @@ class Point extends Geometry {
 
         console.log("x domain is", x.domain());
 
-        const colours = d3.scaleOrdinal(this.colourScale())
-                          .domain(this.getColourDomain(data));
-
         let groups = element.selectAll('.point-groups');
-        groups = groups.data(data);
+        groups = groups.data(data, d => d._key);
 
         groups.exit().remove();
 
         groups.enter()
               .append("g")
               .attr("class", "point-groups")
-              .merge(groups.selectAll(".point-groups"))
+              .merge(groups)
               .each((d, i, nodes) => {
+                  console.log("Adding ze points");
                   const group = d3.select(nodes[i]);
                   const points = group.selectAll(".point")
-                      .data(d.data);
+                      .data(d.data, d => d._x + ":" + d._y);
+
+                  points.exit()
+                      .transition()
+                      .style("opacity", 0)
+                      .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+
+                  points.interrupt("point:move")
+                      .transition("point:move")
+                      .duration(500)
+                          .attr("cx", d => x(d._x))
+                          .attr("cy", d => y(d._y))
+                          .style("fill", d => this.getD3Colour(d));
 
                   points.enter()
                       .append("circle")
-                          .style("opacity", 0.4)
+                          .attr("class", "point")
+                          .style("opacity", 0)
                           .attr("cx", d => x(d._x))
                           .attr("cy", d => y(d._y))
-                          .attr("fill", d => colours(d._colour))
-                          .attr("r", 5);
+                          .attr("r", 1)
+                          .style("fill", d => this.getD3Colour(d))
+                          .style("cursor", "pointer")
+                      .merge(points)
+                      .on("mouseover", (d, i, nodes) => {
+                          const point = d3.select(nodes[i]);
+
+                          point.interrupt("point:grow")
+                              .transition("point:grow")
+                              .duration(250)
+                              .style("opacity", 1)
+                              .attr("r", 10);
+                      })
+                      .on("mouseout", (d, i, nodes) => {
+                          const point = d3.select(nodes[i]);
+
+                          point.interrupt("point:grow")
+                              .transition("point:grow")
+                              .duration(250)
+                              .style("opacity", 0.5)
+                              .attr("r", 5);
+                      })
+                      .transition("point:grow")
+                      .duration(500)
+                        .style("opacity", 0.5)
+                        .attr("r", 5);
+
+
+
+
               });
     }
 

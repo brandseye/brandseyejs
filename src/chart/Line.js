@@ -152,9 +152,6 @@ class Line extends Geometry {
         const determineStroke = d => d.data.length <= 1 ? 20 : 2;
         lines
             .enter()
-            .each((d, i, nodes) => {
-                console.log("d is", d);
-            })
             .append("path")
                 .attr("fill", "none")
                 .attr("stroke-linejoin", "round")
