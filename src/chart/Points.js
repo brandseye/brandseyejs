@@ -19,6 +19,7 @@
 
 import { Geometry } from './Geometry';
 import { colours } from "../Colours";
+import { toColourKey } from "../Legend";
 
 
 class Point extends Geometry {
@@ -35,14 +36,9 @@ class Point extends Geometry {
         const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         element.classed("points", true);
-        console.log("point data is", data);
-
-
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(allData, height);
-
-        console.log("x domain is", x.domain());
 
         let groups = element.selectAll('.point-groups');
         groups = groups.data(data, d => d._key);
@@ -51,10 +47,9 @@ class Point extends Geometry {
 
         groups.enter()
               .append("g")
-              .attr("class", "point-groups")
+              .attr("class", d => "point-groups series series-" + toColourKey(d.data[0]._colour))
               .merge(groups)
               .each((d, i, nodes) => {
-                  console.log("Adding ze points");
                   const group = d3.select(nodes[i]);
                   const points = group.selectAll(".point")
                       .data(d.data, d => d._x + ":" + d._y);
@@ -136,8 +131,6 @@ class Point extends Geometry {
         data = data || this.prepareData()
             .map(d => d.data)
             .reduce((acc, val) => acc.concat(val));
-
-        console.log("prepare data data", data);
 
         return d3.scaleBand()
             .rangeRound([0, width])
