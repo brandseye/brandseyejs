@@ -18,6 +18,7 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { Geometry } from './Geometry';
+import { colours } from "../Colours";
 
 
 class Point extends Geometry {
@@ -59,15 +60,21 @@ class Point extends Geometry {
                       .data(d.data, d => d._x + ":" + d._y);
 
                   points.exit()
+                      .interrupt()
                       .transition()
                       .style("opacity", 0)
+                      .attr("cy", y(0))
                       .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+
+                  const transparentColour = d3.hcl(colours.eighteen.darkGrey);
+                  transparentColour.opacity = 0.8;
+                  const determineStroke = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
 
                   points.interrupt("point:move")
                       .transition("point:move")
                       .duration(500)
                           .attr("cx", d => x(d._x))
-                          .attr("cy", d => y(d._y))
+                          .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
 
                   points.enter()
@@ -75,9 +82,10 @@ class Point extends Geometry {
                           .attr("class", "point")
                           .style("opacity", 0)
                           .attr("cx", d => x(d._x))
-                          .attr("cy", d => y(d._y))
+                          .attr("cy", y(0))
                           .attr("r", 1)
                           .style("fill", d => this.getD3Colour(d))
+                          .style("stroke", determineStroke)
                           .style("cursor", "pointer")
                       .merge(points)
                       .on("mouseover", (d, i, nodes) => {
@@ -99,7 +107,9 @@ class Point extends Geometry {
                               .attr("r", 5);
                       })
                       .transition("point:grow")
-                      .duration(500)
+                      .duration(800)
+                      .delay(points.size() > 0 ? 200 : 0)
+                        .attr("cy", d => y(d._y))
                         .style("opacity", 0.5)
                         .attr("r", 5);
 
