@@ -20,6 +20,7 @@
 import { Geometry } from './Geometry';
 import { toColourKey } from "../Legend";
 import { equals } from "../helpers";
+import {colours} from "../Colours";
 
 
 class Line extends Geometry {
@@ -157,14 +158,17 @@ class Line extends Geometry {
 
 
 
-        const determineStroke = d => d.data.length <= 1 ? 20 : 2;
+        const determineStrokeWidth = d => d.data.length <= 1 ? 20 : 2;
+        const transparentColour = d3.hcl(colours.eighteen.darkGrey);
+        transparentColour.opacity = 0.8;
+        const determineStrokeColour = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
 
         lines.interrupt("line:resize")
             .transition("line:resize")
             .duration(500)
             .attr("d", d => lineGeom(d.data))
             .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
-            .style("stroke-width", determineStroke);
+            .style("stroke-width", determineStrokeWidth);
 
         lines
             .enter()
@@ -173,7 +177,7 @@ class Line extends Geometry {
                 .attr("fill", "none")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
-                .style("stroke-width", determineStroke) // Want to make a circle if we have a line with only a single data point
+                .style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
                 .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
                 .style("opacity", 0)
                 .attr("d", d => flatGeom(d.data))
@@ -241,6 +245,7 @@ class Line extends Geometry {
                                              .style("cursor", "pointer")
                                              .style("opacity", 0)
                                              .style("fill", d => this.getD3Colour(d))
+                                             .style("stroke", determineStrokeColour)
                                          .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                                          .on("click auxclick", d => {
                                              this._dispatch.call("elementClick", this, {
