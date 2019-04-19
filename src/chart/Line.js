@@ -137,39 +137,52 @@ class Line extends Geometry {
                 });
         }
 
+        const lineGeom = d3.line()
+            .x(d => x(d._x) + x.bandwidth() / 2)
+            .y(d => y(d._y));
+
+        const flatGeom = d3.line()
+            .x(d => x(d._x) + x.bandwidth() / 2)
+            .y(y(0));
+
         let lines = lineGroup.selectAll('.line');
         lines = lines.data(data, d => d._key);
 
         lines.exit()
-             .transition()
-             .style("opacity", 0)
-             .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+            .interrupt()
+            .transition()
+            .attr("d", d => flatGeom(d.data))
+            .style("opacity", 0)
+            .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
 
-        const line = d3.line()
-                       .x(d => x(d._x) + x.bandwidth() / 2)
-                       .y(d => y(d._y));
+
 
         const determineStroke = d => d.data.length <= 1 ? 20 : 2;
+
+        lines.interrupt("line:resize")
+            .transition("line:resize")
+            .duration(500)
+            .attr("d", d => lineGeom(d.data))
+            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
+            .style("stroke-width", determineStroke);
+
         lines
             .enter()
             .append("path")
+                .attr("class", d => "line series series-" + toColourKey(d.data[0]._colour))
                 .attr("fill", "none")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
                 .style("stroke-width", determineStroke) // Want to make a circle if we have a line with only a single data point
                 .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
                 .style("opacity", 0)
+                .attr("d", d => flatGeom(d.data))
             .merge(lines)
-                .attr("class", d => "line series series-" + toColourKey(d.data[0]._colour))
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
-                .style("stroke-width", determineStroke)
-            .transition()
+            .transition("line:introduction")
+            .duration(500)
+            .delay(100)
                 .style("opacity", 1)
-                .attr("d", d => line(d.data));
-
-        lines
-            .transition()
-            .attr("d", d => line(d.data));
+                .attr("d", d => lineGeom(d.data));
 
 
         element.selectAll(".domain-selector").remove();
