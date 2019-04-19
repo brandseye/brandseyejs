@@ -31,10 +31,10 @@ class Line extends Geometry {
 
     render() {
         const element = this._element;
-        const data = this.prepareData();
+        const data = this.prepareData(null, true);
         const width = this._width,
               height = this._height;
-        const allData = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
+        const allData = this.prepareData(null, false).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         element.classed("line-chart", true);
 
