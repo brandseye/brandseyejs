@@ -55,6 +55,11 @@ class Point extends Geometry {
                   const points = group.selectAll(".point")
                       .data(d.data, d => d._x + ":" + d._y);
 
+
+                  const isFirstRender = !group.property("renderedOnce");
+                  group.property("renderedOnce", true);
+                  console.log("first render", isFirstRender);
+
                   points.exit()
                       .interrupt()
                       .transition()
@@ -83,39 +88,39 @@ class Point extends Geometry {
                           .style("fill", d => this.getD3Colour(d))
                           .style("stroke", determineStroke)
                           .style("cursor", "pointer")
-                          .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                          .on("mouseover", (d, i, nodes) => {
-                              this._dispatch.call("tooltipShow", this, {
-                                  e: d3.event,
-                                  point: d
-                              });
-
-                              const point = d3.select(nodes[i]);
-
-                              point.interrupt("point:grow")
-                                  .transition("point:grow")
-                                  .duration(250)
-                                  .style("opacity", 1)
-                                  .style("fill", d => d3.hcl(this.getD3Colour(d)).darker())
-                                  .attr("r", d => sizeScale(d._size) + 5);
-                          })
-                          .on("mouseout", (d, i, nodes) => {
-                              const point = d3.select(nodes[i]);
-
-                              point.interrupt("point:grow")
-                                  .transition("point:grow")
-                                  .duration(250)
-                                  .style("opacity", 0.5)
-                                  .style("fill", d => this.getD3Colour(d))
-                                  .attr("r", d => sizeScale(d._size));
-                          })
-                          .on("click auxclick", d => {
-                              this._dispatch.call("elementClick", this, {
-                                  e: d3.event,
-                                  point: d
-                              })
-                          })
                       .merge(points)
+                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                      .on("mouseover", (d, i, nodes) => {
+                          this._dispatch.call("tooltipShow", this, {
+                              e: d3.event,
+                              point: d
+                          });
+
+                          const point = d3.select(nodes[i]);
+
+                          point.interrupt("point:grow")
+                              .transition("point:grow")
+                              .duration(250)
+                              .style("opacity", 1)
+                              .style("fill", d => d3.hcl(this.getD3Colour(d)).darker())
+                              .attr("r", d => sizeScale(d._size) + 5);
+                      })
+                      .on("mouseout", (d, i, nodes) => {
+                          const point = d3.select(nodes[i]);
+
+                          point.interrupt("point:grow")
+                              .transition("point:grow")
+                              .duration(250)
+                              .style("opacity", 0.5)
+                              .style("fill", d => this.getD3Colour(d))
+                              .attr("r", d => sizeScale(d._size));
+                      })
+                      .on("click auxclick", d => {
+                          this._dispatch.call("elementClick", this, {
+                              e: d3.event,
+                              point: d
+                          })
+                      })
                       .transition("point:grow")
                       .duration(800)
                       .delay(points.size() > 0 ? 200 : 0)
