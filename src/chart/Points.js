@@ -39,6 +39,7 @@ class Point extends Geometry {
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(allData, height);
+        const sizeScale = this.getSizeScale(allData);
 
         let groups = element.selectAll('.point-groups');
         groups = groups.data(data, d => d._key);
@@ -95,7 +96,8 @@ class Point extends Geometry {
                                   .transition("point:grow")
                                   .duration(250)
                                   .style("opacity", 1)
-                                  .attr("r", 10);
+                                  .style("fill", d => d3.hcl(this.getD3Colour(d)).darker())
+                                  .attr("r", d => sizeScale(d._size) + 5);
                           })
                           .on("mouseout", (d, i, nodes) => {
                               const point = d3.select(nodes[i]);
@@ -104,7 +106,8 @@ class Point extends Geometry {
                                   .transition("point:grow")
                                   .duration(250)
                                   .style("opacity", 0.5)
-                                  .attr("r", 5);
+                                  .style("fill", d => this.getD3Colour(d))
+                                  .attr("r", d => sizeScale(d._size));
                           })
                           .on("click auxclick", d => {
                               this._dispatch.call("elementClick", this, {
@@ -118,7 +121,7 @@ class Point extends Geometry {
                       .delay(points.size() > 0 ? 200 : 0)
                         .attr("cy", d => y(d._y))
                         .style("opacity", 0.5)
-                        .attr("r", 5);
+                        .attr("r", d => sizeScale(d._size));
 
 
 
@@ -148,6 +151,21 @@ class Point extends Geometry {
             .nice(5)
             .domain([Math.min(0, d3.min(data, d => d._y)), d3.max(data, d => d._y)]);
 
+    }
+
+    getSizeScale(data) {
+        data = data || this.prepareData()
+            .map(d => d.data)
+            .reduce((acc, val) => acc.concat(val));
+
+        var min = d3.min(data, d => d._size);
+        var max = d3.max(data, d => d._size);
+
+        if (min === max) return () => 5;
+
+        return d3.scaleLinear()
+            .range([5, 20])
+            .domain([Math.min(0, min), Math.max(max, 0)]);
     }
 }
 

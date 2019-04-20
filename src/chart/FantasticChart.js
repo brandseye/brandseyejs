@@ -135,8 +135,11 @@ class FantasticChart {
         return this;
     }
 
-    size() {
-        console.warn("=> size: not implemented")
+    size(getter) {
+        if (arguments.length === 0) return this._size;
+        if (typeof getter !== 'function') throw new Error("size getter must be a function");
+        this._size = getter;
+        return this;
     }
 
     formatX(formatter) {

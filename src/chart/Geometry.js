@@ -388,14 +388,12 @@ export class Geometry {
 
 export function getKey(d) {
     // TODO we probably need to encode this better so we can split on the :
-    return "" + d._size + ":" + d._colour;
+    return "" + d._colour;
 }
 
 export function fromKey(key) {
-    const split = key.split(":");
     return {
-        _size: split[0],
-        _colour: split[1],
+        _colour: key,
         _key: key
     }
 }
