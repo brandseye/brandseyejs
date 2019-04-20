@@ -53,19 +53,11 @@ class Point extends Geometry {
               .each((d, i, nodes) => {
                   const group = d3.select(nodes[i]);
                   const points = group.selectAll(".point")
-                      .data(d.data, d => d._x + ":" + d._y);
-
+                      .data(d.data, d => d._x);
 
                   const isFirstRender = !group.property("renderedOnce");
                   group.property("renderedOnce", true);
                   console.log("first render", isFirstRender);
-
-                  points.exit()
-                      .interrupt()
-                      .transition()
-                      .style("opacity", 0)
-                      .attr("cy", y(0))
-                      .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
 
                   const transparentColour = d3.hcl(colours.eighteen.darkGrey);
                   transparentColour.opacity = 0.8;
@@ -74,6 +66,7 @@ class Point extends Geometry {
                   points.interrupt("point:move")
                       .transition("point:move")
                       .duration(500)
+                          .attr("cy", d => y(d._y))
                           .attr("cx", d => x(d._x))
                           .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
@@ -82,8 +75,8 @@ class Point extends Geometry {
                       .append("circle")
                           .attr("class", "point")
                           .style("opacity", 0)
-                          .attr("cx", d => x(d._x))
-                          .attr("cy", y(0))
+                          .attr("cx", isFirstRender ? (x.range()[0] + x.range()[1]) / 2 : d => x(d._x))
+                          .attr("cy", isFirstRender ? (y.range()[0] + y.range()[1]) / 2 : y(0))
                           .attr("r", 1)
                           .style("fill", d => this.getD3Colour(d))
                           .style("stroke", determineStroke)
@@ -123,12 +116,19 @@ class Point extends Geometry {
                       })
                       .transition("point:grow")
                       .duration(800)
-                      .delay(points.size() > 0 ? 200 : 0)
+                      .delay(isFirstRender ? 0 : 500)
                         .attr("cy", d => y(d._y))
+                        .attr("cx", d => x(d._x))
                         .style("opacity", 0.5)
                         .attr("r", d => sizeScale(d._size));
 
-
+                  points.exit()
+                      .interrupt()
+                      .transition()
+                      .duration(800)
+                      .style("opacity", 0)
+                      .attr("cy", y(0))
+                      .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
 
 
               });
