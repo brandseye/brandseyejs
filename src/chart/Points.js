@@ -67,7 +67,7 @@ class Point extends Geometry {
                       .transition("point:move")
                       .duration(500)
                           .attr("cy", d => y(d._y))
-                          .attr("cx", d => x(d._x))
+                          .attr("cx", d => x(d._x) + x.bandwidth() / 2)
                           .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
 
@@ -75,8 +75,8 @@ class Point extends Geometry {
                       .append("circle")
                           .attr("class", "point")
                           .style("opacity", 0)
-                          .attr("cx", isFirstRender ? (x.range()[0] + x.range()[1]) / 2 : d => x(d._x))
-                          .attr("cy", isFirstRender ? (y.range()[0] + y.range()[1]) / 2 : y(0))
+                          .attr("cx", d => x(d._x) + x.bandwidth() / 2)
+                          .attr("cy", y(0))
                           .attr("r", 1)
                           .style("fill", d => this.getD3Colour(d))
                           .style("stroke", determineStroke)
@@ -118,7 +118,6 @@ class Point extends Geometry {
                       .duration(800)
                       .delay(isFirstRender ? 0 : 500)
                         .attr("cy", d => y(d._y))
-                        .attr("cx", d => x(d._x))
                         .style("opacity", 0.5)
                         .attr("r", d => sizeScale(d._size));
 
