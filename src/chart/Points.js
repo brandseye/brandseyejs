@@ -68,6 +68,7 @@ class Point extends Geometry {
                       .duration(500)
                           .attr("cy", d => y(d._y))
                           .attr("cx", d => x(d._x) + x.bandwidth() / 2)
+                          .attr("r", d => sizeScale(d._size))
                           .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
 
@@ -167,8 +168,18 @@ class Point extends Geometry {
 
         if (min === max) return () => 5;
 
+        let rangeMin = 5;
+        let rangeMax = 20;
+        const size = Math.min(this.width(), this.height());
+        if (size < 200) {
+            rangeMax = Math.max(8, size * 0.05);
+            rangeMin = Math.max(2, size * 0.025);
+        }
+
+        console.log(`range min is ${rangeMin} and max is ${rangeMax}`)
+
         return d3.scaleLinear()
-            .range([5, 20])
+            .range([rangeMin, rangeMax])
             .domain([Math.min(0, min), Math.max(max, 0)]);
     }
 }
