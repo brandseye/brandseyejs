@@ -46,6 +46,16 @@ class Point extends Geometry {
 
         groups.exit().remove();
 
+        const transparentColour = d3.hcl(colours.eighteen.darkGrey);
+        transparentColour.opacity = 0.8;
+        const determineStroke = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
+
+        // Try to choose opacity of the points based on how much data there is,
+        // and how much space we have to display them. When they are overlapping (this is
+        // a heuristic to determine that), greater opacity helps to see clustering and distribution.
+        const diagonal = Math.sqrt(this.width() * this.width() + this.height() * this.height());
+        const defaultOpacity = Math.max(Math.min(0.9, diagonal / allData.length / 15), 0.5);
+
         groups.enter()
               .append("g")
               .attr("class", d => "point-groups series series-" + toColourKey(d.data[0]._colour))
@@ -57,11 +67,6 @@ class Point extends Geometry {
 
                   const isFirstRender = !group.property("renderedOnce");
                   group.property("renderedOnce", true);
-                  console.log("first render", isFirstRender);
-
-                  const transparentColour = d3.hcl(colours.eighteen.darkGrey);
-                  transparentColour.opacity = 0.8;
-                  const determineStroke = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
 
                   points.interrupt("point:move")
                       .transition("point:move")
@@ -105,7 +110,7 @@ class Point extends Geometry {
                           point.interrupt("point:grow")
                               .transition("point:grow")
                               .duration(250)
-                              .style("opacity", 0.5)
+                              .style("opacity", defaultOpacity)
                               .style("fill", d => this.getD3Colour(d))
                               .attr("r", d => sizeScale(d._size));
                       })
@@ -119,7 +124,7 @@ class Point extends Geometry {
                       .duration(800)
                       .delay(isFirstRender ? 0 : 500)
                         .attr("cy", d => y(d._y))
-                        .style("opacity", 0.5)
+                        .style("opacity", defaultOpacity)
                         .attr("r", d => sizeScale(d._size));
 
                   points.exit()
@@ -163,8 +168,8 @@ class Point extends Geometry {
             .map(d => d.data)
             .reduce((acc, val) => acc.concat(val));
 
-        var min = d3.min(data, d => d._size);
-        var max = d3.max(data, d => d._size);
+        const min = d3.min(data, d => d._size);
+        const max = d3.max(data, d => d._size);
 
         if (min === max) return () => 5;
 
