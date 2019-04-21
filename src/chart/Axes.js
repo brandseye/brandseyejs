@@ -23,7 +23,7 @@ const AXIS_ANIMATION_DURATION = 1000;
 const AXIS_DELAY = 250;
 
 
-export function xaxis(selection, height, width, axisObject) {
+export function xaxis(selection, height, width, axisObject, importance) {
     selection.select(".x-axis").remove();
     let axis = selection.append("g")
                         .attr("class", "x-axis")
@@ -34,8 +34,11 @@ export function xaxis(selection, height, width, axisObject) {
     axis.select(".domain").remove();
 
     let max = 0;
+    const boldText = colours.eighteen.darkGrey;
+    const regularText = d3.hcl(boldText).brighter();
+
     axis.selectAll("text")
-        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter())
+        .style("fill", (d, i) => importance(d, i) ? boldText : regularText)
         .nodes()
         .forEach(text => max = Math.max(max, text.getBBox().width));
 
@@ -49,6 +52,7 @@ export function xaxis(selection, height, width, axisObject) {
         axis.selectAll("text")
             .style('text-anchor', 'end')
             .style("font-size", fontSize + "px")
+            .style("opacity", fontSize >= 10 ? 1 : ((d, i) => importance(d, i) ? 1 : 0))
             .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
     }
 

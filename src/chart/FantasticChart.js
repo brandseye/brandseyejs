@@ -54,6 +54,7 @@ class FantasticChart {
         this._modify_colour = c => c;
         this._x_formatter = d => "" + d;
         this._y_formatter = d => d;
+        this._x_importance = () => false;
         this._dispatch = d3.dispatch('elementClick', 'tooltipShow', 'tooltipHide');
         this._show_labels = true;
         this._show_legend = true;
@@ -146,6 +147,13 @@ class FantasticChart {
         if (arguments.length === 0) return this._x_formatter;
         if (typeof formatter !== 'function') throw new Error("formatter must be a function");
         this._x_formatter = formatter;
+        return this;
+    }
+
+    importanceX(importance) {
+        if (arguments.length === 0) return this._x_importance;
+        if (typeof importance !== 'function') throw new Error("importance must be a function");
+        this._x_importance = importance;
         return this;
     }
 
@@ -377,7 +385,8 @@ class FantasticChart {
 
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)));
+                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)),
+                this.importanceX());
 
             axisHeight = Math.max(height, axisHeight);
         });
@@ -461,7 +470,8 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)))
+                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)),
+                    this.importanceX())
             });
 
         }
