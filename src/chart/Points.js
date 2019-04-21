@@ -34,6 +34,7 @@ class Point extends Geometry {
         const width = this._width,
               height = this._height;
         const allData = this.prepareData(null, false).map(d => d.data).reduce((acc, val) => acc.concat(val));
+        const totalElements = data.map(d => d.data.length).reduce( (acc, val) => acc + val);
 
         element.classed("points", true);
 
@@ -54,7 +55,7 @@ class Point extends Geometry {
         // and how much space we have to display them. When they are overlapping (this is
         // a heuristic to determine that), greater opacity helps to see clustering and distribution.
         const diagonal = Math.sqrt(this.width() * this.width() + this.height() * this.height());
-        const defaultOpacity = Math.max(Math.min(0.9, diagonal / allData.length / 15), 0.5);
+        const defaultOpacity = Math.max(Math.min(0.9, diagonal / totalElements / 15), 0.5);
 
         groups.enter()
               .append("g")
