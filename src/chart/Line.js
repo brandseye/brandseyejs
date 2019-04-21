@@ -69,6 +69,7 @@ class Line extends Geometry {
 
         if (this.scaleX().isContinuous()) {
             lineGroup
+            lineGroup
                 .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
                     const mouse = d3.mouse(nodes[i]);
 
@@ -140,11 +141,13 @@ class Line extends Geometry {
 
         const lineGeom = d3.line()
             .x(d => x(d._x) + x.bandwidth() / 2)
-            .y(d => y(d._y));
+            .y(d => y(d._y))
+            .curve(d3.curveCatmullRom);
 
         const flatGeom = d3.line()
             .x(d => x(d._x) + x.bandwidth() / 2)
-            .y(y(0));
+            .y(y(0))
+            .curve(d3.curveCatmullRom);
 
         let lines = lineGroup.selectAll('.line');
         lines = lines.data(data, d => d._key);
