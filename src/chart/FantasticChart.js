@@ -376,6 +376,7 @@ class FantasticChart {
         const axisSizeArea = svg.append("g")
             .attr("transform", "translate(-1000, -1000)");
 
+        const xAxisRestriction = this._height <= 160 ? 12 : 25;
         let axisHeight = 0;
         facets.forEach(facet => {
             const xScale = geometries[0]
@@ -385,7 +386,7 @@ class FantasticChart {
 
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)),
+                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
                 this.importanceX());
 
             axisHeight = Math.max(height, axisHeight);
@@ -470,7 +471,7 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), 25)),
+                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
                     this.importanceX())
             });
 
