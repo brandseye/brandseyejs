@@ -325,10 +325,10 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length
+        const axisWidth = geometries.length && this._height >= 160
             ? maxBounding(svg, geometries[0].yValues()
                                             .map(geometries[0].formatY())
-                                            .map(d => restrictLength(d, yAxisRestriction))).width + 20
+                                            .map(d => restrictLength(d, yAxisRestriction))).width + 15
             : 0;
 
         //-----------------------------------------------
@@ -376,7 +376,7 @@ class FantasticChart {
         const axisSizeArea = svg.append("g")
             .attr("transform", "translate(-1000, -1000)");
 
-        const xAxisRestriction = this._height <= 160 ? 12 : 25;
+        const xAxisRestriction = Math.min(25, Math.max(this._height * 0.07, 12));
         let axisHeight = 0;
         facets.forEach(facet => {
             const xScale = geometries[0]
