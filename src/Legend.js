@@ -123,20 +123,27 @@ export function getColour(d, individualColours, colourScale) {
  * @param size
  * @returns {{colours: Set, sizes: Set}}
  */
-export function buckets(data, colour, size) {
+export function buckets(data, colour, individualColour, size) {
     if (!data || !data.length) return { colours: new Set(), sizes: new Set()};
 
     const byColour = new Set(),
-          bySize = new Set();
+          bySize = new Set(),
+          bucketColour = {};
 
     data.forEach(d => {
-        byColour.add(colour(d));
+        const c = colour(d);
+        byColour.add(c);
         bySize.add(size(d));
+
+        if (individualColour && individualColour(d, -1) !== -1) {
+            bucketColour[c] = individualColour(d);
+        }
     });
 
     return {
         colours: byColour,
-        sizes: bySize
+        sizes: bySize,
+        bucketColour: bucketColour
     }
 }
 

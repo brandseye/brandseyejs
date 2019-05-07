@@ -313,7 +313,7 @@ class FantasticChart {
         //-----------------------------------------------
         // Setup initial data
 
-        const bs = buckets(this._data, this._colour, this._size);
+        const bs = buckets(this._data, this._colour, this._individual_colours, this._size);
         const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale())
                                                       .domain(Array.from(bs.colours));
 
@@ -335,7 +335,7 @@ class FantasticChart {
         // Draw the legend
         if (!this._show_legend) removeLegend(svg);
         const legendHeight = this._show_legend
-            ? renderLegend(svg, bs, (d) => this._legend_colours(d) || colourScale(d), this._width, this._height)
+            ? renderLegend(svg, bs, (d) => this._legend_colours(d) || bs.bucketColour[d] || colourScale(d), this._width, this._height)
             : 0;
 
         //-----------------------------------------------
