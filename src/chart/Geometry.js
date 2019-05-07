@@ -168,8 +168,7 @@ export class Geometry {
     }
 
     getD3Colour(d) {
-        const defaultColour = this.d3ColourScale()(d._colour);
-        return this.modifyColour()(this.individualColours()(d, defaultColour) || defaultColour);
+        return getColor(d, this.d3ColourScale(), this.individualColours(), this.modifyColour());
     }
 
     size(size) {
@@ -385,6 +384,11 @@ export class Geometry {
         return [...colours]
     }
 
+}
+
+export function getColor(d, d3ColourScale, individualColours, modifyColour) {
+        const defaultColour = d3ColourScale(d._colour);
+        return modifyColour(individualColours(d, defaultColour) || defaultColour);
 }
 
 export function getKey(d) {

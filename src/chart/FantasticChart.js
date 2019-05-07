@@ -334,7 +334,9 @@ class FantasticChart {
         //-----------------------------------------------
         // Draw the legend
         if (!this._show_legend) removeLegend(svg);
-        const legendHeight = this._show_legend ? renderLegend(svg, bs, (d) => this._legend_colours(d) || colourScale(d), this._width, this._height) : 0;
+        const legendHeight = this._show_legend
+            ? renderLegend(svg, bs, (d) => this._legend_colours(d) || colourScale(d), this._width, this._height)
+            : 0;
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
