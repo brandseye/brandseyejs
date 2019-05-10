@@ -74,7 +74,7 @@ class Point extends Geometry {
                       .duration(500)
                           .attr("cy", d => y(d._y))
                           .attr("cx", d => x(d._x) + x.bandwidth() / 2)
-                          .attr("r", d => sizeScale(d._size))
+                          .attr("r", d => sizeScale(Math.abs(d._size)))
                           .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
 
@@ -103,7 +103,7 @@ class Point extends Geometry {
                               .duration(250)
                               .style("opacity", 1)
                               .style("fill", d => d3.hcl(this.getD3Colour(d)).darker())
-                              .attr("r", d => sizeScale(d._size) + 5);
+                              .attr("r", d => sizeScale(Math.abs(d._size)) + 5);
                       })
                       .on("mouseout", (d, i, nodes) => {
                           const point = d3.select(nodes[i]);
@@ -113,7 +113,7 @@ class Point extends Geometry {
                               .duration(250)
                               .style("opacity", defaultOpacity)
                               .style("fill", d => this.getD3Colour(d))
-                              .attr("r", d => sizeScale(d._size));
+                              .attr("r", d => sizeScale(Math.abs(d._size)));
                       })
                       .on("click auxclick", d => {
                           this._dispatch.call("elementClick", this, {
@@ -126,7 +126,7 @@ class Point extends Geometry {
                       .delay(isFirstRender ? 0 : 500)
                         .attr("cy", d => y(d._y))
                         .style("opacity", defaultOpacity)
-                        .attr("r", d => sizeScale(d._size));
+                        .attr("r", d => sizeScale(Math.abs(d._size)));
 
                   points.exit()
                       .interrupt()
@@ -169,8 +169,8 @@ class Point extends Geometry {
             .map(d => d.data)
             .reduce((acc, val) => acc.concat(val));
 
-        const min = d3.min(data, d => d._size);
-        const max = d3.max(data, d => d._size);
+        const min = d3.min(data, d => Math.abs(d._size));
+        const max = d3.max(data, d => Math.abs(d._size));
 
         if (min === max) return () => 5;
 
@@ -181,8 +181,6 @@ class Point extends Geometry {
             rangeMax = Math.max(8, size * 0.05);
             rangeMin = Math.max(2, size * 0.025);
         }
-
-        console.log(`range min is ${rangeMin} and max is ${rangeMax}`)
 
         return d3.scaleLinear()
             .range([rangeMin, rangeMax])
