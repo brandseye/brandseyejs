@@ -170,7 +170,7 @@ class Line extends Geometry {
             .transition("line:resize")
             .duration(500)
             .attr("d", d => lineGeom(d.data))
-            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
+            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])))
             .style("stroke-width", determineStrokeWidth);
 
         lines
@@ -181,7 +181,7 @@ class Line extends Geometry {
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
                 .style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])).darker())
+                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])))
                 .style("opacity", 0)
                 .attr("d", d => flatGeom(d.data))
             .merge(lines)
