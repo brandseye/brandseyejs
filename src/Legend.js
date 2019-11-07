@@ -17,7 +17,7 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { maxBounding } from "./helpers";
+import { getBoundings } from "./helpers";
 import { colours as schema } from "./Colours";
 
 export function removeLegend(element) {
@@ -34,7 +34,7 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
     const colours = Array.from(buckets.colours);
     if (colours.length < min) return 0;
 
-    const maxWidth = maxBounding(element, colours).width;
+    const boundings = getBoundings(element, colours);
 
     const legend = element.append("g")
                           .attr("class", "legend");
@@ -70,7 +70,7 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
                        .text(d => d);
 
                 element.attr("transform", "translate(" + position + "," + position_height +")");
-                const positionDelta = maxWidth + 20; // element.node().getBBox().width + 10;
+                const positionDelta = boundings[d].width + 25;
                 position += positionDelta;
 
                 if (position >= width) {

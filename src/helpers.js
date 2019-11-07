@@ -26,30 +26,49 @@ export function maxBounding(selection, text, font, fontSize) {
     // font = font || "Open Sans, sans-serif";
     // fontSize = fontSize || "12";
 
+    const boundings = getBoundings(selection, text, font, fontSize);
+
     let width = 0;
     let height = 0;
-    selection.append("g")
-            .attr("class", "text-size")
-            .style("opacity", 0)
-            .attr("transform", "translate(-100, -100)")
-        .selectAll(".text-measurement")
-        .data(text)
-        .enter()
-        .append("text")
-        .text(d => d)
-        .each((d, i, nodes) => {
-            let node = nodes[i];
-            let bb = node.getBBox();
-            width = Math.max(width, bb.width);
-            height = Math.max(height, bb.height)
-        });
 
-    selection.select(".text-size").remove();
+    Object.values(boundings).forEach(bounding => {
+        if (bounding.width > width) width = bounding.width;
+        if (bounding.height > height) height = bounding.height;
+    });
+
     return {
         width: width,
         height: height
     }
 }
+
+export function getBoundings(selection, text, font, fontSize) {
+    // font = font || "Open Sans, sans-serif";
+    // fontSize = fontSize || "12";
+
+    const boundings = {};
+    selection.append("g")
+             .attr("class", "text-size")
+             .style("opacity", 0)
+             .attr("transform", "translate(-100, -100)")
+             .selectAll(".text-measurement")
+             .data(text)
+             .enter()
+             .append("text")
+             .text(d => d)
+             .each((d, i, nodes) => {
+                 const node = nodes[i];
+                 const bb = node.getBBox();
+                 boundings[d] = {
+                     width: bb.width,
+                     height: bb.height
+                 };
+             });
+
+    selection.select(".text-size").remove();
+    return boundings;
+}
+
 
 
 /** A test to whether a given data label is 0, or 0%. */
