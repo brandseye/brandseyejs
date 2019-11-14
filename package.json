@@ -1,5 +1,5 @@
 {
-  "name": "brandseye.js",
+  "name": "brandseyejs",
   "version": "2.0.0",
   "description": "A Javascript library which helps with building charts and pulling data from a BrandsEye account (see www.brandseye.com for more info)",
   "main": "b3.js",
