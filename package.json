@@ -2,7 +2,7 @@
   "name": "brandseyejs",
   "version": "2.0.0",
   "description": "A Javascript library which helps with building charts and pulling data from a BrandsEye account (see www.brandseye.com for more info)",
-  "main": "dist/b3js.js",
+  "main": "src/index.js",
   "repository": "git@github.com:brandseye/brandseyejs",
   "contributors": [
     "BrandsEye <noreply@brandseye.com>",
