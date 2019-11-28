@@ -133,7 +133,11 @@ export function chooseScale(exampleValue) {
     }
 
     if (exampleValue === undefined) throw new Error("No value provided for chooseScale");
-    if (Date.parse(exampleValue)) return scaleTime();
+    try {
+        if (Date.parse(exampleValue)) return scaleTime();
+    } catch (e) {
+        // ignore - likely not a valid date
+    }
     if (exampleValue instanceof Date) return scaleTime();
     if (typeof exampleValue === 'string') return scaleDiscrete();
     if (typeof exampleValue === 'number') return scaleIdentity();
