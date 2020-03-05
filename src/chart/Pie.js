@@ -18,13 +18,11 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { Geometry } from './Geometry';
-import { toColourKey } from "../Legend";
-import { equals } from "../helpers";
-import {colours} from "../Colours";
 
 class Pie extends Geometry {
     constructor(name){
-        super(name || 'Pie');
+        super(name || 'PIE');
+        console.log(this);
     }
 
     _drawPie(dataWrapper, i, nodes){
@@ -34,22 +32,34 @@ class Pie extends Geometry {
         const minDimension = Math.min(this._width,this._height);
 
         const pie = d3.select(nodes[i])
+        console.log('this', this,'\nnodes', nodes, '\npie', pie)
 
         const color = d3.scaleOrdinal()
-            .domain(data.map(d => d.label))
+            .domain(this.xValues())
             .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
 
         const arc = d3.arc()
             .innerRadius(minDimension / 4)
             .outerRadius(minDimension / 2)
 
-        const arcs = d3.pie().value(d => d.count)(data)
+        const arcs = d3.pie().value(this._chart_y_getter)(data);
+
+        // from https://bl.ocks.org/mbostock/5681842
+        function arcTween(a) {
+            var i = d3.interpolate(this._current, a);
+            this._current = i(0);
+            return t => arc(i(t));
+        }
 
         pie.selectAll('path')
             .data(arcs)
             .join('path')
+            .interrupt('arc:redraw')
+            .transition('arc:redraw')
+            .duration(600)
+                // .attr('fill', d => this.getD3Colour(d))
                 .attr('fill', d => color(d.data.label))
-                .attr('d', arc)
+                .attrTween('d', arcTween)
     }
 
     render() {
@@ -58,52 +68,53 @@ class Pie extends Geometry {
 
         element.classed('pies', true);
 
-        let groups = element.selectAll(".pie");
+        let pieEls = element.selectAll(".pie");
 
         const minDimension = Math.min(this._width,this._height);
 
-        /*
-            options
-            -
-            show legend || category label
-                legend: measure block of space for legend
-                category: measure space around for labels
-            show value label
-            pie || donut
-            show pie || donut label (e.g. in the case of facets)
-            labels on or around pie slices
-            group tail end under others || all || # max slices
-
-            to determine
-            -
-            how best to truncate labels?
-                system-wide approach for brand names, topics, segments
-                configurable shorthand/abbreviation || inferred abbreviation?
-            where to show legend or if at all?
-            sort by size?
-            colour spectrum?
-                dependent on user? E.g. Use topic colours vs basic hue shift for brands
-        */
-
-        groups
+        pieEls
             .data(dataArray)
-            .enter()
-            .append("g")
+            .join('g')
+                .attr('class','pie')
                 .attr("transform", `translate(${minDimension/2},${minDimension/2})`)
                 .attr("width", minDimension)
                 .attr("height", minDimension)
-            .each(this._drawPie.bind(this))
+            .each(this._drawPie.bind(this));
+        pieEls.exit().remove();
     }
 
     getD3XScale(){
-        return d3.scaleLinear()
+        return d3.scaleLinear();
     }
 
     getD3YScale(){
-        return d3.scaleLinear()
+        return d3.scaleLinear();
     }
 }
 
 export function pie() {
     return new Pie();
 }
+
+ /*
+    options
+    -
+    show legend || category label
+        legend: measure block of space for legend
+        category: measure space around for labels
+    show value label
+    pie || donut
+    show pie || donut label (e.g. in the case of facets)
+    labels on or around pie slices
+    group tail end under others || all || # max slices
+
+    to determine
+    -
+    how best to truncate labels?
+        system-wide approach for brand names, topics, segments
+        configurable shorthand/abbreviation || inferred abbreviation?
+    where to show legend or if at all?
+    sort by size?
+    colour spectrum?
+        dependent on user? E.g. Use topic colours vs basic hue shift for brands
+*/

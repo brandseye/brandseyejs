@@ -342,6 +342,21 @@ graph
         </p>
 
     </div>
+
+
+    <!-------------------------------------------->
+
+    <div class="banner">
+        <div id="pie-chart" style="width: 200px; height: 200px;">
+        </div>
+    </div>
+
+    <div>
+        <h3>Pie chart</h3>
+        <p>
+
+        </p>
+    </div>
 </div>
 
 
@@ -556,6 +571,47 @@ graph
                 .facetX(d => d.aggregate)
                 .render();
         })
+
+        data = [
+            { count: 117, group: 'animal', label: 'Dog'},
+            { count: 345, group: 'animal', label: 'Cat'},
+            { count: 20,  group: 'animal', label: 'Uncertain'},
+            { count: 123, group: 'beast',  label: 'Gruffalo'},
+            { count: 740, group: 'animal', label: 'Giraffe'},
+            { count: 100, group: 'beast',  label: 'Uncertain'}
+        ]
+
+        const pieChart = new b3js.chart();
+
+        function drawPie(){
+            pieChart
+                .data(data)
+                .element(document.getElementById('pie-chart'))
+                .x(d => d.label)
+                .y(d => d.count)
+                .geometry(b3js.pie())
+                // .colour(d => d.label)
+                .facetX(d => d.group)
+                .render()
+        }
+
+        function updatePie(){
+            pieChart.data(data).render();
+        }
+
+        drawPie();
+
+        const b = document.createElement('button');
+        b.innerHTML = 'Update data';
+        b.addEventListener('click', function(){
+            data.forEach(item => {
+                item.count = Math.random()*150;
+                item.group = ['animal','beast'][Math.round(Math.random())];
+            })
+            updatePie();
+        })
+        document.getElementById('pie-chart').parentElement.appendChild(b)
+
     });
 </script>
 
