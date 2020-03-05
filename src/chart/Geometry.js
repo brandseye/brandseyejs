@@ -346,7 +346,7 @@ export class Geometry {
     }
 
     /**
-     * Get all the Y values for this geometry, ignoring faceting.
+     * Get all the X values for this geometry, ignoring faceting.
      */
     xValues() {
         return this.data()
