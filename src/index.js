@@ -28,5 +28,6 @@ export { chart } from './chart/FantasticChart';
 export { histogram, columnChart } from './chart/Histogram';
 export { barChart } from './chart/BarChart';
 export { line } from './chart/Line';
+export { pie } from './chart/Pie';
 export { points } from './chart/Points';
 export { scaleTime, scaleIdentity, scaleDiscrete, chooseScale } from './chart/Scales';

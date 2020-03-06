@@ -22,73 +22,104 @@ import { Geometry } from './Geometry';
 class Pie extends Geometry {
     constructor(name){
         super(name || 'PIE');
-        console.log(this);
+        this._y_formatter = d => Math.round(d) === d ? d : d.toFixed(1);
+        this._x_formatter = d => d;
     }
 
-    _drawPie(dataWrapper, i, nodes){
+    _addLabels(pie, arcs, arc){
+        pie.selectAll(".segment-labels").remove();
+        const labels = pie.append('g')
+            .attr('class','segment-labels')
+            .selectAll('text')
+            .data(arcs)
 
-        const data = dataWrapper.data;
+        labels.enter()
+            .each((d, i, nodes) => {
+                const centroid = arc.centroid(d);
+
+                let label = d3.select(nodes[i])
+                    .append("text")
+                    .attr("transform", "translate(" + centroid + ")")
+                    .style("opacity", 0)
+
+                label
+                    .append('tspan')
+                    .attr("dy", "1em")
+                    .attr("x", "0")
+                    .text(this.formatX()(d.data._x))
+                        .style("fill", '#444');
+
+                label
+                    .append('tspan')
+                    .text(this.formatY()(d.data._y))
+                        .style("fill", '#444');
+
+                // const radians = d.endAngle - d.startAngle;
+                // const radius = arc.innerRadius()();
+                // const arcLength = radians * radius;
+                const bounding = label.node().getBBox();
+
+                // if (bounding.width < arcLength) {
+                    label.attr("dx", -(bounding.width / 2));
+                    label.attr("dy", (bounding.height / 2));
+
+                    label
+                        .transition()
+                        .duration(100)
+                        .style("opacity", 1)
+                // }
+            })
+    }
+
+    getD3XScale(){
+        return d3.scaleLinear()
+    }
+
+    getD3YScale(){
+        return d3.scaleLinear()
+    }
+
+    render() {
+        const element = this._element;
+        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         const minDimension = Math.min(this._width,this._height);
-
-        const pie = d3.select(nodes[i])
-        console.log('this', this,'\nnodes', nodes, '\npie', pie)
-
-        const color = d3.scaleOrdinal()
-            .domain(this.xValues())
-            .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
 
         const arc = d3.arc()
             .innerRadius(minDimension / 4)
             .outerRadius(minDimension / 2)
 
-        const arcs = d3.pie().value(this._chart_y_getter)(data);
-
         // from https://bl.ocks.org/mbostock/5681842
-        function arcTween(a) {
+        const arcTween = a => {
+            // TODO: need to initialize this._current somewhere
             var i = d3.interpolate(this._current, a);
             this._current = i(0);
             return t => arc(i(t));
         }
 
-        pie.selectAll('path')
-            .data(arcs)
-            .join('path')
-            .interrupt('arc:redraw')
-            .transition('arc:redraw')
-            .duration(600)
-                // .attr('fill', d => this.getD3Colour(d))
-                .attr('fill', d => color(d.data.label))
-                .attrTween('d', arcTween)
-    }
+        let pie = element.selectAll('.pie');
 
-    render() {
-        const element = this._element;
-        const dataArray = this.prepareData(null, true);
-
-        element.classed('pies', true);
-
-        let pieEls = element.selectAll(".pie");
-
-        const minDimension = Math.min(this._width,this._height);
-
-        pieEls
-            .data(dataArray)
-            .join('g')
+        if(pie.empty()){
+            pie = element.append('g')
                 .attr('class','pie')
                 .attr("transform", `translate(${minDimension/2},${minDimension/2})`)
                 .attr("width", minDimension)
-                .attr("height", minDimension)
-            .each(this._drawPie.bind(this));
-        pieEls.exit().remove();
-    }
+                .attr("height", minDimension);
+        }
 
-    getD3XScale(){
-        return d3.scaleLinear();
-    }
+        const arcs = d3.pie().value(this.y())(data);
+        const segments = pie.selectAll('path').data(arcs);
+        //TODO: redrawing each time
+        segments
+            .join('path')
+            .style("fill", d => this.getD3Colour(d.data))
+            .transition()
+            .duration(1000)
+            .attrTween('d', arcTween)
 
-    getD3YScale(){
-        return d3.scaleLinear();
+        this._addLabels(pie, arcs, arc);
+
+
     }
 }
 
