@@ -61,6 +61,8 @@ class FantasticChart {
         this._legend_colours = () => null;
         this._y_axis_label = null;
         this._x_axis_label = null;
+        this._show_xaxis = true;
+        this._show_yaxis = true;
         this._label_formatter = null;
 
         return this;
@@ -180,6 +182,25 @@ class FantasticChart {
     xAxisLabel(label) {
         if (arguments.length === 0) return this._x_axis_label;
         this._x_axis_label = label;
+        return this;
+    }
+
+
+    /**
+     * Whether to show x axis
+     */
+    showXAxis(show) {
+        if (arguments.length === 0) return this._show_xaxis;
+        this._show_xaxis = !!show;
+        return this;
+    }
+
+    /**
+     * Whether to show y axis
+     */
+    showYAxis(show) {
+        if (arguments.length === 0) return this._show_yaxis;
+        this._show_yaxis = !!show;
         return this;
     }
 
@@ -371,30 +392,31 @@ class FantasticChart {
         //-----------------------------------------------
         // Determine x-axis height
         // We do this by rendering the various x-axes offscreen.
+        let axisHeight = 0;
 
         const xTickCount = Math.floor(width / 90);
-
-        geometries.forEach(geom => geom.width(facetBand.bandwidth()));
-        const axisSizeArea = svg.append("g")
-            .attr("transform", "translate(-1000, -1000)");
-
         const xAxisRestriction = Math.min(25, Math.max(this._height * 0.07, 12));
-        let axisHeight = 0;
-        facets.forEach(facet => {
-            const xScale = geometries[0]
-                .width(facetBand.bandwidth())
-                .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                .getD3XScale();
 
-            let height = xaxis(axisSizeArea, this._height,
-                xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
-                this.importanceX());
+        if (this._show_xaxis){
+            geometries.forEach(geom => geom.width(facetBand.bandwidth()));
+            const axisSizeArea = svg.append("g")
+                .attr("transform", "translate(-1000, -1000)");
 
-            axisHeight = Math.max(height, axisHeight);
-        });
+            facets.forEach(facet => {
+                const xScale = geometries[0]
+                    .width(facetBand.bandwidth())
+                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                    .getD3XScale();
 
-        axisSizeArea.remove();
+                let height = xaxis(axisSizeArea, this._height,
+                    xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
+                    this.importanceX());
+
+                axisHeight = Math.max(height, axisHeight);
+            });
+            axisSizeArea.remove();
+        }
 
         //-----------------------------------------------
         // Update margins and calculate height
@@ -433,57 +455,57 @@ class FantasticChart {
         // Setup axes.
 
         let xAxisArea = svg.select(".x-axis-area");
-
         xAxisArea.remove();
-        xAxisArea = svg
-            .append("g")
-            .attr("class", "x-axis-area");
 
-        xAxisArea.attr("transform", "translate(" + margin.left + "," + -bottomOuterPadding +")");
+        if (this._show_xaxis) {
+            xAxisArea = svg
+                .append("g")
+                .attr("class", "x-axis-area")
+                .attr("transform", "translate(" + margin.left + "," + -bottomOuterPadding +")");
 
+            if (geometries.length){
+                // Draw a little x-axis for every facet.
+                facets.forEach(facet => {
+                    const xScale = geometries[0]
+                        .width(facetBand.bandwidth())
+                        .height(height)
+                        .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                        .getD3XScale();
+
+                    const area = xAxisArea
+                        .append("g")
+                        .attr("transform", "translate(" + (facetBand(facet)) + ",0)")// + (this._height - axisHeight) +")")
+                        .attr("width", facetBand.bandwidth());
+
+
+                    xaxis(area, this._height,
+                        xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                        d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
+                        this.importanceX())
+                });
+            }
+        }
 
         let yAxisArea = svg.select(".y-axis-area");
+        yAxisArea.remove();
+        const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         const yTickCount = Math.floor(height / 90);
 
-        yAxisArea.remove();
-        yAxisArea = svg
-            .append("g")
-            .attr("class", "y-axis-area")
-            .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")");
-
-
-        const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
-        if (geometries.length) {
-            // Draw the yaxis.
-            yaxis(yAxisArea, d3.axisLeft(yscale).ticks(yTickCount).tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction))); //;.tickFormat(this._tickFormat));
-
-            // Draw a little x-axis for every facet.
-            facets.forEach(facet => {
-                const xScale = geometries[0]
-                    .width(facetBand.bandwidth())
-                    .height(height)
-                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                    .getD3XScale();
-
-                const area = xAxisArea
-                    .append("g")
-                    .attr("transform", "translate(" + (facetBand(facet)) + ",0)")// + (this._height - axisHeight) +")")
-                    .attr("width", facetBand.bandwidth());
-
-
-                xaxis(area, this._height,
-                    xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
-                    this.importanceX())
-            });
-
+        if (this._show_yaxis) {
+            yAxisArea = svg
+                .append("g")
+                .attr("class", "y-axis-area")
+                .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")");
+            if (geometries.length) {
+                yaxis(yAxisArea, d3.axisLeft(yscale).ticks(yTickCount).tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction))); //;.tickFormat(this._tickFormat));
+            }
         }
 
         //-----------------------------------------------
         // Setup labels
 
-        yAxisLabel(svg, height, margin, this._y_axis_label);
-        xAxisLabel(svg, width, height, margin, this._x_axis_label);
+        if (this._show_yaxis) yAxisLabel(svg, height, margin, this._y_axis_label);
+        if (this._show_xaxis) xAxisLabel(svg, width, height, margin, this._x_axis_label);
 
         //-----------------------------------------------
         // Draw individual geometries.
@@ -507,8 +529,9 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
-                xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
+                // TODO: too heavy-handed?
+                if (this._show_yaxis) yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
+                if (this._show_xaxis) xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();
 
