@@ -49,6 +49,7 @@ export class Geometry {
         this._show_labels = null;
         this._chart_show_labels = null;
         this._d3_colour_scale = null;
+        this._stroke_width = null;
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -248,7 +249,6 @@ export class Geometry {
         return this;
     }
 
-
     width(width) {
         if (arguments.length === 0) return this._width;
         this._width = width;
@@ -287,6 +287,12 @@ export class Geometry {
         if (arguments.length === 0) return this._facet_selector;
         if (selector != null && typeof selector !== 'function' && selector !== null) throw new Error("Facet selector must be a function");
         this._facet_selector = selector;
+        return this;
+    }
+
+    strokeWidth(pixels) {
+        if (arguments.length === 0) return this._stroke_width;
+        this._stroke_width = pixels;
         return this;
     }
 

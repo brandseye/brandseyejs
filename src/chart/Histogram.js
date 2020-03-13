@@ -29,6 +29,7 @@ class Histogram extends Geometry {
         super(name || "HISTOGRAM");
         this._BAR_GROWTH = 100;
         this._padding = padding || 0;
+        this._stroke_width = 1
     }
 
     /**
@@ -106,17 +107,17 @@ class Histogram extends Geometry {
 
                   bars.enter()
                       .append("rect")
-                          .attr("x", d => xGroup(d._key))
-                          // .attr("y", d => height - y(Math.min(0, d._y)))
-                      .attr("y", height - y(0))
-                          .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
-                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
-                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                        .attr("class", d => "bar series series-" + toColourKey(d._colour))
+                          .attr("x", d => xGroup(d._key))
+                          .attr("y", height - y(0))
+                          .attr("width", xGroup.bandwidth())
+                          .attr("class", d => "bar series series-" + toColourKey(d._colour))
+                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
+                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
+                          .style("stroke-width", this._stroke_width)
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
