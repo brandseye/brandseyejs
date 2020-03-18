@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014, 2018 BrandsEye (PTY) LTD
+// Copyright (C) 2020 BrandsEye (PTY) LTD
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -22,8 +22,6 @@ import { Geometry } from './Geometry';
 class Pie extends Geometry {
     constructor(name){
         super(name || 'PIE');
-        this._y_formatter = d => Math.round(d) === d ? d : d.toFixed(1);
-        this._x_formatter = d => d;
     }
 
     _addLabels(pie, arcs, arc){
@@ -44,14 +42,14 @@ class Pie extends Geometry {
 
                 label
                     .append('tspan')
-                    .attr("dy", "1em")
-                    .attr("x", "0")
                     .text(this.formatX()(d.data._x))
                         .style("fill", '#444');
 
                 label
                     .append('tspan')
-                    .text(this.formatY()(d.data._y))
+                    .attr("dy", "1em")
+                    .attr("x", "0")
+                    .text(this.formatLabel()(d.data._y))
                         .style("fill", '#444');
 
                 // const radians = d.endAngle - d.startAngle;
@@ -65,14 +63,15 @@ class Pie extends Geometry {
 
                     label
                         .transition()
-                        .duration(100)
+                        .duration(1000)
                         .style("opacity", 1)
                 // }
             })
     }
 
     getD3XScale(){
-        return d3.scaleLinear()
+        // return d3.scaleOrdinal(this._data.map(d => d._x))
+        return d3.scaleOrdinal(this._data.map(d => this.x()(d)))
     }
 
     getD3YScale(){
@@ -83,15 +82,15 @@ class Pie extends Geometry {
         const element = this._element;
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
-        const minDimension = Math.min(this._width,this._height);
+        // console.log(data);
+        const minDimension = Math.min(this.width(),this.height());
 
         const arc = d3.arc()
             .innerRadius(minDimension / 4)
             .outerRadius(minDimension / 2)
 
-        // from https://bl.ocks.org/mbostock/5681842
-        const arcTween = a => {
-            // TODO: need to initialize this._current somewhere
+        // https://bl.ocks.org/mbostock/5681842
+        const arcTween = function(a, i, nodes){
             var i = d3.interpolate(this._current, a);
             this._current = i(0);
             return t => arc(i(t));
@@ -108,19 +107,24 @@ class Pie extends Geometry {
         }
 
         const arcs = d3.pie().value(this.y())(data);
-        const segments = pie.selectAll('path').data(arcs);
-        //TODO: redrawing each time
+        const segments = pie.selectAll('path').data(arcs, d => d.data._key);
+
         segments
-            .join('path')
+            .enter()
+            .append('path')
+            .each(function(d){this._current = d})
             .style("fill", d => this.getD3Colour(d.data))
+            .merge(segments)
             .transition()
-            .duration(1000)
+            .duration(200)
             .attrTween('d', arcTween)
+
+        segments.exit().remove()
 
         this._addLabels(pie, arcs, arc);
 
-
     }
+
 }
 
 export function pie() {
