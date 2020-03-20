@@ -24,7 +24,10 @@ export function removeLegend(element) {
     element.selectAll(".legend").remove();
 }
 
-export function renderLegend(element, buckets, colourScale, width, height, min) {
+export function renderLegend(element, buckets, colourScale, width, height, min, options) {
+    if (!options) options = { }
+    let fontSize = options.fontSize || 12
+
     min = min || 2;
     removeLegend(element);
 
@@ -64,6 +67,7 @@ export function renderLegend(element, buckets, colourScale, width, height, min) 
                 element.append("text")
                        .text(d => d)
                        .attr("dx", 12)
+                       .style("font-size", fontSize + "px")
                        .style("fill", schema.eighteen.darkGrey);
 
                 element.append("title")

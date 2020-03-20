@@ -50,6 +50,7 @@ export class Geometry {
         this._chart_show_labels = null;
         this._d3_colour_scale = null;
         this._stroke_width = null;
+        this._font_size = 12;
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -296,6 +297,12 @@ export class Geometry {
         return this;
     }
 
+    fontSize(px) {
+        if (arguments.length === 0) return this._font_size;
+        if (typeof px !== "number" && px > 0) throw new Error("fontSize must be a positive number");
+        this._font_size = px;
+        return this;
+    }
 
     /*
      * This takes our array of data, and determines what elements

@@ -265,7 +265,7 @@ class Histogram extends Geometry {
                               .data(data);
 
         let maxWidth = 0;     // For calculating the max width of text.
-        let fontSize = 12;    // Our initial font size.
+        let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
         const calcDy = (y, ypos) => ((y >= 0 && ypos < 10) || ( y < 0 && this._height - ypos > 10)) ? fontSize + 2: -buffer;
 
@@ -317,15 +317,16 @@ class Histogram extends Geometry {
                   let ypos = yscale(d._y);
                   let dy = calcDy(d._y, ypos);
                   let text = d3.select(nodes[i])
-                               .append("text")
-                               .text(labelText)
-                               .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
-                               .attr("y", ypos)
-                               .attr("dx", animate ? -15 : 0)
-                               .attr("dy", dy)
-                               .style("opacity", 0)
-                               .style("pointer-events", "none")
-                               .style("fill", d => findColour(d, dy, labelText));
+                        .append("text")
+                        .text(labelText)
+                        .style("font-size", fontSize + "px")
+                        .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
+                        .attr("y", ypos)
+                        .attr("dx", animate ? -15 : 0)
+                        .attr("dy", dy)
+                        .style("opacity", 0)
+                        .style("pointer-events", "none")
+                        .style("fill", d => findColour(d, dy, labelText));
 
                   // Set the x position, which is based on width.
                   const width = text.node().getBBox().width;
@@ -348,7 +349,7 @@ class Histogram extends Geometry {
             let scale = maxWidth / xgroup.bandwidth() * 1.10;
             fontSize = Math.floor(fontSize / scale);
 
-            if (fontSize < 8) {
+            if (fontSize < 10) {
                 // The labels are too small.
                 labels.enter().selectAll("text").remove();
             } else {

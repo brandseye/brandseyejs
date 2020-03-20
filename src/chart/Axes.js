@@ -22,8 +22,15 @@ import { colours } from "../Colours";
 const AXIS_ANIMATION_DURATION = 1000;
 const AXIS_DELAY = 250;
 
+function ensureOptions(o) {
+    return Object.assign({
+        fontSize: 12
+    }, o)
+}
 
-export function xaxis(selection, height, width, axisObject, importance) {
+export function xaxis(selection, height, width, axisObject, importance, options) {
+    let { fontSize } = ensureOptions(options)
+
     selection.select(".x-axis").remove();
     let axis = selection.append("g")
                         .attr("class", "x-axis")
@@ -38,6 +45,7 @@ export function xaxis(selection, height, width, axisObject, importance) {
     const regularText = d3.hcl(boldText).brighter();
 
     axis.selectAll("text")
+        .style("font-size", fontSize + "px")
         .style("fill", (d, i) => importance(d, i) ? boldText : regularText)
         .nodes()
         .forEach(text => max = Math.max(max, text.getBBox().width));
@@ -45,8 +53,8 @@ export function xaxis(selection, height, width, axisObject, importance) {
     if (max >= width - 10) {
         const bad = max >= width * 2;
         const angle = bad ? -90 : -30;
-        const fontSize = width <= 13 ? 8 : 12;
-        const x = bad ? -fontSize : 0;
+        if (width <= 13) fontSize = 8
+        const x = bad ? -(fontSize * 0.78) : 0;
         const y = bad ? 5 : 2;
 
         axis.selectAll("text")
@@ -67,7 +75,9 @@ export function xaxis(selection, height, width, axisObject, importance) {
     return axisHeight;
 }
 
-export function yaxis(selection, axis) {
+export function yaxis(selection, axis, options) {
+    let { fontSize } = ensureOptions(options)
+
     selection.select(".y-axis").remove();
     let y = selection.append("g")
                      .attr("class", "y-axis")
@@ -75,18 +85,19 @@ export function yaxis(selection, axis) {
                      .style("opacity", 0);
 
     y.selectAll("text")
-     .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+        .style("font-size", fontSize + "px")
+        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
 
     y.selectAll(".domain")
-     .style("stroke", colours.eighteen.midGrey); // d3.hcl(colours.eighteen.darkGrey).brighter());
+        .style("stroke", colours.eighteen.midGrey); // d3.hcl(colours.eighteen.darkGrey).brighter());
 
     const width = y.node().getBBox().width;
     y.attr("transform", "translate(" + width + ",0)");
 
     y.transition()
-     .duration(AXIS_ANIMATION_DURATION)
-     .delay(AXIS_DELAY)
-     .style("opacity", 1);
+        .duration(AXIS_ANIMATION_DURATION)
+        .delay(AXIS_DELAY)
+        .style("opacity", 1);
 
     return width + 20;
 }
@@ -141,7 +152,9 @@ export function xGrid(selection, height, show, axis) {
         .style("opacity", 1);
 }
 
-export function yAxisLabel(element, height, margins, label) {
+export function yAxisLabel(element, height, margins, label, options) {
+    let { fontSize } = ensureOptions(options)
+
     element.selectAll(".y-axis-label").remove();
 
     if (!label) return;
@@ -151,11 +164,12 @@ export function yAxisLabel(element, height, margins, label) {
     let x = -(margins.top + height / 2);
 
     let labelElement = element.append("g")
-                              .attr("class", "y-axis-label")
-                              .append("text")
-                              .text(text)
-                              .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
-                              .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+        .attr("class", "y-axis-label")
+        .append("text")
+        .style("font-size", fontSize + "px")
+        .text(text)
+        .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
+        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
 
     let width = labelElement.node().getBBox().width;
     if (width >= height && label.short) {
@@ -171,7 +185,9 @@ export function yAxisLabel(element, height, margins, label) {
                 .style("opacity", 1)
 }
 
-export function xAxisLabel(element, width, height, margins, label) {
+export function xAxisLabel(element, width, height, margins, label, options) {
+    let { fontSize } = ensureOptions(options)
+
     element.selectAll(".x-axis-label").remove();
 
     if (!label) return;
@@ -182,11 +198,12 @@ export function xAxisLabel(element, width, height, margins, label) {
     let y = margins.top + height + 40;
 
     let labelElement = element.append("g")
-                              .attr("class", "x-axis-label")
-                              .append("text")
-                              .text(text)
-                              .attr("transform", "translate(" + x + ", " + y + ")")
-                              .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+        .attr("class", "x-axis-label")
+        .append("text")
+        .style("font-size", fontSize + "px")
+        .text(text)
+        .attr("transform", "translate(" + x + ", " + y + ")")
+        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
 
     let textWidth = labelElement.node().getBBox().width;
     if (textWidth >= height && label.short) {
