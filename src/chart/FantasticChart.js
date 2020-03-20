@@ -337,7 +337,7 @@ class FantasticChart {
         const axisWidth = geometries.length && this._height >= 160
             ? maxBounding(svg, geometries[0].yValues()
                                             .map(geometries[0].formatY())
-                                            .map(d => restrictLength(d, yAxisRestriction))).width + 15
+                                            .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
             : 0;
 
         //-----------------------------------------------
