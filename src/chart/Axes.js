@@ -17,7 +17,7 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { colours } from "../Colours";
+import {colours} from "../Colours";
 
 const AXIS_ANIMATION_DURATION = 1000;
 const AXIS_DELAY = 250;
@@ -44,8 +44,8 @@ export function xaxis(selection, height, width, axisObject, importance, options)
     const boldText = colours.eighteen.darkGrey;
     const regularText = d3.hcl(boldText).brighter();
 
-    axis.selectAll("text")
-        .style("font-size", fontSize + "px")
+    let text = axis.selectAll("text")
+    text.style("font-size", fontSize + "px")
         .style("fill", (d, i) => importance(d, i) ? boldText : regularText)
         .nodes()
         .forEach(text => max = Math.max(max, text.getBBox().width));
@@ -53,15 +53,28 @@ export function xaxis(selection, height, width, axisObject, importance, options)
     if (max >= width - 10) {
         const bad = max >= width * 2;
         const angle = bad ? -90 : -30;
-        if (width <= 13) fontSize = 8
         const x = bad ? -(fontSize * 0.78) : 0;
         const y = bad ? 5 : 2;
 
-        axis.selectAll("text")
-            .style('text-anchor', 'end')
-            .style("font-size", fontSize + "px")
-            .style("opacity", fontSize >= 10 ? 1 : ((d, i) => importance(d, i) ? 1 : 0))
+        text.style('text-anchor', 'end')
+            .style("fill", regularText) // not using importance any more
             .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
+
+        let labelWidth = fontSize * 1.2
+        if (labelWidth > width) {
+            //console.log("width " + width + " labelWidth " + labelWidth + " peek " + peek)
+            let a = axis.selectAll("g.tick").nodes()
+            let px = (a.length ? a[0].getBoundingClientRect().x : 0) + labelWidth
+            for (let i = 1; i < a.length; i++) {
+                let node = a[i]
+                let x = node.getBoundingClientRect().x
+                if (x < px) {
+                    node.parentNode.removeChild(node)
+                } else {    // there is space for the label
+                    px = x + labelWidth
+                }
+            }
+        }
     }
 
     axis

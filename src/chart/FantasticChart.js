@@ -395,10 +395,11 @@ class FantasticChart {
                 .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                 .getD3XScale();
 
+            let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
+                .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction));
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
-                this.importanceX(), axisOptions);
+                axis, this.importanceX(), axisOptions);
 
             axisHeight = Math.max(height, axisHeight);
         });
