@@ -48,6 +48,7 @@ class Pie extends Geometry {
                 let label = d3.select(nodes[i])
                     .append("text")
                     .attr("transform", "translate(" + centroid + ")")
+                    .attr('text-anchor', 'middle')
                     .style("opacity", 0)
 
                 label
@@ -69,8 +70,8 @@ class Pie extends Geometry {
                 const bounding = label.node().getBBox();
 
                 // if (bounding.width < arcLength) {
-                    label.attr("dx", -(bounding.width / 2));
-                    label.attr("dy", (bounding.height / 2));
+                    // label.attr("dx", (bounding.width / 2));
+                    label.attr("dy", -(bounding.height / 2));
 
                     label
                         .transition()
@@ -82,7 +83,7 @@ class Pie extends Geometry {
 
     prepareData(data, faceted){
         data = Geometry.prototype.prepareData.call(this, data, faceted);
-        data[0].data.map(d => d._colour = this.x()(d));
+        data[0] && data[0].data && data[0].data.map(d => d._colour = this.x()(d));
         return data
     }
 

@@ -346,7 +346,7 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length && this._height >= 160
+        const axisWidth = geometries.length && this._height >= 160 && this._show_yaxis
             ? maxBounding(svg, geometries[0].yValues()
                                             .map(geometries[0].formatY())
                                             .map(d => restrictLength(d, yAxisRestriction))).width + 15
