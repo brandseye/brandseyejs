@@ -590,6 +590,7 @@ graph
                 .x(d => d.species)
                 .y(d => d.count)
                 .geometry(b3js.pie())
+                .scaleX(b3js.scaleDiscrete())
                 .xAxisLabel('Species')
                 .colour(d => d.species)
                 .showXAxis(false)
