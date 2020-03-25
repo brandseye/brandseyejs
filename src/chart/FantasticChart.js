@@ -63,7 +63,9 @@ class FantasticChart {
         this._x_axis_label = null;
         this._label_formatter = null;
         this._font_size = 12;
-
+        this._x_grid_lines = false;
+        this._x_label_angle = null;
+        this._grid_line_opacity = 0.2;
         return this;
     }
 
@@ -276,6 +278,26 @@ class FantasticChart {
         return this;
     }
 
+    xGridLines(show) {
+        if (arguments.length === 0) return this._x_grid_lines;
+        this._x_grid_lines = !!show;
+        return this;
+    }
+
+    xLabelAngle(degrees) {
+        if (arguments.length === 0) return this._x_label_angle;
+        if (degrees !== null && typeof degrees !== "number") throw new Error("degrees must be a number or null");
+        this._x_label_angle = degrees;
+        return this;
+    }
+
+    gridLineOpacity(opacity) {
+        if (arguments.length === 0) return this._grid_line_opacity;
+        if (typeof opacity !== "number") throw new Error("opacity must be a number or null");
+        this._grid_line_opacity = opacity;
+        return this;
+    }
+
     /**
      * Renders or hides labels as they are requested.
      */
@@ -324,7 +346,11 @@ class FantasticChart {
         const bs = buckets(this._data, this._colour, this._individual_colours, this._size);
         const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale())
                                                       .domain(Array.from(bs.colours));
-        const axisOptions = { fontSize: this._font_size }
+        const axisOptions = {
+            fontSize: this._font_size,
+            xLabelAngle: this._x_label_angle,
+            gridLineOpacity: this._grid_line_opacity
+        }
 
         //-----------------------------------------------
         // Calculate the space that various elements will want to take up. We also
@@ -449,8 +475,7 @@ class FantasticChart {
             .append("g")
             .attr("class", "x-axis-area");
 
-        xAxisArea.attr("transform", "translate(" + margin.left + "," + -bottomOuterPadding +")");
-
+        xAxisArea.attr("transform", "translate(" + margin.left + "," + (margin.top + height) +")").lower();
 
         let yAxisArea = svg.select(".y-axis-area");
         const yTickCount = Math.floor(height / 90);
@@ -459,7 +484,7 @@ class FantasticChart {
         yAxisArea = svg
             .append("g")
             .attr("class", "y-axis-area")
-            .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")");
+            .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")").lower();
 
         const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
@@ -485,8 +510,9 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5).tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
-                    this.importanceX(), { fontSize: this._font_size })
+                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
+                        .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
+                    this.importanceX(), axisOptions)
             });
 
         }
@@ -520,7 +546,7 @@ class FantasticChart {
                       geom_height = height;
 
                 yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
-                xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
+                //xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();
 
