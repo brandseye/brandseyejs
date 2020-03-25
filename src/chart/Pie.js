@@ -25,15 +25,99 @@ class Pie extends Geometry {
         super(name || 'PIE');
     }
 
-    _getLabelColour(d){
+
+    _getOutsideLabelColour(d, opacity){
+        const baseColour = d3.hcl(this.getD3Colour(d.data));
+        return d3.hcl(baseColour.h, baseColour.c + 10, baseColour.l - 44, typeof opacity === 'number' && !isNaN(opacity) ? opacity : 1);
+    }
+
+    _getOverlayLabelColour(d){
         const fillColour = d3.hcl(this.getD3Colour(d.data));
-        const shouldInvert = fillColour.l < 60;
-        let labelColour = d3.hcl(colours.eighteen.darkGrey);
-        if (shouldInvert) labelColour.l += Math.min(labelColour.l + 50, 100)
+        let labelColour = d3.hcl(fillColour.h, fillColour.c + 10, fillColour.l - 120);
+
+        if (fillColour.l < 55) {
+            labelColour = d3.hcl(fillColour.h, fillColour.c - 20, fillColour.l + 55);
+        }
+
         return labelColour
     }
 
-    _addLabels(pie, arcs, arc){
+    _addOutsideLabels(pie, arcs, arc, outerArc){
+        pie.selectAll(".outside-labels").remove();
+
+        pie.append('g')
+            .attr('class','outside-labels')
+
+        const labels = pie.select('.outside-labels')
+            .selectAll('text')
+            .data(arcs, d => d.data._x);
+
+        function midAngle(d){
+            return d.startAngle + (d.endAngle - d.startAngle)/2;
+        }
+
+        const radius = Math.min(this.width(),this.height()) / 2;
+
+        labels.enter()
+            .append('text')
+            .attr('pointer-events', 'none')
+            .attr("dy", ".35em")
+            .attr('fill', d => this._getOutsideLabelColour(d))
+            .text((d) => this.formatX()(d.data._x) + ', ' + this.formatLabel()(d.data._y))
+            .transition().duration(1000)
+            .attrTween("transform", function(d) {
+                this._current = this._current || d;
+                var interpolate = d3.interpolate(this._current, d);
+                this._current = interpolate(0);
+                return function(t) {
+                    var d2 = interpolate(t);
+                    var pos = outerArc.centroid(d2);
+                    pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+                    return "translate("+ pos +")";
+                };
+            })
+            .styleTween("text-anchor", function(d){
+                this._current = this._current || d;
+                var interpolate = d3.interpolate(this._current, d);
+                this._current = interpolate(0);
+                return function(t) {
+                    var d2 = interpolate(t);
+                    return midAngle(d2) < Math.PI ? "start":"end";
+                };
+            });
+
+        labels.exit()
+            .remove();
+
+        pie.selectAll(".lines").remove();
+        pie.append('g').attr('class', 'lines');
+
+        var polyline = pie.select(".lines").selectAll("polyline")
+            .data(arcs, d => d.data._x);
+
+        polyline.enter()
+            .append("polyline")
+            .attr('stroke', d => this._getOutsideLabelColour(d,0.45))
+            .attr('stroke-width', '1px')
+            .attr('fill', 'none')
+            .transition().duration(1000)
+            .attrTween("points", function(d){
+                this._current = this._current || d;
+                var interpolate = d3.interpolate(this._current, d);
+                this._current = interpolate(0);
+                return function(t) {
+                    var d2 = interpolate(t);
+                    var pos = outerArc.centroid(d2);
+                    pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+                    return [arc.centroid(d2), outerArc.centroid(d2), pos];
+                };
+            });
+
+        polyline.exit()
+            .remove();
+    }
+
+    _addOverlaidLabels(pie, arcs, arc){
         pie.selectAll(".segment-labels").remove();
         const labels = pie.append('g')
             .attr('class','segment-labels')
@@ -43,12 +127,13 @@ class Pie extends Geometry {
         labels.enter()
             .each((d, i, nodes) => {
                 const centroid = arc.centroid(d);
-                const labelColour = this._getLabelColour(d);
+                const labelColour = this._getOverlayLabelColour(d);
 
                 let label = d3.select(nodes[i])
                     .append("text")
                     .attr("transform", "translate(" + centroid + ")")
                     .attr('text-anchor', 'middle')
+                    .attr('pointer-events', 'none')
                     .style("opacity", 0)
 
                 label
@@ -75,7 +160,7 @@ class Pie extends Geometry {
 
                     label
                         .transition()
-                        .duration(1000)
+                        .duration(300)
                         .style("opacity", 1)
                 // }
             })
@@ -105,12 +190,15 @@ class Pie extends Geometry {
         const element = this._element;
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
-        // console.log(data);
         const minDimension = Math.min(this.width(),this.height());
 
         const arc = d3.arc()
             .innerRadius(minDimension / 4)
             .outerRadius(minDimension / 2)
+
+        const outerArc = d3.arc()
+            .innerRadius(minDimension / 2 + 10)
+            .outerRadius(minDimension / 2 + 10)
 
         // https://bl.ocks.org/mbostock/5681842
         const arcTween = function(a, i, nodes){
@@ -124,19 +212,18 @@ class Pie extends Geometry {
         if(pie.empty()){
             pie = element.append('g')
                 .attr('class','pie')
-                .attr("transform", `translate(${minDimension/2},${minDimension/2})`)
-                .attr("width", minDimension)
-                .attr("height", minDimension);
+                .attr("transform", `translate(${this.width()/2},${minDimension/2})`)
         }
 
         const arcs = d3.pie().value(this.y())(data);
-        const segments = pie.selectAll('path').data(arcs, d => d.data._key);
+        const segments = pie.selectAll('path').data(arcs, d => d.data._x);
 
         segments
             .enter()
             .append('path')
             .each(function(d){this._current = d})
             .style("fill", d => this.getD3Colour(d.data))
+            .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
             .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
                 d3.select(nodes[i])
                   .interrupt("hover:colour")
@@ -166,7 +253,13 @@ class Pie extends Geometry {
 
         segments.exit().remove()
 
-        this._addLabels(pie, arcs, arc);
+        // TODO: do this in a more advanced / customisable way
+        if (this.width() >= this.height() * 1.5){
+            this._addOutsideLabels(pie, arcs, arc, outerArc);
+        } else {
+            this._addOverlaidLabels(pie, arcs, arc);
+        }
+
 
     }
 
