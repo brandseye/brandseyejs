@@ -570,6 +570,7 @@ class FantasticChart {
             .setupModifyColour(this._modify_colour)
             .setupShowLabels(this._show_labels)
             .d3ColourScale(this._d3_colour_scale)
+            .setupYAxisLabel(this._y_axis_label)
             .fontSize(this._font_size);
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);

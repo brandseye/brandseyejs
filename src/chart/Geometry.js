@@ -39,6 +39,7 @@ export class Geometry {
         this._chart_modify_colour = null;
         this._x_formatter = null;
         this._y_formatter = null;
+        this._y_axis_label = null;
         this._chart_x_formatter = null;
         this._chart_y_formatter = null;
         this._label_formatter = null;
@@ -271,6 +272,18 @@ export class Geometry {
     setupShowLabels(show) {
         if (arguments.length === 0) return this._chart_show_labels;
         this._chart_show_labels = !!show;
+        return this;
+    }
+
+    yAxisLabel(labelObject) {
+        if (arguments.length === 0) return this._chart_y_axis_label || this._y_axis_label;
+        this._y_axis_label = labelObject;
+        return this;
+    }
+
+    setupYAxisLabel(labelObject) {
+        if (arguments.length === 0) return this._chart_y_axis_label;
+        this._chart_y_axis_label = labelObject;
         return this;
     }
 

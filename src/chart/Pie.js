@@ -27,17 +27,17 @@ class Pie extends Geometry {
 
 
     _getOutsideLabelColour(d, opacity){
-        const baseColour = d3.hcl(this.getD3Colour(d.data));
-        return d3.hcl(baseColour.h, baseColour.c + 10, baseColour.l - 44, typeof opacity === 'number' && !isNaN(opacity) ? opacity : 1);
+        // const baseColour = d3.hcl(this.getD3Colour(d.data));
+        // return d3.hcl(baseColour.h, baseColour.c + 10, baseColour.l - 44, typeof opacity === 'number' && !isNaN(opacity) ? opacity : 1);
+        return d3.hcl(colours.eighteen.darkGrey, opacity).brighter()
     }
 
     _getOverlayLabelColour(d){
-        const fillColour = d3.hcl(this.getD3Colour(d.data));
-        let labelColour = d3.hcl(fillColour.h, fillColour.c + 10, fillColour.l - 120);
+        const segmentColour = d3.hcl(this.getD3Colour(d.data));
+        let labelColour = d3.hcl(colours.eighteen.darkGrey);
 
-        if (fillColour.l < 55) {
-            labelColour = d3.hcl(fillColour.h, fillColour.c - 20, fillColour.l + 55);
-        }
+        // invert
+        if (segmentColour.l < 60) labelColour.l += Math.min(labelColour.l + 50, 100)
 
         return labelColour
     }
@@ -63,7 +63,17 @@ class Pie extends Geometry {
             .attr('pointer-events', 'none')
             .attr("dy", ".35em")
             .attr('fill', d => this._getOutsideLabelColour(d))
-            .text((d) => this.formatX()(d.data._x) + ', ' + this.formatLabel()(d.data._y))
+            .each((d, i, nodes) => {
+                const label = d3.select(nodes[i]);
+                label.append('tspan')
+                    .text(d => this.formatX()(d.data._x))
+
+                label.append('tspan')
+                    .text(d => this.formatLabel()(d.data._y))
+                    .attr('dy', '1em')
+
+            })
+
             .transition().duration(1000)
             .attrTween("transform", function(d) {
                 this._current = this._current || d;
@@ -166,6 +176,19 @@ class Pie extends Geometry {
             })
     }
 
+    _addYAxisLabel(){
+        if (this._element.select('.y-axis-label').empty()){
+            this._element.select('.pie')
+                .append('g')
+                .attr('class', 'y-axis-label')
+        }
+        this._element
+            .select('.y-axis-label')
+            .append('text')
+            .attr('text-anchor', 'middle')
+            .text(this.yAxisLabel().short)
+    }
+
     prepareData(data, faceted){
         data = Geometry.prototype.prepareData.call(this, data, faceted);
         data[0] && data[0].data && data[0].data.map(d => d._colour = this.x()(d));
@@ -260,7 +283,7 @@ class Pie extends Geometry {
             this._addOverlaidLabels(pie, arcs, arc);
         }
 
-
+        this._addYAxisLabel();
     }
 
 }
