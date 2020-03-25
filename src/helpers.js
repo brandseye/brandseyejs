@@ -56,6 +56,7 @@ export function getBoundings(selection, text, font, fontSize) {
              .enter()
              .append("text")
              .text(d => d)
+             .style("font-size", fontSize ? fontSize + "px" : null)
              .each((d, i, nodes) => {
                  const node = nodes[i];
                  const bb = node.getBBox();

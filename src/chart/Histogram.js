@@ -29,6 +29,7 @@ class Histogram extends Geometry {
         super(name || "HISTOGRAM");
         this._BAR_GROWTH = 100;
         this._padding = padding || 0;
+        this._stroke_width = 1
     }
 
     /**
@@ -106,17 +107,17 @@ class Histogram extends Geometry {
 
                   bars.enter()
                       .append("rect")
-                          .attr("x", d => xGroup(d._key))
-                          // .attr("y", d => height - y(Math.min(0, d._y)))
-                      .attr("y", height - y(0))
-                          .attr("width", xGroup.bandwidth())
                           .attr("height", 0)
                           .style("cursor", "pointer")
-                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
-                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                        .attr("class", d => "bar series series-" + toColourKey(d._colour))
+                          .attr("x", d => xGroup(d._key))
+                          .attr("y", height - y(0))
+                          .attr("width", xGroup.bandwidth())
+                          .attr("class", d => "bar series series-" + toColourKey(d._colour))
+                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
+                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
+                          .style("stroke-width", this._stroke_width)
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
@@ -264,7 +265,7 @@ class Histogram extends Geometry {
                               .data(data);
 
         let maxWidth = 0;     // For calculating the max width of text.
-        let fontSize = 12;    // Our initial font size.
+        let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
         const calcDy = (y, ypos) => ((y >= 0 && ypos < 10) || ( y < 0 && this._height - ypos > 10)) ? fontSize + 2: -buffer;
 
@@ -316,15 +317,16 @@ class Histogram extends Geometry {
                   let ypos = yscale(d._y);
                   let dy = calcDy(d._y, ypos);
                   let text = d3.select(nodes[i])
-                               .append("text")
-                               .text(labelText)
-                               .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
-                               .attr("y", ypos)
-                               .attr("dx", animate ? -15 : 0)
-                               .attr("dy", dy)
-                               .style("opacity", 0)
-                               .style("pointer-events", "none")
-                               .style("fill", d => findColour(d, dy, labelText));
+                        .append("text")
+                        .text(labelText)
+                        .style("font-size", fontSize + "px")
+                        .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
+                        .attr("y", ypos)
+                        .attr("dx", animate ? -15 : 0)
+                        .attr("dy", dy)
+                        .style("opacity", 0)
+                        .style("pointer-events", "none")
+                        .style("fill", d => findColour(d, dy, labelText));
 
                   // Set the x position, which is based on width.
                   const width = text.node().getBBox().width;
@@ -347,7 +349,7 @@ class Histogram extends Geometry {
             let scale = maxWidth / xgroup.bandwidth() * 1.10;
             fontSize = Math.floor(fontSize / scale);
 
-            if (fontSize < 8) {
+            if (fontSize < 10) {
                 // The labels are too small.
                 labels.enter().selectAll("text").remove();
             } else {

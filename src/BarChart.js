@@ -490,7 +490,7 @@ export class BarChart extends Chart {
             .selectAll(".label-group")
             .data(data);
 
-        let fontSize = 12;    // Our initial font size.
+        let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
 
         labels.enter().each((series, s_i, s_nodes) => {
@@ -608,8 +608,8 @@ export class BarChart extends Chart {
         axis.select(".domain").remove();
 
         let max = 0;
-        const fontSize = 12;
         axis.selectAll("text")
+            .style("font-size", this._font_size + "px")
             .style("fill", colours.eighteen.darkGrey)
             .nodes()
             .forEach(text => max = Math.max(max, text.getBBox().width));

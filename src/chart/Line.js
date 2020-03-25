@@ -27,9 +27,17 @@ class Line extends Geometry {
 
     constructor() {
         super("LINE", 2);
+        this._stroke_width = 2
+        this._curve = 'curveCatmullRom'
     }
 
-    render() {
+  curve(curve) {
+    if (arguments.length === 0) return this._curve;
+    this._curve = curve;
+    return this;
+  }
+
+  render() {
         const element = this._element;
         const data = this.prepareData(null, true);
         const width = this._width,
@@ -142,12 +150,12 @@ class Line extends Geometry {
         const lineGeom = d3.line()
             .x(d => x(d._x) + x.bandwidth() / 2)
             .y(d => y(d._y))
-            .curve(d3.curveCatmullRom);
+            .curve(d3[this._curve]);
 
         const flatGeom = d3.line()
             .x(d => x(d._x) + x.bandwidth() / 2)
             .y(y(0))
-            .curve(d3.curveCatmullRom);
+            .curve(d3[this._curve]);
 
         let lines = lineGroup.selectAll('.line');
         lines = lines.data(data, d => d._key);
@@ -161,7 +169,7 @@ class Line extends Geometry {
 
 
 
-        const determineStrokeWidth = d => d.data.length <= 1 ? 20 : 2;
+        const determineStrokeWidth = d => d.data.length <= 1 ? 20 : this._stroke_width;
         const transparentColour = d3.hcl(colours.eighteen.darkGrey);
         transparentColour.opacity = 0.8;
         const determineStrokeColour = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";

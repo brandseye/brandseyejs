@@ -113,6 +113,7 @@ class BarHistogram extends Geometry {
                       .style("cursor", "pointer")
                       .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
+                      .style("stroke-width", this.strokeWidth())
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .attr("class", d => "bar series series-" + toColourKey(d._colour))
@@ -265,7 +266,7 @@ class BarHistogram extends Geometry {
 
         let maxHeight = 0;    // For calculating the max height of text.
         let maxWidth = 0;     // For calculating the max width of the text.
-        let fontSize = 12;    // Our initial font size.
+        let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
 
         // Want to figure out if the label is too dark / light for the
@@ -315,12 +316,13 @@ class BarHistogram extends Geometry {
                   let ypos = yGroup(d._key) + yGroup.bandwidth() / 2;
                   let xpos = xscale(d._x);
                   let text = d3.select(nodes[i])
-                               .append("text")
-                               .text(labelText)
-                               .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
-                               .attr("dx", (animate ? -15 : 0))
-                               .style("opacity", 0)
-                               .style("pointer-events", "none");
+                        .append("text")
+                        .style("font-size", fontSize + "px")
+                        .text(labelText)
+                        .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
+                        .attr("dx", (animate ? -15 : 0))
+                        .style("opacity", 0)
+                        .style("pointer-events", "none");
 
                   // Set the x position, which is based on width.
                   const bb = text.node().getBBox();
