@@ -60,12 +60,12 @@ class Pie extends Geometry {
             .each((d, i, nodes) => {
                 const label = d3.select(nodes[i]);
                 label.append('tspan')
-                    .text(d => this.formatX()(d.data._x))
+                    .text(d => this.formatX()(this.x()(d.data)))
                     .attr('dy', this.showLabels() ? '-0.25em' : '0.25em')
 
                 if (this.showLabels()){
                     label.append('tspan')
-                        .text(d => this.formatLabel()(d.data._y))
+                        .text(d => this.formatLabel()(this.y()(d.data)))
                         .attr('dy', '1em')
                         .attr("x", "0")
                 }
@@ -152,7 +152,7 @@ class Pie extends Geometry {
 
                 label
                     .append('tspan')
-                    .text(this.formatX()(d.data._x))
+                    .text(this.formatX()(this.x()(d.data)))
                     .style("dy", this.showLabels() ? "-0.3em" : "0.3em")
                     .style("fill",labelColour);
 
@@ -161,16 +161,16 @@ class Pie extends Geometry {
                         .append('tspan')
                         .attr("dy", "1em")
                         .attr("x", "0")
-                        .text(this.formatLabel()(d.data._y))
+                        .text(this.formatLabel()(this.y()(d.data)))
                         .style("fill", labelColour);
                 }
 
-                // const radians = d.endAngle - d.startAngle;
-                // const radius = arc.innerRadius()();
-                // const arcLength = radians * radius;
-                // const bounding = label.node().getBBox();
+                const radians = d.endAngle - d.startAngle;
+                const radius = arc.innerRadius()();
+                const arcLength = radians * radius;
+                const bounding = label.node().getBBox();
 
-                // if (bounding.width < arcLength) {
+                if (bounding.width < arcLength * 1.2) {
                     // label.attr("dx", (bounding.width / 2));
                     // label.attr("dy", -(bounding.height / 3));
 
@@ -178,21 +178,56 @@ class Pie extends Geometry {
                         .transition()
                         .duration(200)
                         .style("opacity", 1)
-                // }
+                }
             })
     }
 
-    _addCentreLabel(text){
-        if (this._element.select('.y-axis-label').empty()){
-            this._element.select('.pie')
-                .append('g')
-                .attr('class', 'y-axis-label')
+    _addCentreLabel(){
+        let xText = this.xAxisLabel();
+        let yText = this.yAxisLabel();
+
+        const hasYText = yText || yText === 0;
+        const hasXText = xText || xText === 0;
+
+        if (hasXText) xText = xText && xText.short || xText;
+        if (hasYText) yText = yText && yText.short || yText;
+
+        let centreText = this._element.select('.centre-label');
+
+        if (!hasXText && !hasYText){
+            centreText.remove();
+            return
         }
-        this._element
-            .select('.y-axis-label')
-            .append('text')
-            .attr('text-anchor', 'middle')
-            .text(text)
+
+        if (centreText.empty()){
+            centreText = this._element.select('.pie')
+                .append('text')
+                .attr('class', 'centre-label')
+                .attr('text-anchor', 'middle')
+        }
+
+        let xSpan = centreText.select('.x');
+        let ySpan = centreText.select('.y');
+
+        // add spans
+        if (hasYText && ySpan.empty()) ySpan = centreText.append('tspan').attr('class','y');
+        if (hasYText && xSpan.empty()) xSpan = centreText.append('tspan').attr('class','x');
+
+        // populate spans or remove unneeded
+        hasYText
+            ? ySpan
+                .attr('dy', hasXText ? '-0.3em' : '0.3em')
+                .text(yText)
+            : ySpan
+                .remove();
+
+        hasXText
+            ? xSpan
+                .attr('dy', hasYText ? '1em' : '0.3em')
+                .attr('x', '0')
+                .text(xText)
+            : xSpan
+                .remove();
     }
 
     prepareData(data, faceted){
@@ -318,9 +353,7 @@ class Pie extends Geometry {
             this._addOverlaidLabels(pie, arcs, arc);
         }
 
-        if (this.yAxisLabel()){
-            this._addCentreLabel(this.yAxisLabel().short);
-        }
+        this._addCentreLabel();
     }
 
 }

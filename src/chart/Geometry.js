@@ -39,9 +39,12 @@ export class Geometry {
         this._chart_modify_colour = null;
         this._x_formatter = null;
         this._y_formatter = null;
-        this._y_axis_label = null;
         this._chart_x_formatter = null;
         this._chart_y_formatter = null;
+        this._y_axis_label = null;
+        this._x_axis_label = null;
+        this._chart_y_axis_label = null;
+        this._chart_x_axis_label = null;
         this._label_formatter = null;
         this._chart_label_formatter = null;
         this._priority = priority || 1;
@@ -275,15 +278,27 @@ export class Geometry {
         return this;
     }
 
-    yAxisLabel(labelObject) {
+    yAxisLabel(label) {
         if (arguments.length === 0) return this._chart_y_axis_label || this._y_axis_label;
-        this._y_axis_label = labelObject;
+        this._y_axis_label = label;
         return this;
     }
 
-    setupYAxisLabel(labelObject) {
+    setupYAxisLabel(label) {
         if (arguments.length === 0) return this._chart_y_axis_label;
-        this._chart_y_axis_label = labelObject;
+        this._chart_y_axis_label = label;
+        return this;
+    }
+
+    xAxisLabel(label) {
+        if (arguments.length === 0) return this._chart_x_axis_label || this._x_axis_label;
+        this._y_axis_label = label;
+        return this;
+    }
+
+    setupXAxisLabel(label) {
+        if (arguments.length === 0) return this._chart_x_axis_label;
+        this._chart_x_axis_label = label;
         return this;
     }
 
