@@ -61,12 +61,14 @@ class Pie extends Geometry {
                 const label = d3.select(nodes[i]);
                 label.append('tspan')
                     .text(d => this.formatX()(d.data._x))
-                    .attr('dy', '-0.25em')
+                    .attr('dy', this.showLabels() ? '-0.25em' : '0.25em')
 
-                label.append('tspan')
-                    .text(d => this.formatLabel()(d.data._y))
-                    .attr('dy', '1em')
-                    .attr("x", "0")
+                if (this.showLabels()){
+                    label.append('tspan')
+                        .text(d => this.formatLabel()(d.data._y))
+                        .attr('dy', '1em')
+                        .attr("x", "0")
+                }
             })
             .merge(labels)
             .transition().duration(200)
@@ -151,20 +153,22 @@ class Pie extends Geometry {
                 label
                     .append('tspan')
                     .text(this.formatX()(d.data._x))
-                        .style("dy","-0.3em")
-                        .style("fill",labelColour);
+                    .style("dy", this.showLabels() ? "-0.3em" : "0.3em")
+                    .style("fill",labelColour);
 
-                label
-                    .append('tspan')
-                    .attr("dy", "1em")
-                    .attr("x", "0")
-                    .text(this.formatLabel()(d.data._y))
+                if (this.showLabels()){
+                    label
+                        .append('tspan')
+                        .attr("dy", "1em")
+                        .attr("x", "0")
+                        .text(this.formatLabel()(d.data._y))
                         .style("fill", labelColour);
+                }
 
                 // const radians = d.endAngle - d.startAngle;
                 // const radius = arc.innerRadius()();
                 // const arcLength = radians * radius;
-                const bounding = label.node().getBBox();
+                // const bounding = label.node().getBBox();
 
                 // if (bounding.width < arcLength) {
                     // label.attr("dx", (bounding.width / 2));
@@ -280,8 +284,9 @@ class Pie extends Geometry {
                 d3.select(nodes[i])
                   .interrupt("hover:colour")
                   .transition("hover:colour")
-                  .duration(200)
-                  .style("fill", d3.hcl(this.getD3Colour(d.data)).darker());
+                  .duration(50)
+                  .style("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
+                  .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
                 this._dispatch.call("tooltipShow", this, {
                     e: d3.event,
                     point: d.data,
@@ -294,13 +299,14 @@ class Pie extends Geometry {
                 d3.select(nodes[i])
                   .interrupt("hover:colour")
                   .transition("hover:colour")
-                  .duration(200)
-                  .style("fill", d => this.getD3Colour(d.data));
+                  .duration(100)
+                  .style("fill", d => this.getD3Colour(d.data))
+                  .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
                 this._dispatch.call("tooltipHide", this);
             })
             .style("fill", d => this.getD3Colour(d.data))
             .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
-            .transition().duration(200)
+            .transition().duration(100)
             .attrTween('d', arcTween)
 
         segments.exit().remove()
