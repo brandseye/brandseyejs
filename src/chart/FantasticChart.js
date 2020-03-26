@@ -17,12 +17,12 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { colours } from '../Colours';
-import { scaleIdentity } from "./Scales";
-import { xaxis, yaxis, yGrid, xGrid, yAxisLabel, xAxisLabel } from "./Axes";
-import { maxBounding } from "../helpers";
-import { removeLegend, renderLegend, buckets } from "../Legend";
-import { restrictLength } from "../Strings";
+import {colours} from '../Colours';
+import {scaleIdentity} from "./Scales";
+import {xaxis, xAxisLabel, yaxis, yAxisLabel, yGrid} from "./Axes";
+import {maxBounding} from "../helpers";
+import {buckets, removeLegend, renderLegend} from "../Legend";
+import {restrictLength} from "../Strings";
 
 
 class FantasticChart {
@@ -64,8 +64,12 @@ class FantasticChart {
         this._label_formatter = null;
         this._font_size = 12;
         this._x_grid_lines = false;
+        this._y_grid_lines = false;
+        this._axis_box = false;
         this._x_label_angle = null;
         this._grid_line_opacity = 0.2;
+        this._x_tick_values_fn = null;
+        this._y_tick_values_fn = null;
         return this;
     }
 
@@ -284,6 +288,18 @@ class FantasticChart {
         return this;
     }
 
+    yGridLines(show) {
+        if (arguments.length === 0) return this._y_grid_lines;
+        this._y_grid_lines = !!show;
+        return this;
+    }
+
+    axisBox(show) {
+        if (arguments.length === 0) return this._axis_box;
+        this._axis_box = !!show;
+        return this;
+    }
+
     xLabelAngle(degrees) {
         if (arguments.length === 0) return this._x_label_angle;
         if (degrees !== null && typeof degrees !== "number") throw new Error("degrees must be a number or null");
@@ -295,6 +311,26 @@ class FantasticChart {
         if (arguments.length === 0) return this._grid_line_opacity;
         if (typeof opacity !== "number") throw new Error("opacity must be a number or null");
         this._grid_line_opacity = opacity;
+        return this;
+    }
+
+    /**
+     * The function is passed the xScale and must return null or an array of values to use for ticks.
+     */
+    xTickValuesFn(fn) {
+        if (arguments.length === 0) return this._x_tick_values_fn;
+        if (fn && typeof fn !== "function") throw new Error("fn must be an function or null");
+        this._x_tick_values_fn = fn;
+        return this;
+    }
+
+    /**
+     * The function is passed the yScale and must return null or an array of values to use for ticks.
+     */
+    yTickValuesFn(fn) {
+        if (arguments.length === 0) return this._y_tick_values_fn;
+        if (fn && typeof fn !== "function") throw new Error("fn must be an function or null");
+        this._y_tick_values_fn = fn;
         return this;
     }
 
@@ -349,7 +385,8 @@ class FantasticChart {
         const axisOptions = {
             fontSize: this._font_size,
             xLabelAngle: this._x_label_angle,
-            gridLineOpacity: this._grid_line_opacity
+            gridLineOpacity: this._grid_line_opacity,
+            axisBox: this._axis_box
         }
 
         //-----------------------------------------------
@@ -390,7 +427,6 @@ class FantasticChart {
         if (this._x_axis_label) margin.bottom += 40;
         const width  = this._width - margin.left - margin.right;
         const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
-        const bottomOuterPadding = outerPadding + legendHeight + (this._x_axis_label ? 40 : 0);
 
         //-----------------------------------------------
         // Determine initial facet / small multiple information
@@ -422,7 +458,8 @@ class FantasticChart {
                 .getD3XScale();
 
             let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
-                .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction));
+                .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
+                .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null)
             let height = xaxis(axisSizeArea, this._height,
                 xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
                 axis, this.importanceX(), axisOptions);
@@ -486,11 +523,12 @@ class FantasticChart {
             .attr("class", "y-axis-area")
             .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")").lower();
 
-        const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
+        const yScale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
             yaxis(yAxisArea,
-                d3.axisLeft(yscale).ticks(yTickCount)
+                d3.axisLeft(yScale).ticks(yTickCount)
+                    .tickValues(this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null)
                     .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
                 axisOptions);
 
@@ -511,7 +549,8 @@ class FantasticChart {
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
                     d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
-                        .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
+                        .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
+                        .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null),
                     this.importanceX(), axisOptions)
             });
 
@@ -545,7 +584,7 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
+                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yScale).ticks(yTickCount));
                 //xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();

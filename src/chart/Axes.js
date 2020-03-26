@@ -29,52 +29,68 @@ function ensureOptions(o) {
     }, o)
 }
 
+function getMaxWidth(sel) {
+    let max = 0
+    sel.nodes().forEach(node => max = Math.max(max, node.getBBox().width))
+    return max
+}
+
+function removeExcessXTicks(axis, labelWidth) {
+    let a = axis.selectAll("g.tick").nodes()
+    if (!a.length) return
+    let px = a[0].getBoundingClientRect().x + labelWidth
+    for (let i = 1; i < a.length; i++) {
+        let node = a[i]
+        let x = node.getBoundingClientRect().x
+        if (x < px) node.parentNode.removeChild(node)
+        else px = x + labelWidth // there is space for the label
+    }
+}
+
 export function xaxis(selection, height, width, axisObject, importance, options) {
-    let { fontSize, gridLineOpacity } = ensureOptions(options)
+    options = ensureOptions(options)
+    let { fontSize, gridLineOpacity } = options
 
     selection.select(".x-axis").remove();
     let axis = selection.append("g").attr("class", "x-axis").style("opacity", 0).call(axisObject)
 
     axis.select(".domain").remove();
 
-    let max = 0;
-    const boldText = colours.eighteen.darkGrey;
-    const regularText = d3.hcl(boldText).brighter();
+    const regularText = d3.hcl(colours.eighteen.darkGrey).brighter();
 
     let text = axis.selectAll("text")
     text.style("font-size", fontSize + "px")
-        .style("fill", (d, i) => importance(d, i) ? boldText : regularText)
-        .nodes()
-        .forEach(text => max = Math.max(max, text.getBBox().width));
+        .style("fill", regularText)
 
-    if (max >= width - 10) {
-        const bad = max >= width * 2;
-        const angle = bad ? -90 : -30;
-        const x = bad ? -(fontSize * 0.78) : 0;
-        const y = bad ? 5 : 2;
+    let tv = axisObject.tickValues()
+    if (tv) width *= axisObject.scale().domain().length / (tv.length + 1)
 
-        text.style('text-anchor', 'end')
-            .style("fill", regularText) // not using importance any more
-            .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
+    let labelWidth = getMaxWidth(text) + 4
+    if (labelWidth > width) {
+        if (options.xLabelAngle !== 0) {
+            const bad = labelWidth >= width * 2;
+            const angle = bad ? -90 : -30;
+            const x = bad ? -(fontSize * 0.78) : 0;
+            const y = bad ? 5 : 2;
 
-        let labelWidth = fontSize * 1.2
-        if (labelWidth > width) {
-            //console.log("width " + width + " labelWidth " + labelWidth + " peek " + peek)
-            let a = axis.selectAll("g.tick").nodes()
-            let px = (a.length ? a[0].getBoundingClientRect().x : 0) + labelWidth
-            for (let i = 1; i < a.length; i++) {
-                let node = a[i]
-                let x = node.getBoundingClientRect().x
-                if (x < px) {
-                    node.parentNode.removeChild(node)
-                } else {    // there is space for the label
-                    px = x + labelWidth
-                }
-            }
+            text.style('text-anchor', 'end')
+                .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
+
+            labelWidth = fontSize * 1.2  // getBoundingClientRect doesn't seem to consider the rotation?
         }
+        if (labelWidth > width) removeExcessXTicks(axis, labelWidth)
+    } else {
+        if (tv) removeExcessXTicks(axis, labelWidth) // ticks might not be evenly spaced
     }
 
     axis.selectAll("line").style("opacity", gridLineOpacity)
+
+    let tickSize = axisObject.tickSize();
+    if (tickSize && options.axisBox) {
+        let x = axisObject.scale().range()[1]
+        axis.append("line").attr("x1", x).attr("x2", x).attr("y2", tickSize)
+            .attr("opacity", gridLineOpacity).attr("stroke", "currentColor")
+    }
 
     axis.transition().duration(AXIS_ANIMATION_DURATION).delay(AXIS_DELAY).style("opacity", 1)
 
