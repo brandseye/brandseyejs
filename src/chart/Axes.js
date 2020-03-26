@@ -24,19 +24,16 @@ const AXIS_DELAY = 250;
 
 function ensureOptions(o) {
     return Object.assign({
-        fontSize: 12
+        fontSize: 12,
+        gridLineOpacity: 0.2
     }, o)
 }
 
 export function xaxis(selection, height, width, axisObject, importance, options) {
-    let { fontSize } = ensureOptions(options)
+    let { fontSize, gridLineOpacity } = ensureOptions(options)
 
     selection.select(".x-axis").remove();
-    let axis = selection.append("g")
-                        .attr("class", "x-axis")
-                        .attr("transform", "translate(0," + height + ")")
-                        .style("opacity", 0)
-                        .call(axisObject);
+    let axis = selection.append("g").attr("class", "x-axis").style("opacity", 0).call(axisObject)
 
     axis.select(".domain").remove();
 
@@ -77,15 +74,11 @@ export function xaxis(selection, height, width, axisObject, importance, options)
         }
     }
 
-    axis
-        .transition()
-        .duration(AXIS_ANIMATION_DURATION)
-        .delay(AXIS_DELAY)
-        .style("opacity", 1);
+    axis.selectAll("line").style("opacity", gridLineOpacity)
 
-    const axisHeight = axis.node().getBBox().height;
-    axis.attr("transform", "translate(0," + (height - axisHeight) + ")");
-    return axisHeight;
+    axis.transition().duration(AXIS_ANIMATION_DURATION).delay(AXIS_DELAY).style("opacity", 1)
+
+    return axis.node().getBBox().height;
 }
 
 export function yaxis(selection, axis, options) {
