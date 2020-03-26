@@ -61,6 +61,8 @@ class FantasticChart {
         this._legend_colours = () => null;
         this._y_axis_label = null;
         this._x_axis_label = null;
+        this._show_x_axis = true;
+        this._show_y_axis = true;
         this._label_formatter = null;
         this._font_size = 12;
         this._x_grid_lines = false;
@@ -183,6 +185,24 @@ class FantasticChart {
     xAxisLabel(label) {
         if (arguments.length === 0) return this._x_axis_label;
         this._x_axis_label = label;
+        return this;
+    }
+
+    /**
+     * Whether to show the x axis. Needs a #render() call.
+     */
+    showXAxis(show) {
+        if (arguments.length === 0) return this._show_x_axis;
+        this._show_x_axis = !!show;
+        return this;
+    }
+
+    /**
+     * Whether to show the y axis. Needs a #render() call.
+     */
+    showYAxis(show) {
+        if (arguments.length === 0) return this._show_y_axis;
+        this._show_y_axis = !!show;
         return this;
     }
 
@@ -356,15 +376,18 @@ class FantasticChart {
         // Calculate the space that various elements will want to take up. We also
         // restrict the y axis by a proportion of the width of the metric.
 
-        const yAxisRestriction = Math.max((this._width * 0.07), 25);
-
+        let axisWidth = 0;
         const geometries = this.sortGeometries();
+        const yAxisRestriction = Math.max((this._width * 0.07), 25);
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length && this._height >= 160
-            ? maxBounding(svg, geometries[0].yValues()
-                                            .map(geometries[0].formatY())
-                                            .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
-            : 0;
+
+        if (this._show_y_axis){
+            axisWidth = geometries.length && this._height >= 160
+                ? maxBounding(svg, geometries[0].yValues()
+                                                .map(geometries[0].formatY())
+                                                .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
+                : 0;
+        }
 
         //-----------------------------------------------
         // Draw the legend
@@ -386,8 +409,8 @@ class FantasticChart {
             bottom: outerPadding + legendHeight,
             left: outerPadding + axisWidth
         };
-        if (this._y_axis_label) margin.left += 20;
-        if (this._x_axis_label) margin.bottom += 40;
+        if (this._show_y_axis && this._y_axis_label) margin.left += 20;
+        if (this._show_x_axis && this._x_axis_label) margin.bottom += 40;
         const width  = this._width - margin.left - margin.right;
         const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
         const bottomOuterPadding = outerPadding + legendHeight + (this._x_axis_label ? 40 : 0);
@@ -407,30 +430,35 @@ class FantasticChart {
         // Determine x-axis height
         // We do this by rendering the various x-axes offscreen.
 
+        let axisHeight = 0;
         const xTickCount = Math.floor(width / 90);
 
-        geometries.forEach(geom => geom.width(facetBand.bandwidth()));
-        const axisSizeArea = svg.append("g")
-            .attr("transform", "translate(-1000, -1000)");
+        if (this._show_x_axis){
 
-        const xAxisRestriction = Math.min(25, Math.max(this._height * 0.07, 12));
-        let axisHeight = 0;
-        facets.forEach(facet => {
-            const xScale = geometries[0]
-                .width(facetBand.bandwidth())
-                .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                .getD3XScale();
+            geometries.forEach(geom => geom.width(facetBand.bandwidth()));
+            const axisSizeArea = svg.append("g")
+                .attr("transform", "translate(-1000, -1000)");
 
-            let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
-                .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction));
-            let height = xaxis(axisSizeArea, this._height,
-                xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                axis, this.importanceX(), axisOptions);
+            const xAxisRestriction = Math.min(25, Math.max(this._height * 0.07, 12));
 
-            axisHeight = Math.max(height, axisHeight);
-        });
+            facets.forEach(facet => {
+                const xScale = geometries[0]
+                    .width(facetBand.bandwidth())
+                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                    .getD3XScale();
 
-        axisSizeArea.remove();
+                let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
+
+                    .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction));
+                let height = xaxis(axisSizeArea, this._height,
+                    xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                    axis, this.importanceX(), axisOptions);
+
+                axisHeight = Math.max(height, axisHeight);
+            });
+
+            axisSizeArea.remove();
+        }
 
         //-----------------------------------------------
         // Update margins and calculate height
@@ -488,40 +516,46 @@ class FantasticChart {
 
         const yscale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
+
             // Draw the yaxis.
-            yaxis(yAxisArea,
-                d3.axisLeft(yscale).ticks(yTickCount)
-                    .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
-                axisOptions);
+            if (this._show_y_axis) {
+                yaxis(yAxisArea,
+                    d3.axisLeft(yscale).ticks(yTickCount)
+                        .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
+                    axisOptions);
+            }
 
             // Draw a little x-axis for every facet.
-            facets.forEach(facet => {
-                const xScale = geometries[0]
-                    .width(facetBand.bandwidth())
-                    .height(height)
-                    .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
-                    .getD3XScale();
+            if (this._show_x_axis){
+                facets.forEach(facet => {
+                    const xScale = geometries[0]
+                        .width(facetBand.bandwidth())
+                        .height(height)
+                        .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
+                        .getD3XScale();
 
-                const area = xAxisArea
-                    .append("g")
-                    .attr("transform", "translate(" + (facetBand(facet)) + ",0)")// + (this._height - axisHeight) +")")
-                    .attr("width", facetBand.bandwidth());
+                    const area = xAxisArea
+                        .append("g")
+                        .attr("transform", "translate(" + (facetBand(facet)) + ",0)")// + (this._height - axisHeight) +")")
+                        .attr("width", facetBand.bandwidth());
 
 
-                xaxis(area, this._height,
-                    xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
-                        .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
-                    this.importanceX(), axisOptions)
-            });
+                    xaxis(area, this._height,
+                        xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
+                        d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
+
+                            .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction)),
+                        this.importanceX(), axisOptions)
+                });
+            }
 
         }
 
         //-----------------------------------------------
         // Setup labels
 
-        yAxisLabel(svg, height, margin, this._y_axis_label, axisOptions);
-        xAxisLabel(svg, width, height, margin, this._x_axis_label, axisOptions);
+        if(this._show_y_axis) yAxisLabel(svg, height, margin, this._y_axis_label, axisOptions);
+        if(this._show_x_axis) xAxisLabel(svg, width, height, margin, this._x_axis_label, axisOptions);
 
         //-----------------------------------------------
         // Draw individual geometries.
@@ -545,8 +579,9 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
+                if(this._show_y_axis) yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yscale).ticks(yTickCount));
                 //xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
+
 
                 geoms.exit().remove();
 
