@@ -120,7 +120,6 @@ function removeOverlappingYTicks(axis, labelHeight) {
     for (let i = 1; i < a.length; i++) {
         let node = a[i]
         let y = node.getBoundingClientRect().y
-        console.log("y " + y + " py " + py)
         if (y > py) node.parentNode.removeChild(node)
         else py = y - labelHeight // there is space for the label
     }
