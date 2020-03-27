@@ -47,6 +47,19 @@ function removeOverlappingXTicks(axis, labelWidth) {
     }
 }
 
+function adjustFirstXTickLabel(axis) {
+    // move the first tick label right if it extends too far to the left as it might overlap the y-axis zero
+    let tick = axis.select("g.tick")
+    if (tick.empty()) return
+    let t = tick.attr("transform")  // e.g. translate(8.327586206896552,0)
+    let i = t.indexOf('(')
+    let j = t.indexOf(',', i + 1)
+    let x = parseFloat(t.substring(i + 1, j))
+    let text = tick.select("text")
+    x -= text.node().getComputedTextLength() / 2
+    if (x < -8) text.attr("x", Math.abs(x + 6))
+}
+
 export function xaxis(selection, height, width, axisObject, importance, options) {
     options = ensureOptions(options)
     let { fontSize, gridLineOpacity } = options
@@ -77,9 +90,12 @@ export function xaxis(selection, height, width, axisObject, importance, options)
                 .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
 
             labelWidth = fontSize * 1.2  // getBoundingClientRect doesn't seem to consider the rotation?
+        } else {
+            adjustFirstXTickLabel(axis)
         }
         if (labelWidth > width) removeOverlappingXTicks(axis, labelWidth)
     } else {
+        adjustFirstXTickLabel(axis)
         if (tv) removeOverlappingXTicks(axis, labelWidth) // ticks might not be evenly spaced
     }
 

@@ -457,7 +457,7 @@ class FantasticChart {
                 .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                 .getD3XScale();
 
-            let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
+            let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(6)
                 .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
                 .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null)
             let height = xaxis(axisSizeArea, this._height,
@@ -529,7 +529,7 @@ class FantasticChart {
             yaxis(yAxisArea,
                 d3.axisLeft(yScale).ticks(Math.floor(height / 30))
                     .tickSize(this._y_grid_lines ? -width : 0)
-                    .tickPadding(5)
+                    .tickPadding(6)
                     .tickValues(this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null)
                     .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
                 axisOptions);
@@ -550,7 +550,7 @@ class FantasticChart {
 
                 xaxis(area, this._height,
                     xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
+                    d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(6)
                         .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
                         .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null),
                     this.importanceX(), axisOptions)
