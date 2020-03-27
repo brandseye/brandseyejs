@@ -6,6 +6,13 @@ module.exports = {
       "b3js": "./src/index.js",
       "b3js.min": "./src/index.js",
   },
+  devServer: {
+    port: 8000,
+    filename: 'b3js.js',
+    publicPath: '/dist/',
+    open: true,
+    openPage: 'dist/examples/fantastic.html'
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js', library: 'b3js'

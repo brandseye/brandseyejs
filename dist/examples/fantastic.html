@@ -593,8 +593,10 @@ graph
                 .scaleX(b3js.scaleDiscrete())
                 .yAxisLabel('Count')
                 .xAxisLabel('Species')
+                .showXAxis(false)
+                .showYAxis(false)
                 // .colour(d => d.species)
-                // .facetX(d => d.group)
+                .facetX(d => d.group)
                 .render()
         }
         drawPie();
