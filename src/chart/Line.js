@@ -320,7 +320,7 @@ class Line extends Geometry {
 
 
         return d3.scaleBand()
-            .rangeRound([0, width])
+            .range([0, width])
             .domain(data.map(d => d._x));
     }
 
