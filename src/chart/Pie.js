@@ -400,16 +400,6 @@ class Pie extends Geometry {
           .innerRadius(this.isDonut() ? minDimension / 4 : 0)
           .outerRadius(minDimension / 2)
 
-        const labelArc = this.isDonut()
-          ? arc
-          : d3.arc()
-            .innerRadius(minDimension / 6)
-            .outerRadius(minDimension / 2)
-
-        const outerArc = d3.arc()
-          .innerRadius(minDimension / 2 + 10)
-          .outerRadius(minDimension / 2 + 10)
-
         const arcTween = function(a, i, nodes){
           var i = d3.interpolate(this._current, a);
           this._current = i(0);
@@ -466,9 +456,18 @@ class Pie extends Geometry {
         // TODO: do this in a customisable way
         // const canUseOutsideLabels = this.width() / this.height() >= 1.5;
 
+        const labelArc = this.isDonut()
+          ? arc
+          : d3.arc()
+            .innerRadius(minDimension / 6)
+            .outerRadius(minDimension / 2)
+
         if (this.useOutsideLabels()){ // && canUseOutsideLabels
+            const outerArc = d3.arc()
+              .innerRadius(minDimension / 2 + 10)
+              .outerRadius(minDimension / 2 + 10)
             pie.select('.segment-labels').remove();
-            this._addOutsideLabels(pie, arcs, arc, outerArc);
+            this._addOutsideLabels(pie, arcs, labelArc, outerArc);
         } else {
             pie.select('.outside-labels').remove();
             pie.select('.outside-lines').remove();
