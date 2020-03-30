@@ -135,7 +135,10 @@ class Pie extends Geometry {
     }
 
     _getWidthOfWidestLabel(){
-        const allLabels = [...this.xValues(), ...this.yValues()];
+        const allLabels = [
+          ...this.xValues().map(xVal => this.formatX()(xVal)),
+          ...this.yValues().map(yVal => this.formatLabel()(yVal))
+        ];
         const text = this._element.select('.pie')
             .append('text')
             .attr('class', 'label-width-check')
@@ -149,11 +152,33 @@ class Pie extends Geometry {
                 .attr('x', 0)
                 .attr('dy', '1em')
 
-        const widthOfWidestLabel = text.node().getBBox().width;
+        const textWidth = text.node().getBBox().width;
 
         text.remove();
 
-        return widthOfWidestLabel
+        return textWidth
+    }
+
+    _getLabelHeight(){
+      const text = this._element.select('.pie')
+        .append('text')
+        .attr('class', 'label-height-check')
+
+      const data = this.showLabels() ? ['Category', 'Value'] : ['Category'];
+
+      text.selectAll('tspan')
+        .data(data)
+        .enter()
+        .append('tspan')
+        .text(d => d)
+        .attr('x',0)
+        .attr('dy','1em')
+
+      const textHeight = text.node().getBBox().height;
+
+      text.remove()
+
+      return textHeight
     }
 
     _addSegmentLabels(pie, arcs, arc){
@@ -349,15 +374,23 @@ class Pie extends Geometry {
 
         // check how much width we need for labels
         const minLabelCharacters = 6;
-        let widthOfWidestLabel = 0;
+
+        let availableWidth = this.width();
+        let availableHeight = this.height();
+
+        let widestLabelWidth = 0;
+        let labelHeight = 0;
 
         if (this.useOutsideLabels()){
-          widthOfWidestLabel = this._getWidthOfWidestLabel();
+          widestLabelWidth = this._getWidthOfWidestLabel();
+          labelHeight = this._getLabelHeight();
+          availableWidth -= widestLabelWidth * 2;
+          availableHeight -= labelHeight * 2;
         }
 
-        const minDimension = Math.min(this.width(),this.height());
+        const minDimension = Math.min(availableWidth, availableHeight);
 
-        pie.attr("transform", `translate(${this.width()/2},${minDimension/2})`)
+        pie.attr("transform", `translate(${availableWidth/2 + widestLabelWidth},${minDimension/2 + labelHeight})`)
 
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
