@@ -591,31 +591,34 @@ graph
         ]
 
         const pieChart = new b3js.chart('Pie');
+        const pieGeom = b3js.pie();
 
-        function drawPie(){
-            pieChart
-                .data(pieData)
-                .element(document.getElementById('pie-chart'))
-                .x(d => d.species)
-                .y(d => d.count)
-                .geometry(b3js.pie())
-                .scaleX(b3js.scaleDiscrete())
-                .yAxisLabel('Count')
-                .xAxisLabel('Species')
-                .showXAxis(false)
-                .showYAxis(false)
-                .isDonut(true)
-                // .colour(d => d.species)
-                //.facetX(d => d.group)
-                .render()
-        }
-        drawPie();
+        pieChart
+            .data(pieData)
+            .element(document.getElementById('pie-chart'))
+            .x(d => d.species)
+            .y(d => d.count)
+            .geometry(pieGeom.isDonut(true))
+            .scaleX(b3js.scaleDiscrete())
+            .yAxisLabel('Count')
+            .xAxisLabel('Species')
+            .showXAxis(false)
+            .showYAxis(false)
+            // .colour(d => d.species)
+            //.facetX(d => d.group)
+            .render()
 
         const interactions = document.createElement('div');
         const btn = document.createElement('button');
+        const donutToggle = document.createElement('button');
+        const outsideLabelToggle = document.createElement('button');
+
+        btn.innerHTML = 'Update data';
+        donutToggle.innerHTML = 'Toggle donut';
+        outsideLabelToggle.innerHTML = 'Toggle outside labels';
+
         let i = 0;
         const mod = 100;
-        btn.innerHTML = 'Update data';
         btn.addEventListener('click', function(){
             pieData.forEach(item => {
                 item.count = (Math.random()*150).toFixed(2);
@@ -624,7 +627,21 @@ graph
             i === mod ? i = 0 : i += 1 ;
             pieChart.render();
         })
+
+        donutToggle.addEventListener('click', function(){
+          pieGeom.isDonut(!pieGeom.isDonut());
+          pieChart.render();
+        });
+
+        outsideLabelToggle.addEventListener('click', function(){
+          pieGeom.useOutsideLabels(!pieGeom.useOutsideLabels());
+          pieChart.render();
+        })
+
         interactions.appendChild(btn);
+        interactions.appendChild(donutToggle);
+        interactions.appendChild(outsideLabelToggle);
+
         document.getElementById('pie-chart').parentElement.appendChild(interactions)
 
     });

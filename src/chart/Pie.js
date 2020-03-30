@@ -21,8 +21,10 @@ import { Geometry } from './Geometry';
 import { colours } from "../Colours";
 
 class Pie extends Geometry {
-    constructor(name){
+    constructor(name, isDonut, useOutsideLabels){
         super(name || 'PIE');
+        this._is_donut = (typeof isDonut !== 'undefined' && isDonut !== null) ? isDonut : false;
+        this._use_outside_labels = (typeof useOutsideLabels !== 'undefined' && useOutsideLabels !== null) ? useOutsideLabels : false;
     }
 
     _getOverlayLabelColour(d){
@@ -250,6 +252,18 @@ class Pie extends Geometry {
                 .remove();
     }
 
+    isDonut(bool){
+        if (arguments.length === 0) return this._is_donut;
+        this._is_donut = bool;
+        return this
+    }
+
+    useOutsideLabels(bool){
+        if (arguments.length === 0) return this._use_outside_labels;
+        this._use_outside_labels = bool;
+        return this
+    }
+
     prepareData(data, faceted){
         faceted = !!faceted && this.facet();
         data = data || this._data;
@@ -306,8 +320,14 @@ class Pie extends Geometry {
         const minDimension = Math.min(this.width(),this.height());
 
         const arc = d3.arc()
-            .innerRadius(minDimension / 4)
+            .innerRadius(this.isDonut() ? minDimension / 4 : 0)
             .outerRadius(minDimension / 2)
+
+        const labelArc = this.isDonut()
+          ? arc
+          : d3.arc()
+                .innerRadius(minDimension / 6)
+                .outerRadius(minDimension / 2)
 
         const outerArc = d3.arc()
             .innerRadius(minDimension / 2 + 10)
@@ -375,18 +395,22 @@ class Pie extends Geometry {
         paths.exit().remove()
 
         // TODO: do this in a customisable way
-        const useOutsideLabels = this.width() / this.height() >= 1.5;
+        const canUseOutsideLabels = this.width() / this.height() >= 1.5;
 
-        if (useOutsideLabels){
+        if (this.useOutsideLabels() && canUseOutsideLabels){
             pie.select('.segment-labels').remove();
             this._addOutsideLabels(pie, arcs, arc, outerArc);
         } else {
             pie.select('.outside-labels').remove();
             pie.select('.outside-lines').remove();
-            this._addSegmentLabels(pie, arcs, arc);
+            this._addSegmentLabels(pie, arcs, labelArc);
         }
 
-        this._addCentreLabel();
+        if (this.isDonut()){
+            this._addCentreLabel();
+        } else {
+            this._element.select('.centre-label').remove();
+        }
     }
 
 }
