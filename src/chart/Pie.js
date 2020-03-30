@@ -395,9 +395,9 @@ class Pie extends Geometry {
         paths.exit().remove()
 
         // TODO: do this in a customisable way
-        const canUseOutsideLabels = this.width() / this.height() >= 1.5;
+        // const canUseOutsideLabels = this.width() / this.height() >= 1.5;
 
-        if (this.useOutsideLabels() && canUseOutsideLabels){
+        if (this.useOutsideLabels()){ // && canUseOutsideLabels
             pie.select('.segment-labels').remove();
             this._addOutsideLabels(pie, arcs, arc, outerArc);
         } else {
