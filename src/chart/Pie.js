@@ -54,7 +54,7 @@ class Pie extends Geometry {
 
         const radius = arc.outerRadius()();
         const textColour = d3.hcl(colours.eighteen.darkGrey).brighter();
-        const lineColour = d3.hcl(textColour.h, textColour.c, textColour.l, 0.6);
+        const lineColour = d3.hcl(textColour.h, textColour.c, textColour.l, 0.5);
 
         labels.enter()
             .append('text')
@@ -110,6 +110,7 @@ class Pie extends Geometry {
             .attr('stroke', lineColour)
             .attr('stroke-width', '1px')
             .attr('fill', 'none')
+            .style('mix-blend-mode', 'multiply')
             .merge(polyline)
             .transition().duration(this._transition_duration)
             .attrTween("points", function(d){
