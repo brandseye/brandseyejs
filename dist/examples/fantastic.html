@@ -578,7 +578,16 @@ graph
             { count: 345, group: 'animal', species: 'Cat'},
             { count: 123, group: 'beast',  species: 'Gruffalo'},
             { count: 740, group: 'animal', species: 'Giraffe'},
-            { count: 100, group: 'beast',  species: 'Uncertain'}
+            { count: 100, group: 'beast',  species: 'Uncertain'},
+            { count: 123, group: 'beast',  species: 'Bird'},
+            { count: 740, group: 'animal', species: 'Parrot'},
+            { count: 100, group: 'beast',  species: 'Dragon'},
+            { count: 123, group: 'beast',  species: 'Mouse'},
+            { count: 740, group: 'animal', species: 'Lynx'},
+            { count: 100, group: 'beast',  species: 'Worm'},
+            { count: 123, group: 'beast',  species: 'Snake'},
+            { count: 740, group: 'animal', species: 'Ant'},
+            { count: 100, group: 'beast',  species: 'Dinosaur'},
         ]
 
         const pieChart = new b3js.chart('Pie');
@@ -595,8 +604,9 @@ graph
                 .xAxisLabel('Species')
                 .showXAxis(false)
                 .showYAxis(false)
+                .isDonut(true)
                 // .colour(d => d.species)
-                // .facetX(d => d.group)
+                //.facetX(d => d.group)
                 .render()
         }
         drawPie();
@@ -604,13 +614,14 @@ graph
         const interactions = document.createElement('div');
         const btn = document.createElement('button');
         let i = 0;
+        const mod = 100;
         btn.innerHTML = 'Update data';
         btn.addEventListener('click', function(){
             pieData.forEach(item => {
-                item.count = Math.random()*150;
-                item.group = i === 2 ? 'animal' : ['animal','beast'][Math.round(Math.random())];
+                item.count = (Math.random()*150).toFixed(2);
+                item.group = i === mod ? 'animal' : ['animal','beast'][Math.round(Math.random())];
             })
-            i === 2 ? i = 0 : i += 1 ;
+            i === mod ? i = 0 : i += 1 ;
             pieChart.render();
         })
         interactions.appendChild(btn);

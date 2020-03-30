@@ -49,7 +49,7 @@ class Pie extends Geometry {
             return d.startAngle + (d.endAngle - d.startAngle)/2;
         }
 
-        const radius = Math.min(this.width(),this.height()) / 2;
+        const radius = arc.outerRadius()();
         const textColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lineColour = d3.hcl(textColour.h, textColour.c, textColour.l, 0.6);
 
@@ -132,23 +132,30 @@ class Pie extends Geometry {
     }
 
     _addSegmentLabels(pie, arcs, arc){
-        pie.selectAll(".segment-labels").remove();
-        const labels = pie.append('g')
-            .attr('class','segment-labels')
+        if (pie.select(".segment-labels").empty()){
+            pie.append('g').attr('class','segment-labels')
+        }
+
+        const labels = pie.select('.segment-labels')
             .selectAll('text')
             .data(arcs)
 
+        function midAngle(d){
+          return d.startAngle + (d.endAngle - d.startAngle)/2;
+        }
+
+        const radius = arc.innerRadius()();
+
         labels.enter()
+            .append("text")
+            .attr('text-anchor', 'middle')
+            .attr('pointer-events', 'none')
+            // .style("opacity", 0)
             .each((d, i, nodes) => {
                 const centroid = arc.centroid(d);
                 const labelColour = this._getOverlayLabelColour(d);
 
                 let label = d3.select(nodes[i])
-                    .append("text")
-                    .attr("transform", "translate(" + centroid + ")")
-                    .attr('text-anchor', 'middle')
-                    .attr('pointer-events', 'none')
-                    .style("opacity", 0)
 
                 label
                     .append('tspan')
@@ -165,21 +172,34 @@ class Pie extends Geometry {
                         .style("fill", labelColour);
                 }
 
-                const radians = d.endAngle - d.startAngle;
-                const radius = arc.innerRadius()();
-                const arcLength = radians * radius;
-                const bounding = label.node().getBBox();
-
-                if (bounding.width < arcLength * 1.2) {
-                    // label.attr("dx", (bounding.width / 2));
-                    // label.attr("dy", -(bounding.height / 3));
-
-                    label
-                        .transition()
-                        .duration(200)
-                        .style("opacity", 1)
-                }
+                // const radians = d.endAngle - d.startAngle;
+                // const radius = arc.innerRadius()();
+                // const arcLength = radians * radius;
+                // const bounding = label.node().getBBox();
+                //
+                // if (bounding.width < arcLength * 1.2) {
+                //     // label.attr("dx", (bounding.width / 2));
+                //     // label.attr("dy", -(bounding.height / 3));
+                //
+                //     label
+                //         .transition()
+                //         .duration(200)
+                //         .style("opacity", 1)
+                // }
             })
+            .merge(labels)
+            .transition().duration(100)
+            .attrTween("transform", function(d) {
+              this._current = this._current || d;
+              const interpolate = d3.interpolate(this._current, d);
+              this._current = interpolate(0);
+              return function(t) {
+                const dInt = interpolate(t);
+                return "translate(" + arc.centroid(dInt) + ")";
+              };
+            });
+
+        labels.exit().remove();
     }
 
     _addCentreLabel(){
@@ -308,13 +328,21 @@ class Pie extends Geometry {
         }
 
         const arcs = d3.pie().value(this.y())(data);
-        const segments = pie.selectAll('path').data(arcs, d => d.data._x);
 
-        segments
+        let segments = pie.select('.segments');
+
+        if (segments.empty()){
+          segments = pie.append('g').attr('class','segments')
+        }
+
+        const paths = segments.selectAll('path')
+          .data(arcs, d => d.data._x)
+
+        paths
             .enter()
             .append('path')
             .each(function(d){this._current = d})
-            .merge(segments)
+            .merge(paths)
             .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
                 d3.select(nodes[i])
                   .interrupt("hover:colour")
@@ -344,10 +372,12 @@ class Pie extends Geometry {
             .transition().duration(100)
             .attrTween('d', arcTween)
 
-        segments.exit().remove()
+        paths.exit().remove()
 
-        // TODO: do this in a more advanced / customisable way
-        if (this.width() >= this.height() * 1.5){
+        // TODO: do this in a customisable way
+        const useOutsideLabels = this.width() / this.height() >= 1.5;
+
+        if (useOutsideLabels){
             pie.select('.segment-labels').remove();
             this._addOutsideLabels(pie, arcs, arc, outerArc);
         } else {
@@ -364,26 +394,3 @@ class Pie extends Geometry {
 export function pie() {
     return new Pie();
 }
-
- /*
-    options
-    -
-    show legend || category label
-        legend: measure block of space for legend
-        category: measure space around for labels
-    show value label
-    pie || donut
-    show pie || donut label (e.g. in the case of facets)
-    labels on or around pie slices
-    group tail end under others || all || # max slices
-
-    to determine
-    -
-    how best to truncate labels?
-        system-wide approach for brand names, topics, segments
-        configurable shorthand/abbreviation || inferred abbreviation?
-    where to show legend or if at all?
-    sort by size?
-    colour spectrum?
-        dependent on user? E.g. Use topic colours vs basic hue shift for brands
-*/
