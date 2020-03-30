@@ -25,6 +25,7 @@ class Pie extends Geometry {
         super(name || 'PIE');
         this._is_donut = (typeof isDonut !== 'undefined' && isDonut !== null) ? isDonut : false;
         this._use_outside_labels = (typeof useOutsideLabels !== 'undefined' && useOutsideLabels !== null) ? useOutsideLabels : false;
+        this._transition_duration = 200;
     }
 
     _getOverlayLabelColour(d){
@@ -73,7 +74,7 @@ class Pie extends Geometry {
                 }
             })
             .merge(labels)
-            .transition().duration(200)
+            .transition().duration(this._transition_duration)
             .attrTween("transform", function(d) {
                 this._current = this._current || d;
                 const interpolate = d3.interpolate(this._current, d);
@@ -110,7 +111,7 @@ class Pie extends Geometry {
             .attr('stroke-width', '1px')
             .attr('fill', 'none')
             .merge(polyline)
-            .transition().duration(200)
+            .transition().duration(this._transition_duration)
             .attrTween("points", function(d){
                 this._current = this._current || d;
                 var interpolate = d3.interpolate(this._current, d);
@@ -133,14 +134,38 @@ class Pie extends Geometry {
         polyline.exit().remove();
     }
 
+    _getWidthOfWidestLabel(){
+        const allLabels = [...this.xValues(), ...this.yValues()];
+        const text = this._element.select('.pie')
+            .append('text')
+            .attr('class', 'label-width-check')
+
+        text.selectAll('tspan')
+            .data(allLabels)
+            .enter()
+            .append('tspan')
+                .text(d => d)
+                .style('opacity', 0.3)
+                .attr('x', 0)
+                .attr('dy', '1em')
+
+        const widthOfWidestLabel = text.node().getBBox().width;
+
+        text.remove();
+
+        return widthOfWidestLabel
+    }
+
     _addSegmentLabels(pie, arcs, arc){
-        if (pie.select(".segment-labels").empty()){
-            pie.append('g').attr('class','segment-labels')
+        let segmentLabels = pie.select(".segment-labels");
+
+        if (segmentLabels.empty()){
+            segmentLabels = pie.append('g').attr('class','segment-labels')
         }
 
-        const labels = pie.select('.segment-labels')
+        const labels = segmentLabels
             .selectAll('text')
-            .data(arcs)
+            .data(arcs, d => d.data._x)
 
         function midAngle(d){
           return d.startAngle + (d.endAngle - d.startAngle)/2;
@@ -190,7 +215,7 @@ class Pie extends Geometry {
                 // }
             })
             .merge(labels)
-            .transition().duration(100)
+            .transition().duration(this._transition_duration)
             .attrTween("transform", function(d) {
               this._current = this._current || d;
               const interpolate = d3.interpolate(this._current, d);
@@ -315,36 +340,46 @@ class Pie extends Geometry {
 
     render() {
         const element = this._element;
-        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
+
+        let pie = element.select('.pie');
+
+        if(pie.empty()){
+            pie = element.append('g').attr('class','pie')
+        }
+
+        // check how much width we need for labels
+        const minLabelCharacters = 6;
+        let widthOfWidestLabel = 0;
+
+        if (this.useOutsideLabels()){
+          widthOfWidestLabel = this._getWidthOfWidestLabel();
+        }
 
         const minDimension = Math.min(this.width(),this.height());
 
+        pie.attr("transform", `translate(${this.width()/2},${minDimension/2})`)
+
+        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
+
+
         const arc = d3.arc()
-            .innerRadius(this.isDonut() ? minDimension / 4 : 0)
-            .outerRadius(minDimension / 2)
+          .innerRadius(this.isDonut() ? minDimension / 4 : 0)
+          .outerRadius(minDimension / 2)
 
         const labelArc = this.isDonut()
           ? arc
           : d3.arc()
-                .innerRadius(minDimension / 6)
-                .outerRadius(minDimension / 2)
+            .innerRadius(minDimension / 6)
+            .outerRadius(minDimension / 2)
 
         const outerArc = d3.arc()
-            .innerRadius(minDimension / 2 + 10)
-            .outerRadius(minDimension / 2 + 10)
+          .innerRadius(minDimension / 2 + 10)
+          .outerRadius(minDimension / 2 + 10)
 
         const arcTween = function(a, i, nodes){
-            var i = d3.interpolate(this._current, a);
-            this._current = i(0);
-            return t => arc(i(t));
-        }
-
-        let pie = element.selectAll('.pie');
-
-        if(pie.empty()){
-            pie = element.append('g')
-                .attr('class','pie')
-                .attr("transform", `translate(${this.width()/2},${minDimension/2})`)
+          var i = d3.interpolate(this._current, a);
+          this._current = i(0);
+          return t => arc(i(t));
         }
 
         const arcs = d3.pie().value(this.y())(data);
@@ -389,7 +424,7 @@ class Pie extends Geometry {
             })
             .style("fill", d => this.getD3Colour(d.data))
             .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
-            .transition().duration(100)
+            .transition().duration(this._transition_duration)
             .attrTween('d', arcTween)
 
         paths.exit().remove()

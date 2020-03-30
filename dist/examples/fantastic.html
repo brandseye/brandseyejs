@@ -605,7 +605,7 @@ graph
             .showXAxis(false)
             .showYAxis(false)
             // .colour(d => d.species)
-            //.facetX(d => d.group)
+            // .facetX(d => d.group)
             .render()
 
         const interactions = document.createElement('div');
@@ -618,7 +618,7 @@ graph
         outsideLabelToggle.innerHTML = 'Toggle outside labels';
 
         let i = 0;
-        const mod = 100;
+        const mod = 3;
         btn.addEventListener('click', function(){
             pieData.forEach(item => {
                 item.count = (Math.random()*150).toFixed(2);
