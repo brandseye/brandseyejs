@@ -596,19 +596,21 @@ graph
                 .showXAxis(false)
                 .showYAxis(false)
                 // .colour(d => d.species)
-                .facetX(d => d.group)
+                // .facetX(d => d.group)
                 .render()
         }
         drawPie();
 
         const interactions = document.createElement('div');
         const btn = document.createElement('button');
+        let i = 0;
         btn.innerHTML = 'Update data';
         btn.addEventListener('click', function(){
             pieData.forEach(item => {
                 item.count = Math.random()*150;
-                item.group = ['animal','beast'][Math.round(Math.random())];
+                item.group = i === 2 ? 'animal' : ['animal','beast'][Math.round(Math.random())];
             })
+            i === 2 ? i = 0 : i += 1 ;
             pieChart.render();
         })
         interactions.appendChild(btn);

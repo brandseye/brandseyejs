@@ -37,11 +37,11 @@ class Pie extends Geometry {
 
     _addOutsideLabels(pie, arcs, arc, outerArc){
 
-        if (pie.select(".outer-labels").empty()){
-            pie.append('g').attr('class','outer-labels')
+        if (pie.select(".outside-labels").empty()){
+            pie.append('g').attr('class','outside-labels')
         }
 
-        const labels = pie.select('.outer-labels')
+        const labels = pie.select('.outside-labels')
             .selectAll('text')
             .data(arcs, d => d.data._x);
 
@@ -95,11 +95,11 @@ class Pie extends Geometry {
 
         labels.exit().remove();
 
-        if (pie.select(".outer-lines").empty()){
-            pie.append('g').attr('class', 'outer-lines');
+        if (pie.select(".outside-lines").empty()){
+            pie.append('g').attr('class', 'outside-lines');
         }
 
-        var polyline = pie.select(".outer-lines").selectAll("polyline")
+        var polyline = pie.select(".outside-lines").selectAll("polyline")
             .data(arcs, d => d.data._x);
 
         polyline.enter()
@@ -131,7 +131,7 @@ class Pie extends Geometry {
         polyline.exit().remove();
     }
 
-    _addOverlaidLabels(pie, arcs, arc){
+    _addSegmentLabels(pie, arcs, arc){
         pie.selectAll(".segment-labels").remove();
         const labels = pie.append('g')
             .attr('class','segment-labels')
@@ -348,9 +348,12 @@ class Pie extends Geometry {
 
         // TODO: do this in a more advanced / customisable way
         if (this.width() >= this.height() * 1.5){
+            pie.select('.segment-labels').remove();
             this._addOutsideLabels(pie, arcs, arc, outerArc);
         } else {
-            this._addOverlaidLabels(pie, arcs, arc);
+            pie.select('.outside-labels').remove();
+            pie.select('.outside-lines').remove();
+            this._addSegmentLabels(pie, arcs, arc);
         }
 
         this._addCentreLabel();
