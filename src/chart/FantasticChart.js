@@ -69,7 +69,7 @@ class FantasticChart {
         this._y_grid_lines = false;
         this._axis_box = false;
         this._x_label_angle = null;
-        this._grid_line_opacity = 0.2;
+        this._grid_line_opacity = 0.15;
         this._x_tick_values_fn = null;
         this._y_tick_values_fn = null;
         return this;
@@ -476,7 +476,7 @@ class FantasticChart {
                     .facet(singleFacet ? null : (d => this._facet_x(d) === facet))
                     .getD3XScale();
 
-                let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(5)
+                let axis = d3.axisBottom(xScale).ticks(xTickCount).tickSize(0).tickPadding(6)
                     .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
                     .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null)
                 let height = xaxis(axisSizeArea, this._height,
@@ -541,14 +541,16 @@ class FantasticChart {
         yAxisArea = svg
             .append("g")
             .attr("class", "y-axis-area")
-            .attr("transform", "translate(" + leftOuterPadding +"," + margin.top + ")").lower();
+            .attr("transform", "translate(" + margin.left +"," + margin.top + ")").lower();
 
         const yScale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
             if (this._show_y_axis) {
                 yaxis(yAxisArea,
-                    d3.axisLeft(yScale).ticks(yTickCount)
+                    d3.axisLeft(yScale).ticks(Math.floor(height / 30))
+                        .tickSize(this._y_grid_lines ? -width : 0)
+                        .tickPadding(6)
                         .tickValues(this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null)
                         .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
                     axisOptions);
@@ -571,7 +573,7 @@ class FantasticChart {
 
                     xaxis(area, this._height,
                         xScale.bandwidth ? xScale.bandwidth() : facetBand.bandwidth() / xScale.domain().length,
-                        d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(5)
+                        d3.axisBottom(xScale).ticks(xTickCount).tickSize(this._x_grid_lines ? -height : 0).tickPadding(6)
                             .tickFormat((d, i) => restrictLength(geometries[0].formatX()(d, i), xAxisRestriction))
                             .tickValues(this._x_tick_values_fn ? this._x_tick_values_fn(xScale) : null),
                         this.importanceX(), axisOptions)
@@ -612,9 +614,7 @@ class FantasticChart {
                 const geom_width  = facetBand.bandwidth(),
                       geom_height = height;
 
-                if (this._show_y_axis) {
-                    yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yScale).ticks(yTickCount));
-                }
+                //yGrid(area, geom_width, this.scaleY().isShowGrid(), d3.axisLeft(yScale).ticks(yTickCount));
                 //xGrid(area, geom_height, this.scaleX().isShowGrid(), d3.axisBottom(xscale).ticks(xTickCount));
 
                 geoms.exit().remove();

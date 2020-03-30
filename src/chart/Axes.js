@@ -35,7 +35,7 @@ function getMaxWidth(sel) {
     return max
 }
 
-function removeExcessXTicks(axis, labelWidth) {
+function removeOverlappingXTicks(axis, labelWidth) {
     let a = axis.selectAll("g.tick").nodes()
     if (!a.length) return
     let px = a[0].getBoundingClientRect().x + labelWidth
@@ -45,6 +45,19 @@ function removeExcessXTicks(axis, labelWidth) {
         if (x < px) node.parentNode.removeChild(node)
         else px = x + labelWidth // there is space for the label
     }
+}
+
+function adjustFirstXTickLabel(axis) {
+    // move the first tick label right if it extends too far to the left as it might overlap the y-axis zero
+    let tick = axis.select("g.tick")
+    if (tick.empty()) return
+    let t = tick.attr("transform")  // e.g. translate(8.327586206896552,0)
+    let i = t.indexOf('(')
+    let j = t.indexOf(',', i + 1)
+    let x = parseFloat(t.substring(i + 1, j))
+    let text = tick.select("text")
+    x -= text.node().getComputedTextLength() / 2
+    if (x < -8) text.attr("x", Math.abs(x + 6))
 }
 
 export function xaxis(selection, height, width, axisObject, importance, options) {
@@ -77,10 +90,13 @@ export function xaxis(selection, height, width, axisObject, importance, options)
                 .attr("transform", () => "translate(" + x + "," + y + ") rotate(" + angle + " 0,0)")
 
             labelWidth = fontSize * 1.2  // getBoundingClientRect doesn't seem to consider the rotation?
+        } else {
+            adjustFirstXTickLabel(axis)
         }
-        if (labelWidth > width) removeExcessXTicks(axis, labelWidth)
+        if (labelWidth > width) removeOverlappingXTicks(axis, labelWidth)
     } else {
-        if (tv) removeExcessXTicks(axis, labelWidth) // ticks might not be evenly spaced
+        adjustFirstXTickLabel(axis)
+        if (tv) removeOverlappingXTicks(axis, labelWidth) // ticks might not be evenly spaced
     }
 
     axis.selectAll("line").style("opacity", gridLineOpacity)
@@ -97,31 +113,46 @@ export function xaxis(selection, height, width, axisObject, importance, options)
     return axis.node().getBBox().height;
 }
 
+function removeOverlappingYTicks(axis, labelHeight) {
+    let a = axis.selectAll("g.tick").nodes()
+    if (!a.length) return
+    let py = a[0].getBoundingClientRect().y - labelHeight
+    for (let i = 1; i < a.length; i++) {
+        let node = a[i]
+        let y = node.getBoundingClientRect().y
+        if (y > py) node.parentNode.removeChild(node)
+        else py = y - labelHeight // there is space for the label
+    }
+}
+
 export function yaxis(selection, axis, options) {
-    let { fontSize } = ensureOptions(options)
+    options = ensureOptions(options)
+    let { fontSize, gridLineOpacity } = ensureOptions(options)
 
     selection.select(".y-axis").remove();
     let y = selection.append("g")
                      .attr("class", "y-axis")
-                     .call(axis.tickSize(0).tickPadding(10))
-                     .style("opacity", 0);
+                     .call(axis)
+                     .style("opacity", 0)
+    y.select(".domain").remove() // this doubles up on the 0 tick line making it darker so nuke it
 
-    y.selectAll("text")
-        .style("font-size", fontSize + "px")
-        .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+    if (options.axisBox) y.append("line").attr("y2", axis.scale().range()[0]).attr("stroke", "currentColor")
 
-    y.selectAll(".domain")
-        .style("stroke", colours.eighteen.midGrey); // d3.hcl(colours.eighteen.darkGrey).brighter());
+    let tickSize = axis.tickSize()
+    if (tickSize && options.axisBox) y.append("line").attr("x2", -tickSize).attr("stroke", "currentColor")
 
-    const width = y.node().getBBox().width;
-    y.attr("transform", "translate(" + width + ",0)");
+    y.selectAll("text").style("font-size", fontSize + "px").style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
+    y.selectAll("path").style("opacity", gridLineOpacity)
+    y.selectAll("line").style("opacity", gridLineOpacity)
+
+    if (!axis.scale().bandwidth) removeOverlappingYTicks(y, fontSize * 1.2)
 
     y.transition()
         .duration(AXIS_ANIMATION_DURATION)
         .delay(AXIS_DELAY)
         .style("opacity", 1);
 
-    return width + 20;
+    return y.node().getBBox().width + 20;
 }
 
 export function yGrid(selection, width, show, axis) {
