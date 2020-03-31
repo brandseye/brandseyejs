@@ -397,7 +397,7 @@ class FantasticChart {
 
         const geometries = this.sortGeometries();
         geometries.forEach(geom => this.setupGeom(geom));
-        const axisWidth = geometries.length && this._height >= 160
+        const axisWidth = geometries.length
             ? maxBounding(svg, geometries[0].yValues()
                                             .map(geometries[0].formatY())
                                             .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
@@ -526,11 +526,14 @@ class FantasticChart {
         const yScale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
+            let tv = this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null
+            let tc = Math.floor(height / 30)
+            if (tc <= 2 && !tv) tv = yScale.domain()
             yaxis(yAxisArea,
-                d3.axisLeft(yScale).ticks(Math.floor(height / 30))
+                d3.axisLeft(yScale).ticks(tc)
                     .tickSize(this._y_grid_lines ? -width : 0)
                     .tickPadding(6)
-                    .tickValues(this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null)
+                    .tickValues(tv)
                     .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
                 axisOptions);
 
