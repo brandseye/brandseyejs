@@ -45,7 +45,7 @@ class Pie extends Geometry {
         ];
         const text = this._element
             .append('text')
-            .attr('font-size', this._font_size + 'px')
+            .style('font-size', this._font_size + 'px')
             .attr('class', 'label-width-check')
 
         text.selectAll('tspan')
@@ -67,7 +67,7 @@ class Pie extends Geometry {
     _getLabelHeight(){
       const text = this._element
         .append('text')
-        .attr('font-size', this._font_size + 'px')
+        .style('font-size', this._font_size + 'px')
         .attr('class', 'label-height-check')
 
       const data = this.showLabels() ? ['Category', 'Value'] : ['Category'];
@@ -98,7 +98,7 @@ class Pie extends Geometry {
         if (hasYText) yText = yText && yText.short || yText;
 
         const centreText = this._appendIfEmpty(this._element.select('.pie'), 'text', 'centre-label')
-            .attr('font-size', this._font_size + 'px')
+            .style('font-size', this._font_size + 'px')
             .attr('text-anchor', 'middle');
 
         if (!hasXText && !hasYText){
@@ -254,6 +254,7 @@ class Pie extends Geometry {
         paths.enter()
             .append('path')
             .attr('class','segment')
+            .merge(paths)
             .on("mouseover", (d, i, nodes) => {
                 d3.select(nodes[i])
                 .interrupt("hover:colour")
@@ -290,7 +291,6 @@ class Pie extends Geometry {
             .attr("fill", d => this.getD3Colour(d.data))
             .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
             .each(function(d){this._current = d})
-            .merge(paths)
             .transition().duration(this._transition_duration)
             .attrTween('d', function(p,pi,pnodes){
                 var pInt = d3.interpolate(this._current, p);
@@ -307,10 +307,10 @@ class Pie extends Geometry {
 
         segmentLabels.enter()
             .append('text')
-            .attr('font-size', this._font_size + 'px')
             .attr('class', 'segment-label')
             .attr('pointer-events', 'none')
             .merge(segmentLabels)
+            .style('font-size', this._font_size + 'px')
             .each((d, i, nodes) => {
                 const useOutsideLabels = this.useOutsideLabels();
                 const text = d3.select(nodes[i]);
@@ -367,7 +367,7 @@ class Pie extends Geometry {
                             return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
                         }
                     })
-
+                // TODO:
                 // let previousLabel = null;
                 // whether to display outer label
                 // const finalPos = outerArc.centroid(d);
@@ -387,6 +387,8 @@ class Pie extends Geometry {
 
                 // return intersectsWithPreviousLabel ? 'none' : null
 
+                // TODO:
+                // What do do with settings from another metric that don't suit pie?
             })
 
         segmentLabels.exit().remove();
