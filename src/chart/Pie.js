@@ -28,6 +28,12 @@ class Pie extends Geometry {
         this._transition_duration = 200;
     }
 
+    _appendIfEmpty(appendTo, elementName, className) {
+        let selection = appendTo.select('.' + className);
+        if (selection.empty()) selection = appendTo.append(elementName).attr('class', className);
+        return selection
+    }
+
     _getOverlayLabelColour(d){
         const segmentColour = d3.hcl(this.getD3Colour(d.data));
         let labelColour = d3.hcl(colours.eighteen.darkGrey);
@@ -196,10 +202,9 @@ class Pie extends Geometry {
                  .domain([min, max]);
     }
 
-    _appendIfEmpty(appendTo, elementName, className) {
-        let selection = appendTo.select('.' + className);
-        if (selection.empty()) selection = appendTo.append(elementName).attr('class', className);
-        return selection
+    immediatelyRenderLabels(show){
+        this.showLabels(!!show);
+        this.render();
     }
 
     render() {
@@ -313,14 +318,13 @@ class Pie extends Geometry {
             .style('font-size', this._font_size + 'px')
             .each((d, i, nodes) => {
                 const useOutsideLabels = this.useOutsideLabels();
+
                 const text = d3.select(nodes[i]);
-                let xLabel = text.select('.x-label');
-                let yLabel = text.select('.y-label');
-                if (xLabel.empty()) xLabel = text.append('tspan').attr('class','x-label');
-                if (yLabel.empty()) yLabel = text.append('tspan').attr('class','y-label');
+                const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
+                const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
 
                 xLabel
-                    .style("dy", this.showLabels() ? "-0.3em" : "0.3em")
+                    .attr("dy", this.showLabels() ? "-0.3em" : "0.3em")
                     .text(d => this.formatX()(this.x()(d.data)));
 
                 if (this.showLabels()){
@@ -328,6 +332,8 @@ class Pie extends Geometry {
                         .attr("dy", "1em")
                         .attr("x", "0")
                         .text(d => this.formatLabel()(this.y()(d.data)));
+                } else {
+                    yLabel.remove();
                 }
 
                 const textColour = useOutsideLabels ? d3.hcl(colours.eighteen.darkGrey).brighter() : this._getOverlayLabelColour(d);
@@ -383,6 +389,7 @@ class Pie extends Geometry {
                 //     intersectsWithPreviousLabel = ( finalPos[1] + rect.height ) > previousLabel.y
                 // }
 
+                // TODO: labels aren't necessarily drawn in visual sequence
                 // previousLabel = { y: finalPos[1], height: rect.height, right: rightHandSide};
 
                 // return intersectsWithPreviousLabel ? 'none' : null
