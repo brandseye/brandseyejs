@@ -45,6 +45,7 @@ class Pie extends Geometry {
         ];
         const text = this._element
             .append('text')
+            .attr('font-size', this._font_size + 'px')
             .attr('class', 'label-width-check')
 
         text.selectAll('tspan')
@@ -66,6 +67,7 @@ class Pie extends Geometry {
     _getLabelHeight(){
       const text = this._element
         .append('text')
+        .attr('font-size', this._font_size + 'px')
         .attr('class', 'label-height-check')
 
       const data = this.showLabels() ? ['Category', 'Value'] : ['Category'];
@@ -95,26 +97,17 @@ class Pie extends Geometry {
         if (hasXText) xText = xText && xText.short || xText;
         if (hasYText) yText = yText && yText.short || yText;
 
-        let centreText = this._element.select('.centre-label');
+        const centreText = this._appendIfEmpty(this._element.select('.pie'), 'text', 'centre-label')
+            .attr('font-size', this._font_size + 'px')
+            .attr('text-anchor', 'middle');
 
         if (!hasXText && !hasYText){
             centreText.remove();
             return
         }
 
-        if (centreText.empty()){
-            centreText = this._element.select('.pie')
-                .append('text')
-                .attr('class', 'centre-label')
-                .attr('text-anchor', 'middle')
-        }
-
-        let xSpan = centreText.select('.x');
-        let ySpan = centreText.select('.y');
-
-        // add spans
-        if (hasYText && ySpan.empty()) ySpan = centreText.append('tspan').attr('class','y');
-        if (hasYText && xSpan.empty()) xSpan = centreText.append('tspan').attr('class','x');
+        const ySpan = this._appendIfEmpty(centreText, 'tspan', 'y');
+        const xSpan = this._appendIfEmpty(centreText, 'tspan', 'x');
 
         // populate spans or remove unneeded
         hasYText
@@ -183,12 +176,30 @@ class Pie extends Geometry {
         return mapped
     }
 
-    getD3XScale() {
-        return d3.scaleOrdinal(this._data.map(d => this.x()(d)))
+    getD3XScale(data, width) {
+        data = data || this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
+        width = width || this.width();
+        return d3.scaleBand()
+                 .rangeRound([0, width])
+                 .domain(data.map(d => d._x));
     }
 
     getD3YScale(data, height) {
+        data = data || this.prepareData(null, false);
+        height = height || this.height();
+
+        const max = Math.max(d3.max(data, d => d3.max(d.data, d => d._y)), 0);
+        const min = Math.min(0, d3.min(data, d => d3.min(d.data, d => d._y)));
         return d3.scaleLinear()
+                 .rangeRound([height, 0])
+                 .nice()
+                 .domain([min, max]);
+    }
+
+    _appendIfEmpty(appendTo, elementName, className) {
+        let selection = appendTo.select('.' + className);
+        if (selection.empty()) selection = appendTo.append(elementName).attr('class', className);
+        return selection
     }
 
     render() {
@@ -210,12 +221,8 @@ class Pie extends Geometry {
 
         const minDimension = Math.min(availableWidth, availableHeight);
 
-        let pie = this._element.select('.pie');
-        if(pie.empty()) {
-            pie = this._element
-                .append('g').attr('class','pie')
-                .attr("transform", `translate(${availableWidth/2 + widestLabelWidth},${minDimension/2 + labelHeight})`)
-        }
+        const pie = this._appendIfEmpty(this._element, 'g', 'pie');
+        pie.attr("transform", `translate(${availableWidth/2 + widestLabelWidth},${minDimension/2 + labelHeight})`)
 
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
@@ -237,39 +244,76 @@ class Pie extends Geometry {
 
         const arcs = d3.pie().value(this.y())(data);
 
-        let segmentWrapper = pie.select('.segments');
-        if (segmentWrapper.empty()) segmentWrapper = pie.append('g').attr('class','segments');
+        const midAngle = d => d.startAngle + (d.endAngle - d.startAngle)/2;
 
-        const segments = segmentWrapper.selectAll('.segment')
+        const segmentWrapper = this._appendIfEmpty(pie, 'g', 'segments');
+
+        const paths = segmentWrapper.selectAll('.segment')
           .data(arcs, d => d.data._x);
 
-        segments
-            .enter()
-            .append('g')
-            .attr('class', 'segment')
+        paths.enter()
+            .append('path')
+            .attr('class','segment')
+            .on("mouseover", (d, i, nodes) => {
+                d3.select(nodes[i])
+                .interrupt("hover:colour")
+                .transition("hover:colour")
+                .duration(50)
+                .attr("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
+                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
+                this._dispatch.call("tooltipShow", this, {
+                    e: d3.event,
+                    point: d.data,
+                    series: d.data._series,
+                    seriesIndex: 0,//s_i
+                    value: d.data._y
+                })
+            })
+            .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+                d3.select(nodes[i])
+                .interrupt("hover:colour")
+                .transition("hover:colour")
+                .duration(100)
+                .attr("fill", d => this.getD3Colour(d.data))
+                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
+                this._dispatch.call("tooltipHide", this);
+            })
+            .on("click auxclick", (d, i, nodes) => {
+                this._dispatch.call("elementClick", this, {
+                    e: d3.event,
+                    point: d.data,
+                    series: d.data._series,
+                    seriesIndex: 0, //d.data._s_i,
+                    value: d.data._y
+                })
+            })
+            .attr("fill", d => this.getD3Colour(d.data))
+            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
             .each(function(d){this._current = d})
-            .merge(segments)
+            .merge(paths)
+            .transition().duration(this._transition_duration)
+            .attrTween('d', function(p,pi,pnodes){
+                var pInt = d3.interpolate(this._current, p);
+                this._current = pInt(0);
+                return t => arc(pInt(t));
+            })
+
+        paths.exit().remove();
+
+        const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels');
+
+        const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
+            .data(arcs, d => d.data._x);
+
+        segmentLabels.enter()
+            .append('text')
+            .attr('font-size', this._font_size + 'px')
+            .attr('class', 'segment-label')
+            .attr('pointer-events', 'none')
+            .merge(segmentLabels)
             .each((d, i, nodes) => {
-                const segment = d3.select(nodes[i]);
                 const useOutsideLabels = this.useOutsideLabels();
-
-                // path
-                let path = segment.select('path');
-                if (path.empty()) path = segment.append('path')
-                path.style("fill", d => this.getD3Colour(d.data))
-                    .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
-                    .transition().duration(this._transition_duration)
-                    .attrTween('d', function(p,pi,pnodes){
-                        var i = d3.interpolate(this._current, p);
-                        this._current = i(0);
-                        return t => arc(i(t));
-                    })
-
-                // label
-                let text = segment.select('text');
-                if (text.empty()) text = segment.append('text')
-                // text.attr('pointer-events', 'none') //
-
+                const text = d3.select(nodes[i]);
                 let xLabel = text.select('.x-label');
                 let yLabel = text.select('.y-label');
                 if (xLabel.empty()) xLabel = text.append('tspan').attr('class','x-label');
@@ -286,22 +330,18 @@ class Pie extends Geometry {
                         .text(d => this.formatLabel()(this.y()(d.data)));
                 }
 
-                function midAngle(d){
-                    return d.startAngle + (d.endAngle - d.startAngle)/2;
-                }
-
                 const textColour = useOutsideLabels ? d3.hcl(colours.eighteen.darkGrey).brighter() : this._getOverlayLabelColour(d);
 
                 text
                     .attr('fill', textColour)
-                    .transition().duration(this._transition_duration)
-                    .style('opacity', d => {
-                        if (useOutsideLabels) return 1
+                    .style('visibility', d => {
+                        if (useOutsideLabels) return null
                         const radians = d.endAngle - d.startAngle;
                         const arcLength = radians * radius;
                         const bounding = text.node().getBBox();
-                        return bounding.width > arcLength ? 0 : 1
+                        return bounding.width > arcLength ? 'hidden' : null
                     })
+                    .transition().duration(this._transition_duration)
                     .attrTween("transform", function(d) {
                         this._current = this._current || d;
                         const interpolate = d3.interpolate(this._current, d);
@@ -327,88 +367,68 @@ class Pie extends Geometry {
                             return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
                         }
                     })
-                /*
-                let previousLabel = null;
-                whether to display outer label
-                const finalPos = outerArc.centroid(d);
-                const rightHandSide = midAngle(d) < Math.PI;
-                finalPos[0] = radius * 1.03 * (rightHandSide ? 1 : -1);
-                const rect = this.getBoundingClientRect();
 
-                let intersectsWithPreviousLabel = false
+                // let previousLabel = null;
+                // whether to display outer label
+                // const finalPos = outerArc.centroid(d);
+                // const rightHandSide = midAngle(d) < Math.PI;
+                // finalPos[0] = radius * 1.03 * (rightHandSide ? 1 : -1);
+                // const rect = this.getBoundingClientRect();
 
-                if (rightHandSide && previousLabel && previousLabel.right){
-                    intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > finalPos[1]
-                } else if (!rightHandSide && previousLabel && !previousLabel.right){
-                    intersectsWithPreviousLabel = ( finalPos[1] + rect.height ) > previousLabel.y
-                }
+                // let intersectsWithPreviousLabel = false
 
-                previousLabel = { y: finalPos[1], height: rect.height, right: rightHandSide};
+                // if (rightHandSide && previousLabel && previousLabel.right){
+                //     intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > finalPos[1]
+                // } else if (!rightHandSide && previousLabel && !previousLabel.right){
+                //     intersectsWithPreviousLabel = ( finalPos[1] + rect.height ) > previousLabel.y
+                // }
 
-                return intersectsWithPreviousLabel ? 'none' : null
-                */
+                // previousLabel = { y: finalPos[1], height: rect.height, right: rightHandSide};
 
-                // lines
+                // return intersectsWithPreviousLabel ? 'none' : null
 
-                let polyline = segment.select('polyline');
-                if (useOutsideLabels && polyline.empty()){
-                    polyline = segment.append('polyline');
-                } else if (!useOutsideLabels) {
-                    polyline.remove();
-                }
-
-                const lineColour = d3.hcl(textColour.h, textColour.c, textColour.l, 0.5);
-                polyline
-                    .attr('stroke', lineColour)
-                    .attr('stroke-width', '1px')
-                    .attr('fill', 'none')
-                    .style('mix-blend-mode', 'multiply')
-                    .transition().duration(this._transition_duration)
-                    .attrTween("points", function(d){
-                        this._current = this._current || d;
-                        var interpolate = d3.interpolate(this._current, d);
-                        this._current = interpolate(0);
-                        return function(t) {
-                            var d2 = interpolate(t);
-                            var start = arc.centroid(d2);
-                            var elbow = outerArc.centroid(d2);
-                            var terminal = outerArc.centroid(d2);
-                            const leftAligned = midAngle(d2) < Math.PI;
-                            terminal[0] = radius * 0.98 * (leftAligned ? 1 : -1);
-                            const positions = [start, elbow];
-                            if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
-                                positions.push(terminal);
-                            }
-                            return positions;
-                        };
-                    });
-            })
-            .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-                d3.select(nodes[i]).select('path')
-                  .interrupt("hover:colour")
-                  .transition("hover:colour")
-                  .duration(50)
-                  .style("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
-                  .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
-                this._dispatch.call("tooltipShow", this, {
-                    e: d3.event,
-                    point: d.data,
-                    series: d.data._series,
-                    seriesIndex: 0,//s_i
-                    value: d.data._y
-                })
-            })
-            .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-                d3.select(nodes[i]).select('path')
-                  .interrupt("hover:colour")
-                  .transition("hover:colour")
-                  .duration(100)
-                  .style("fill", d => this.getD3Colour(d.data))
-                  .style("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
-                this._dispatch.call("tooltipHide", this);
             })
 
-        segments.exit().remove()
+        segmentLabels.exit().remove();
+
+        const labelLinesWrapper = this._appendIfEmpty(pie, 'g', 'label-lines');
+        const labelLines = labelLinesWrapper.selectAll('.label-line')
+            .data(arcs, d => d.data._x)
+
+        if (this.useOutsideLabels()) {
+            labelLines.enter()
+                .append('polyline')
+                .attr('class', 'label-line')
+                .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
+                .attr('opacity', 0.5)
+                .attr('stroke-width', '1px')
+                .attr('fill', 'none')
+                .style('mix-blend-mode', 'multiply')
+                .merge(labelLines)
+                .transition().duration(this._transition_duration)
+                .attrTween("points", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                        var d2 = interpolate(t);
+                        var start = arc.centroid(d2);
+                        var elbow = outerArc.centroid(d2);
+                        var terminal = outerArc.centroid(d2);
+                        const leftAligned = midAngle(d2) < Math.PI;
+                        terminal[0] = radius * 0.98 * (leftAligned ? 1 : -1);
+                        const positions = [start, elbow];
+                        if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
+                            positions.push(terminal);
+                        }
+                        return positions;
+                    };
+                });
+
+            labelLines.exit().remove();
+        } else {
+            labelLinesWrapper.remove();
+        }
 
         this.isDonut()
             ? this._addCentreLabel()
