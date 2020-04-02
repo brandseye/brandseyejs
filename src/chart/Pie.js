@@ -56,29 +56,58 @@ class Pie extends Geometry {
         const textColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lineColour = d3.hcl(textColour.h, textColour.c, textColour.l, 0.5);
 
+        let previousLabel = null;
+
         labels.enter()
             .append('text')
-            .attr('pointer-events', 'none')
-            .attr('fill', textColour)
             .each((d, i, nodes) => {
                 const label = d3.select(nodes[i]);
                 label.append('tspan')
-                    .text(d => this.formatX()(this.x()(d.data)))
+                    .attr('class', 'x-label')
                     .attr('dy', this.showLabels() ? '-0.25em' : '0.25em')
 
                 if (this.showLabels()){
                     label.append('tspan')
-                        .text(d => this.formatLabel()(this.y()(d.data)))
+                        .attr('class', 'y-label')
                         .attr('dy', '1em')
                         .attr("x", "0")
                 }
             })
             .merge(labels)
+            .each((d, i, nodes) => {
+                const label = d3.select(nodes[i]);
+                label.select('.x-label')
+                    .text(d => this.formatX()(this.x()(d.data)))
+
+                label.select('.y-label')
+                    .text(d => this.formatLabel()(this.y()(d.data)))
+            })
+            .attr('pointer-events', 'none')
+            .attr('fill', textColour)
+            .style('display', function(d) {
+                const finalPos = outerArc.centroid(d);
+                const rightHandSide = midAngle(d) < Math.PI;
+                finalPos[0] = radius * 1.03 * (rightHandSide ? 1 : -1);
+                const rect = this.getBoundingClientRect();
+
+                let intersectsWithPreviousLabel = false
+
+                if (rightHandSide && previousLabel && previousLabel.right){
+                    intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > finalPos[1]
+                } else if (!rightHandSide && previousLabel && !previousLabel.right){
+                    intersectsWithPreviousLabel = ( finalPos[1] + rect.height ) > previousLabel.y
+                }
+
+                previousLabel = { y: finalPos[1], height: rect.height, right: rightHandSide};
+
+                return intersectsWithPreviousLabel ? 'none' : null
+            })
             .transition().duration(this._transition_duration)
             .attrTween("transform", function(d) {
                 this._current = this._current || d;
                 const interpolate = d3.interpolate(this._current, d);
                 this._current = interpolate(0);
+
                 return function(t) {
                     const d2 = interpolate(t);
                     const pos = outerArc.centroid(d2);
@@ -94,7 +123,7 @@ class Pie extends Geometry {
                     const d2 = interpolate(t);
                     return midAngle(d2) < Math.PI ? "start":"end";
                 };
-            });
+            })
 
         labels.exit().remove();
 
@@ -193,54 +222,57 @@ class Pie extends Geometry {
             .selectAll('text')
             .data(arcs, d => d.data._x)
 
-        function midAngle(d){
-          return d.startAngle + (d.endAngle - d.startAngle)/2;
-        }
-
         const radius = arc.innerRadius()();
 
         labels.enter()
             .append("text")
             .attr('text-anchor', 'middle')
             .attr('pointer-events', 'none')
-            // .style("opacity", 0)
+            .style("opacity", 0)
             .each((d, i, nodes) => {
-                const centroid = arc.centroid(d);
                 const labelColour = this._getOverlayLabelColour(d);
 
                 let label = d3.select(nodes[i])
 
                 label
                     .append('tspan')
-                    .text(this.formatX()(this.x()(d.data)))
+                    .attr('class', 'x-label')
                     .style("dy", this.showLabels() ? "-0.3em" : "0.3em")
-                    .style("fill",labelColour);
+                    .style("fill", labelColour);
 
                 if (this.showLabels()){
                     label
                         .append('tspan')
+                        .attr('class','y-label')
                         .attr("dy", "1em")
                         .attr("x", "0")
-                        .text(this.formatLabel()(this.y()(d.data)))
                         .style("fill", labelColour);
                 }
+            })
+            .merge(labels)
+            .each((d, i, nodes) => {
+                let label = d3.select(nodes[i])
 
-                // const radians = d.endAngle - d.startAngle;
-                // const radius = arc.innerRadius()();
-                // const arcLength = radians * radius;
-                // const bounding = label.node().getBBox();
+                label.select('.x-label')
+                    .text(this.formatX()(this.x()(d.data)))
+
+                label.select('.y-label')
+                    .text(this.formatLabel()(this.y()(d.data)))
+
+                const radians = d.endAngle - d.startAngle;
+                const radius = arc.innerRadius()();
+                const arcLength = radians * radius;
+                const bounding = label.node().getBBox();
                 //
-                // if (bounding.width < arcLength * 1.2) {
+                if (bounding.width < arcLength * 1.2) {
                 //     // label.attr("dx", (bounding.width / 2));
                 //     // label.attr("dy", -(bounding.height / 3));
                 //
-                //     label
-                //         .transition()
-                //         .duration(200)
-                //         .style("opacity", 1)
-                // }
+                    label
+                        // .transition().duration(this._transition_duration)
+                        .style("opacity", 1)
+                }
             })
-            .merge(labels)
             .transition().duration(this._transition_duration)
             .attrTween("transform", function(d) {
               this._current = this._current || d;
@@ -255,7 +287,7 @@ class Pie extends Geometry {
         labels.exit().remove();
     }
 
-    _addCentreLabel(){
+    _addCentreLabel() {
         let xText = this.xAxisLabel();
         let yText = this.yAxisLabel();
 
@@ -303,19 +335,19 @@ class Pie extends Geometry {
                 .remove();
     }
 
-    isDonut(bool){
+    isDonut(bool) {
         if (arguments.length === 0) return this._is_donut;
         this._is_donut = bool;
         return this
     }
 
-    useOutsideLabels(bool){
+    useOutsideLabels(bool) {
         if (arguments.length === 0) return this._use_outside_labels;
         this._use_outside_labels = bool;
         return this
     }
 
-    prepareData(data, faceted){
+    prepareData(data, faceted) {
         faceted = !!faceted && this.facet();
         data = data || this._data;
         if (!data || !data.length) return [];
@@ -329,11 +361,12 @@ class Pie extends Geometry {
 
         data.forEach((d,index) => {
             if (faceted && !this.facet()(d)) return;
+            const xVal = scaleX.transform(x(d));
             const object = Object.assign({
                 _key: index,
-                _x: scaleX.transform(x(d)),
+                _x: xVal,
                 _y: scaleY.transform(y(d)),
-                _colour: scaleX.transform(x(d)),
+                _colour: xVal,
                 _size: this.size()(d)
             }, d);
 
@@ -350,18 +383,14 @@ class Pie extends Geometry {
         });
 
         return mapped
-}
+    }
 
-    getD3XScale(){
+    getD3XScale() {
         return d3.scaleOrdinal(this._data.map(d => this.x()(d)))
     }
 
     getD3YScale(data, height) {
-        data = data || this.prepareData(null, true);
-        height = height || this.height();
-
-        return d3.scaleBand()
-                 .rangeRound([0, height])
+        return d3.scaleLinear()
     }
 
     render() {
@@ -407,6 +436,7 @@ class Pie extends Geometry {
         }
 
         const arcs = d3.pie().value(this.y())(data);
+        //arcs.sort((a,b)=> d3.ascending(a.index,b.index));
 
         let segments = pie.select('.segments');
 
@@ -453,15 +483,14 @@ class Pie extends Geometry {
 
         paths.exit().remove()
 
-        // TODO: do this in a customisable way
-        // const canUseOutsideLabels = this.width() / this.height() >= 1.5;
-
         const labelArc = this.isDonut()
           ? arc
           : d3.arc()
             .innerRadius(minDimension / 6)
             .outerRadius(minDimension / 2)
 
+        // TODO: do this in a customisable way
+        // const canUseOutsideLabels = this.width() / this.height() >= 1.5;
         if (this.useOutsideLabels()){ // && canUseOutsideLabels
             const outerArc = d3.arc()
               .innerRadius(minDimension / 2 + 10)
