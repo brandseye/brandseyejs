@@ -440,9 +440,6 @@ class Pie extends Geometry {
             label.style('visibility', hide ? 'hidden' : null);
         })
 
-        // TODO:
-        // What do do with settings from another metric that don't suit pie?
-
         segmentLabels.exit().remove();
 
         this.isDonut()
