@@ -310,13 +310,15 @@ class Pie extends Geometry {
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
             .data(arcs, d => d.data._x);
 
+        const labelSizes = []
+
         segmentLabels.enter()
             .append('g')
             .attr('class', 'segment-label')
-            .attr('pointer-events', 'none')
             .merge(segmentLabels)
             .style('font-size', this._font_size + 'px')
             .each((d, i, nodes) => {
+
                 const useOutsideLabels = this.useOutsideLabels();
                 const labelWrapper = d3.select(nodes[i]);
                 const text = this._appendIfEmpty(labelWrapper, 'text', 'label-wrapper');
@@ -336,21 +338,24 @@ class Pie extends Geometry {
                     yLabel.remove();
                 }
 
-                const textColour = useOutsideLabels ? d3.hcl(colours.eighteen.darkGrey).brighter() : this._getOverlayLabelColour(d);
+                const textColour = useOutsideLabels
+                    ? d3.hcl(colours.eighteen.darkGrey).brighter()
+                    : this._getOverlayLabelColour(d);
 
                 text
+                    .attr('pointer-events', 'none')
                     .attr('fill', textColour)
-                    .style('visibility', d => {
+                    .style('visibility', arcData => {
                         if (useOutsideLabels) return null
-                        const radians = d.endAngle - d.startAngle;
+                        const radians = arcData.endAngle - arcData.startAngle;
                         const arcLength = radians * radius;
                         const bounding = text.node().getBBox();
                         return bounding.width > arcLength ? 'hidden' : null
                     })
                     .transition().duration(this._transition_duration)
-                    .attrTween("transform", function(d) {
-                        this._current = this._current || d;
-                        const interpolate = d3.interpolate(this._current, d);
+                    .attrTween("transform", function(arcData) {
+                        this._current = this._current || arcData;
+                        const interpolate = d3.interpolate(this._current, arcData);
                         this._current = interpolate(0);
 
                         return function(t) {
@@ -364,15 +369,21 @@ class Pie extends Geometry {
                             }
                         };
                     })
-                    .styleTween("text-anchor", function(d){
-                        this._current = this._current || d;
-                        const interpolate = d3.interpolate(this._current, d);
+                    .styleTween("text-anchor", function(arcData){
+                        this._current = this._current || arcData;
+                        const interpolate = d3.interpolate(this._current, arcData);
                         this._current = interpolate(0);
                         return function(t) {
                             const dInt = interpolate(t);
                             return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
                         }
                     })
+
+                const finalPos = outerArc.centroid(d);
+                const rightHandSide = midAngle(d) < Math.PI;
+                const rect = text.node().getBoundingClientRect();
+
+                labelSizes[d.index] = {y: finalPos[1], height: rect.height, rightHandSide};
 
                 const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
 
@@ -405,29 +416,34 @@ class Pie extends Geometry {
                 } else {
                     line.remove()
                 }
-                // let previousLabel = null;
-                //// whether to display outer label
-                // const finalPos = outerArc.centroid(d);
-                // const rightHandSide = midAngle(d) < Math.PI;
-                // finalPos[0] = radius * 1.03 * (rightHandSide ? 1 : -1);
-                // const rect = this.getBoundingClientRect();
-
-                // let intersectsWithPreviousLabel = false
-
-                // if (rightHandSide && previousLabel && previousLabel.right){
-                //     intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > finalPos[1]
-                // } else if (!rightHandSide && previousLabel && !previousLabel.right){
-                //     intersectsWithPreviousLabel = ( finalPos[1] + rect.height ) > previousLabel.y
-                // }
-
-                // TODO: labels aren't necessarily drawn in visual sequence
-                // previousLabel = { y: finalPos[1], height: rect.height, right: rightHandSide};
-
-                // return intersectsWithPreviousLabel ? 'none' : null
-
-                // TODO:
-                // What do do with settings from another metric that don't suit pie?
             })
+
+        // hide intersecting labels
+        // giving preference to labels a lower arc index
+        // only do this for outside labels for now
+        segmentLabels.each((d, i, nodes) => {
+            const label = d3.select(nodes[i]);
+
+            if (d.index !== 0 && this.useOutsideLabels()){ // skip first label
+                const thisLabel = labelSizes[d.index];
+                const previousLabel = labelSizes[d.index - 1];
+
+                let intersectsWithPreviousLabel = false;
+                if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
+                    // different sides – ignore
+                } else if (thisLabel.rightHandSide) {
+                    intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                } else {
+                    intersectsWithPreviousLabel = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                }
+                label.style('visibility', intersectsWithPreviousLabel ? 'hidden' : null);
+            } else {
+                label.style('visibility', null);
+            }
+        })
+
+        // TODO:
+        // What do do with settings from another metric that don't suit pie?
 
         segmentLabels.exit().remove();
 
