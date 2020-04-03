@@ -424,22 +424,20 @@ class Pie extends Geometry {
         segmentLabels.each((d, i, nodes) => {
             const label = d3.select(nodes[i]);
 
+            let hide = false;
             if (d.index !== 0 && this.useOutsideLabels()){ // skip first label
                 const thisLabel = labelSizes[d.index];
                 const previousLabel = labelSizes[d.index - 1];
 
-                let intersectsWithPreviousLabel = false;
                 if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
                     // different sides – ignore
                 } else if (thisLabel.rightHandSide) {
-                    intersectsWithPreviousLabel = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                    hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
                 } else {
-                    intersectsWithPreviousLabel = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                    hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
                 }
-                label.style('visibility', intersectsWithPreviousLabel ? 'hidden' : null);
-            } else {
-                label.style('visibility', null);
             }
+            label.style('visibility', hide ? 'hidden' : null);
         })
 
         // TODO:
