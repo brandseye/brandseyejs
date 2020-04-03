@@ -183,7 +183,7 @@ class Pie extends Geometry {
     }
 
     getD3XScale(data, width) {
-        data = data || this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
+        data = data || this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val), []);
         width = width || this.width();
         return d3.scaleBand()
                  .rangeRound([0, width])
