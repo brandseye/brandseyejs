@@ -259,7 +259,6 @@ class Pie extends Geometry {
         paths.enter()
             .append('path')
             .attr('class','segment')
-            .merge(paths)
             .on("mouseover", (d, i, nodes) => {
                 d3.select(nodes[i])
                 .interrupt("hover:colour")
@@ -293,15 +292,16 @@ class Pie extends Geometry {
                     value: d.data._y
                 })
             })
+            .merge(paths)
+            .transition().duration(this._transition_duration)
             .attr("fill", d => this.getD3Colour(d.data))
             .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
-            .each(function(d){this._current = d})
-            .transition().duration(this._transition_duration)
             .attrTween('d', function(p,pi,pnodes){
                 var pInt = d3.interpolate(this._current, p);
                 this._current = pInt(0);
                 return t => arc(pInt(t));
             })
+
 
         paths.exit().remove();
 
@@ -311,15 +311,15 @@ class Pie extends Geometry {
             .data(arcs, d => d.data._x);
 
         segmentLabels.enter()
-            .append('text')
+            .append('g')
             .attr('class', 'segment-label')
             .attr('pointer-events', 'none')
             .merge(segmentLabels)
             .style('font-size', this._font_size + 'px')
             .each((d, i, nodes) => {
                 const useOutsideLabels = this.useOutsideLabels();
-
-                const text = d3.select(nodes[i]);
+                const labelWrapper = d3.select(nodes[i]);
+                const text = this._appendIfEmpty(labelWrapper, 'text', 'label-wrapper');
                 const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
                 const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
 
@@ -357,7 +357,7 @@ class Pie extends Geometry {
                             const dInt = interpolate(t);
                             if (useOutsideLabels){
                                 const pos = outerArc.centroid(dInt);
-                                pos[0] = radius * 1.03 * (midAngle(dInt) < Math.PI ? 1 : -1);
+                                pos[0] = radius * 1.13 * (midAngle(dInt) < Math.PI ? 1 : -1);
                                 return "translate("+ pos +")";
                             } else {
                                 return "translate(" + labelArc.centroid(dInt) + ")";
@@ -373,9 +373,40 @@ class Pie extends Geometry {
                             return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
                         }
                     })
-                // TODO:
+
+                const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
+
+                if (this.useOutsideLabels()) {
+                    line
+                        .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
+                        .attr('opacity', 0.5)
+                        .attr('stroke-width', '1px')
+                        .attr('fill', 'none')
+                        .style('mix-blend-mode', 'multiply')
+                        .transition().duration(this._transition_duration)
+                        .attrTween("points", function(d){
+                            this._current = this._current || d;
+                            var interpolate = d3.interpolate(this._current, d);
+                            this._current = interpolate(0);
+                            return function(t) {
+                                var d2 = interpolate(t);
+                                var start = arc.centroid(d2);
+                                var elbow = outerArc.centroid(d2);
+                                var terminal = outerArc.centroid(d2);
+                                const leftAligned = midAngle(d2) < Math.PI;
+                                terminal[0] = radius * 1.1 * (leftAligned ? 1 : -1);
+                                const positions = [start, elbow];
+                                if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
+                                    positions.push(terminal);
+                                }
+                                return positions;
+                            };
+                        });
+                } else {
+                    line.remove()
+                }
                 // let previousLabel = null;
-                // whether to display outer label
+                //// whether to display outer label
                 // const finalPos = outerArc.centroid(d);
                 // const rightHandSide = midAngle(d) < Math.PI;
                 // finalPos[0] = radius * 1.03 * (rightHandSide ? 1 : -1);
@@ -399,45 +430,6 @@ class Pie extends Geometry {
             })
 
         segmentLabels.exit().remove();
-
-        const labelLinesWrapper = this._appendIfEmpty(pie, 'g', 'label-lines');
-        const labelLines = labelLinesWrapper.selectAll('.label-line')
-            .data(arcs, d => d.data._x)
-
-        if (this.useOutsideLabels()) {
-            labelLines.enter()
-                .append('polyline')
-                .attr('class', 'label-line')
-                .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
-                .attr('opacity', 0.5)
-                .attr('stroke-width', '1px')
-                .attr('fill', 'none')
-                .style('mix-blend-mode', 'multiply')
-                .merge(labelLines)
-                .transition().duration(this._transition_duration)
-                .attrTween("points", function(d){
-                    this._current = this._current || d;
-                    var interpolate = d3.interpolate(this._current, d);
-                    this._current = interpolate(0);
-                    return function(t) {
-                        var d2 = interpolate(t);
-                        var start = arc.centroid(d2);
-                        var elbow = outerArc.centroid(d2);
-                        var terminal = outerArc.centroid(d2);
-                        const leftAligned = midAngle(d2) < Math.PI;
-                        terminal[0] = radius * 0.98 * (leftAligned ? 1 : -1);
-                        const positions = [start, elbow];
-                        if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
-                            positions.push(terminal);
-                        }
-                        return positions;
-                    };
-                });
-
-            labelLines.exit().remove();
-        } else {
-            labelLinesWrapper.remove();
-        }
 
         this.isDonut()
             ? this._addCentreLabel()
