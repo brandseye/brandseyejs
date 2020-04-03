@@ -259,6 +259,7 @@ class Pie extends Geometry {
         paths.enter()
             .append('path')
             .attr('class','segment')
+            .merge(paths)
             .on("mouseover", (d, i, nodes) => {
                 d3.select(nodes[i])
                 .interrupt("hover:colour")
@@ -292,7 +293,6 @@ class Pie extends Geometry {
                     value: d.data._y
                 })
             })
-            .merge(paths)
             .transition().duration(this._transition_duration)
             .attr("fill", d => this.getD3Colour(d.data))
             .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
@@ -316,7 +316,6 @@ class Pie extends Geometry {
             .append('g')
             .attr('class', 'segment-label')
             .merge(segmentLabels)
-            .style('font-size', this._font_size + 'px')
             .each((d, i, nodes) => {
 
                 const useOutsideLabels = this.useOutsideLabels();
@@ -345,6 +344,7 @@ class Pie extends Geometry {
                 text
                     .attr('pointer-events', 'none')
                     .attr('fill', textColour)
+                    .style('font-size', this._font_size + 'px')
                     .style('visibility', arcData => {
                         if (useOutsideLabels) return null
                         const radians = arcData.endAngle - arcData.startAngle;
