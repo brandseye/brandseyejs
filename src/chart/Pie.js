@@ -159,23 +159,26 @@ class Pie extends Geometry {
         data.forEach((d,index) => {
             if (faceted && !this.facet()(d)) return;
             const xVal = scaleX.transform(x(d));
-            const object = Object.assign({
-                _key: index,
-                _x: xVal,
-                _y: scaleY.transform(y(d)),
-                _colour: xVal,
-                _size: this.size()(d)
-            }, d);
-
-            if (mapped[index]){
-                mapped[index].data.push(object)
-            } else {
-                mapped.push({
+            const yVal = scaleY.transform(y(d));
+            if (yVal !== 0){
+                const object = Object.assign({
                     _key: index,
-                    _size: object._size,
-                    _colour: object._colour,
-                    data: [object]
-                })
+                    _x: xVal,
+                    _y: yVal,
+                    _colour: xVal,
+                    _size: this.size()(d)
+                }, d);
+
+                if (mapped[index]){
+                    mapped[index].data.push(object)
+                } else {
+                    mapped.push({
+                        _key: index,
+                        _size: object._size,
+                        _colour: object._colour,
+                        data: [object]
+                    })
+                }
             }
         });
 
