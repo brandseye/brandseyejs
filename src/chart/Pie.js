@@ -417,28 +417,27 @@ class Pie extends Geometry {
                     line.remove()
                 }
             })
+            // hide intersecting labels
+            // giving preference to labels a lower arc index
+            // only do this for outside labels for now
+            .each((d, i, nodes) => {
+                const label = d3.select(nodes[i]);
 
-        // hide intersecting labels
-        // giving preference to labels a lower arc index
-        // only do this for outside labels for now
-        segmentLabels.each((d, i, nodes) => {
-            const label = d3.select(nodes[i]);
+                let hide = false;
+                if (d.index !== 0 && this.useOutsideLabels()){ // skip first label
+                    const thisLabel = labelSizes[d.index];
+                    const previousLabel = labelSizes[d.index - 1];
 
-            let hide = false;
-            if (d.index !== 0 && this.useOutsideLabels()){ // skip first label
-                const thisLabel = labelSizes[d.index];
-                const previousLabel = labelSizes[d.index - 1];
-
-                if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
-                    // different sides – ignore
-                } else if (thisLabel.rightHandSide) {
-                    hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
-                } else {
-                    hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                    if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
+                        // different sides – ignore
+                    } else if (thisLabel.rightHandSide) {
+                        hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                    } else {
+                        hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                    }
                 }
-            }
-            label.style('visibility', hide ? 'hidden' : null);
-        })
+                label.style('visibility', hide ? 'hidden' : null);
+            })
 
         segmentLabels.exit().remove();
 
