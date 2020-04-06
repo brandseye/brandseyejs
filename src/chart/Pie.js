@@ -477,7 +477,7 @@ class Pie extends Geometry {
                 } else {
                     const radians = d.endAngle - d.startAngle;
                     const arcLength = radians * radius;
-                    labelWrapper.style('visibility', label.node().getBBox() > arcLength ? 'hidden' : null);
+                    labelWrapper.style('visibility', label.node().getBBox().width > arcLength ? 'hidden' : null);
                 }
             })
 
