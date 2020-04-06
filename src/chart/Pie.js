@@ -348,34 +348,43 @@ class Pie extends Geometry {
                 }
 
                 let currWidth = xLabel.node().getBBox().width;
-                let canFix = true;
-                let truncSize = 2;
+
+                // string-based
+                // let truncSize = 2; // string-based
+                // const half = Math.floor(xLabelText.length / 2);
+                // const start = xLabelText.slice(0, half);
+                // const end = xLabelText.slice(half);
+
+                // word-based
+                let truncSize = 1;
+                let labelLength = xLabelText.length;
+
+                const minChars = 5;
                 const ellipsis = '...'; //\u2026
-                const half = Math.floor(xLabelText.length / 2);
-                const start = xLabelText.slice(0, half);
-                const end = xLabelText.slice(half);
-                const maxAttempts = 30;
-                const minChars = 6;
-                while(
-                      truncSize < Math.min(half, maxAttempts)
-                    && ( start.length + end.length - truncSize * 2 ) >= minChars
-                    && canFix
-                    && currWidth > maxLabelWidth
-                ){
+
+                while( currWidth > maxLabelWidth ){
+
                     // word-based
-                    // const xLabelWords = xLabelText.split(' ')
-                    // xLabelWords.splice(Math.floor(xLabelWords.length / 2 - 1), 2, ellipsis);
-                    // xLabelText = xLabelWords.join(' ');
+                    const xLabelWords = xLabelText.split(' ')
+                    xLabelWords.splice(Math.ceil(xLabelWords.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
+                    const truncatedText = xLabelWords.join(' ');
+                    labelLength = truncatedText.length;
+
                     // string-based
-                    const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
+                    // const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
+
+                    if (labelLength - ellipsis.length < minChars) {
+                        break;
+                    }
+
                     xLabel.text(truncatedText);
                     const newWidth = xLabel.node().getBBox().width;
                     if (newWidth >= currWidth){
-                        canFix = false;
+                        break;
                     } else {
                         currWidth = newWidth;
+                        ++truncSize;
                     }
-                    ++truncSize;
                 }
 
                 if (this.showLabels()){

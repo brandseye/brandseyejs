@@ -356,6 +356,41 @@ graph
         <p>
 
         </p>
+        <pre><code class="language-js">const pieData = [
+    { count: 1930, group: 'A', topicName: 'Reputation' },
+    { count: 1030, group: 'B', topicName: 'Charity or outreach programmes (CSI)' },
+    { count: 130,  group: 'B', topicName: 'Banking products' },
+    { count: 1234, group: 'A', topicName: 'Customer service' },
+    { count: 441,  group: 'A', topicName: 'Bank facilities' },
+    { count: 22,   group: 'A', topicName: 'Turnaround time' },
+    { count: 568,  group: 'A', topicName: 'Comparing brands to brands/industries' },
+    { count: 244,  group: 'B', topicName: 'Outstanding debt or settlements' },
+    { count: 902,  group: 'A', topicName: 'Speed or responsiveness of platform' },
+    { count: 178,  group: 'B', topicName: 'Personal loans' },
+    { count: 351,  group: 'B', topicName: 'Referral / dissuasion from one consumer to another' },
+    { count: 800,  group: 'B', topicName: 'Staff or HR' },
+    { count: 288,  group: 'B', topicName: 'No response received' },
+    { count: 276,  group: 'B', topicName: 'Reaction to brands advertising/promoting/marketing' },
+    { count: 1012, group: 'A', topicName: 'Business banking' },
+    { count: 90,   group: 'A', topicName: 'Insurance' },
+    { count: 582,  group: 'B', topicName: 'Multiple contacts' }
+]
+
+const pieChart = new b3js.chart('Pie');
+const pieGeom = b3js.pie();
+
+pieChart
+    .data(pieData)
+    .element(document.getElementById('pie-chart'))
+    .x(d => d.topicName)
+    .y(d => d.count)
+    .geometry(pieGeom.isDonut(true))
+    .scaleX(b3js.scaleDiscrete())
+    .yAxisLabel('Count')
+    .xAxisLabel('Species')
+    .showXAxis(false)
+    .showYAxis(false)
+    .render()</code></pre>
     </div>
 </div>
 
@@ -572,23 +607,24 @@ graph
                 .render();
         })
 
-        pieData = [
-            { count: 117, group: 'animal', species: 'Dog'},
-            { count: 20,  group: 'animal', species: 'Hound'},
-            { count: 345, group: 'animal', species: 'Cat'},
-            { count: 123, group: 'beast',  species: 'Placed on hold or call dropped or not answered or something else happened'},
-            { count: 0,   group: 'beast',  species: 'Penguin'},
-            { count: 740, group: 'animal', species: 'Giraffe'},
-            { count: 100, group: 'beast',  species: 'Gigantolopithecus'},
-            { count: 123, group: 'beast',  species: 'Bird'},
-            { count: 0,   group: 'animal', species: 'Accusations of unethical behaviour'},
-            { count: 100, group: 'beast',  species: 'Dragon'},
-            { count: 0,   group: 'beast',  species: 'Advice given by a representative'},
-            { count: 740, group: 'animal', species: 'Lynx'},
-            { count: 100, group: 'beast',  species: 'Worm'},
-            { count: 123, group: 'beast',  species: 'Snake'},
-            { count: 740, group: 'animal', species: 'Ant'},
-            { count: 100, group: 'beast',  species: 'Dinosaur'},
+        const pieData = [
+            { count: 1930, group: 'A', topicName: 'Reputation' },
+            { count: 1030, group: 'B', topicName: 'Charity or outreach programmes (CSI)' },
+            { count: 130,  group: 'B', topicName: 'Banking products' },
+            { count: 1234, group: 'A', topicName: 'Customer service' },
+            { count: 441,  group: 'A', topicName: 'Bank facilities' },
+            { count: 22,   group: 'A', topicName: 'Turnaround time' },
+            { count: 568,  group: 'A', topicName: 'Comparing brands to brands/industries' },
+            { count: 244,  group: 'B', topicName: 'Outstanding debt or settlements' },
+            { count: 902,  group: 'A', topicName: 'Speed or responsiveness of platform' },
+            { count: 178,  group: 'B', topicName: 'Personal loans' },
+            { count: 351,  group: 'B', topicName: 'Referral / dissuasion from one consumer to another' },
+            { count: 800,  group: 'B', topicName: 'Staff or HR' },
+            { count: 288,  group: 'B', topicName: 'No response received' },
+            { count: 276,  group: 'B', topicName: 'Reaction to brands advertising/promoting/marketing' },
+            { count: 1012, group: 'A', topicName: 'Business banking' },
+            { count: 90,   group: 'A', topicName: 'Insurance' },
+            { count: 582,  group: 'B', topicName: 'Multiple contacts' }
         ]
 
         const pieChart = new b3js.chart('Pie');
@@ -597,7 +633,7 @@ graph
         pieChart
             .data(pieData)
             .element(document.getElementById('pie-chart'))
-            .x(d => d.species)
+            .x(d => d.topicName)
             .y(d => d.count)
             .geometry(pieGeom.isDonut(true))
             .scaleX(b3js.scaleDiscrete())
@@ -605,8 +641,6 @@ graph
             .xAxisLabel('Species')
             .showXAxis(false)
             .showYAxis(false)
-            // .colour(d => d.species)
-            // .facetX(d => d.group)
             .render()
 
         const interactions = document.createElement('div');
