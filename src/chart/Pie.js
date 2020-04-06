@@ -211,17 +211,17 @@ class Pie extends Geometry {
     }
 
     render() {
-        // check how much width we need for labels
-        const minLabelCharacters = 6;
-
         let availableWidth = this.width();
         let availableHeight = this.height();
 
         let widestLabelWidth = 0;
         let labelHeight = 0;
 
-        if (this.useOutsideLabels()){
-          widestLabelWidth = this._getWidthOfWidestLabel();
+        let maxLabelWidth = availableWidth / 4;
+        const useOutsideLabels = this.useOutsideLabels();
+
+        if (useOutsideLabels){
+          widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), maxLabelWidth);
           labelHeight = this._getLabelHeight();
           availableWidth -= widestLabelWidth * 2;
           availableHeight -= labelHeight * 2;
@@ -313,7 +313,7 @@ class Pie extends Geometry {
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
             .data(arcs, d => d.data._x);
 
-        const labelSizes = []
+        const labelSizes = [];
 
         segmentLabels.enter()
             .append('g')
@@ -321,40 +321,73 @@ class Pie extends Geometry {
             .merge(segmentLabels)
             .each((d, i, nodes) => {
 
-                const useOutsideLabels = this.useOutsideLabels();
                 const labelWrapper = d3.select(nodes[i]);
                 const text = this._appendIfEmpty(labelWrapper, 'text', 'label-wrapper');
-                const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
-                const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
-
-                xLabel
-                    .attr("dy", this.showLabels() ? "-0.3em" : "0.3em")
-                    .text(d => this.formatX()(this.x()(d.data)));
-
-                if (this.showLabels()){
-                    yLabel
-                        .attr("dy", "1em")
-                        .attr("x", "0")
-                        .text(d => this.formatLabel()(this.y()(d.data)));
-                } else {
-                    yLabel.remove();
-                }
 
                 const textColour = useOutsideLabels
                     ? d3.hcl(colours.eighteen.darkGrey).brighter()
                     : this._getOverlayLabelColour(d);
 
-                text
-                    .attr('pointer-events', 'none')
+                text.attr('pointer-events', 'none')
                     .attr('fill', textColour)
                     .style('font-size', this._font_size + 'px')
-                    .style('visibility', arcData => {
-                        if (useOutsideLabels) return null
-                        const radians = arcData.endAngle - arcData.startAngle;
-                        const arcLength = radians * radius;
-                        const bounding = text.node().getBBox();
-                        return bounding.width > arcLength ? 'hidden' : null
-                    })
+
+                const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
+                const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
+
+                let xLabelText = this.formatX()(this.x()(d.data));
+                xLabel
+                    .attr("dy", this.showLabels() ? "-0.3em" : "0.3em")
+                    .text(xLabelText);
+
+                if (!useOutsideLabels){
+                    // TODO: calculate based on intersection of arc and text label
+                    const radians = d.endAngle - d.startAngle;
+                    const arcLength = radians * radius;
+                    maxLabelWidth = arcLength;
+                }
+
+                let currWidth = xLabel.node().getBBox().width;
+                let canFix = true;
+                let truncSize = 2;
+                const ellipsis = '...'; //\u2026
+                const half = Math.floor(xLabelText.length / 2);
+                const start = xLabelText.slice(0, half);
+                const end = xLabelText.slice(half);
+                const maxAttempts = 30;
+                const minChars = 6;
+                while(
+                      truncSize < Math.min(half, maxAttempts)
+                    && ( start.length + end.length - truncSize * 2 ) >= minChars
+                    && canFix
+                    && currWidth > maxLabelWidth
+                ){
+                    // word-based
+                    // const xLabelWords = xLabelText.split(' ')
+                    // xLabelWords.splice(Math.floor(xLabelWords.length / 2 - 1), 2, ellipsis);
+                    // xLabelText = xLabelWords.join(' ');
+                    // string-based
+                    const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
+                    xLabel.text(truncatedText);
+                    const newWidth = xLabel.node().getBBox().width;
+                    if (newWidth >= currWidth){
+                        canFix = false;
+                    } else {
+                        currWidth = newWidth;
+                    }
+                    ++truncSize;
+                }
+
+                if (this.showLabels()){
+                    yLabel
+                        .attr("dy", "1em")
+                        .attr("x", "0")
+                        .text(this.formatLabel()(this.y()(d.data)));
+                } else {
+                    yLabel.remove();
+                }
+
+                text
                     .transition().duration(this._transition_duration)
                     .attrTween("transform", function(arcData) {
                         this._current = this._current || arcData;
@@ -365,7 +398,7 @@ class Pie extends Geometry {
                             const dInt = interpolate(t);
                             if (useOutsideLabels){
                                 const pos = outerArc.centroid(dInt);
-                                pos[0] = radius * 1.13 * (midAngle(dInt) < Math.PI ? 1 : -1);
+                                pos[0] = radius * 1.09 * (midAngle(dInt) < Math.PI ? 1 : -1);
                                 return "translate("+ pos +")";
                             } else {
                                 return "translate(" + labelArc.centroid(dInt) + ")";
@@ -390,7 +423,7 @@ class Pie extends Geometry {
 
                 const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
 
-                if (this.useOutsideLabels()) {
+                if (useOutsideLabels) {
                     line
                         .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
                         .attr('opacity', 0.5)
@@ -408,7 +441,7 @@ class Pie extends Geometry {
                                 var elbow = outerArc.centroid(d2);
                                 var terminal = outerArc.centroid(d2);
                                 const leftAligned = midAngle(d2) < Math.PI;
-                                terminal[0] = radius * 1.1 * (leftAligned ? 1 : -1);
+                                terminal[0] = radius * 1.05 * (leftAligned ? 1 : -1);
                                 const positions = [start, elbow];
                                 if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
                                     positions.push(terminal);
@@ -420,26 +453,32 @@ class Pie extends Geometry {
                     line.remove()
                 }
             })
-            // hide intersecting labels
+            // hide intersecting or too-wide labels
             // giving preference to labels a lower arc index
             // only do this for outside labels for now
             .each((d, i, nodes) => {
-                const label = d3.select(nodes[i]);
+                const labelWrapper = d3.select(nodes[i]);
+                const label = labelWrapper.select('text');
+                if (useOutsideLabels){
+                    let hide = label.node().getBBox().width > maxLabelWidth;
+                    if (!hide && d.index !== 0 && this.useOutsideLabels()){ // skip first label
+                        const thisLabel = labelSizes[d.index];
+                        const previousLabel = labelSizes[d.index - 1];
 
-                let hide = false;
-                if (d.index !== 0 && this.useOutsideLabels()){ // skip first label
-                    const thisLabel = labelSizes[d.index];
-                    const previousLabel = labelSizes[d.index - 1];
-
-                    if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
-                        // different sides – ignore
-                    } else if (thisLabel.rightHandSide) {
-                        hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
-                    } else {
-                        hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                        if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
+                            // different sides – ignore
+                        } else if (thisLabel.rightHandSide) {
+                            hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                        } else {
+                            hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                        }
                     }
+                    labelWrapper.style('visibility', hide ? 'hidden' : null);
+                } else {
+                    const radians = d.endAngle - d.startAngle;
+                    const arcLength = radians * radius;
+                    labelWrapper.style('visibility', label.node().getBBox() > arcLength ? 'hidden' : null);
                 }
-                label.style('visibility', hide ? 'hidden' : null);
             })
 
         segmentLabels.exit().remove();
