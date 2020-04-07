@@ -157,10 +157,11 @@ class Point extends Geometry {
             .reduce((acc, val) => acc.concat(val));
         height = height || this.height();
 
+        let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0);
         return d3.scaleLinear()
             .range([height, 0])
             .nice(5)
-            .domain([Math.min(0, d3.min(data, d => d._y)), d3.max(data, d => d._y)]);
+            .domain([Math.min(0, d3.min(data, d => d._y)), max]);
 
     }
 
