@@ -104,6 +104,7 @@ class Pie extends Geometry {
         if (hasYText) yText = yText && yText.short || yText;
 
         const centreText = this._appendIfEmpty(this._element.select('.pie'), 'text', 'centre-label')
+            .style('font-family', 'sans-serif')
             .style('font-size', this._font_size + 'px')
             .attr('text-anchor', 'middle');
 
@@ -305,10 +306,9 @@ class Pie extends Geometry {
                 return t => arc(pInt(t));
             })
 
-
         paths.exit().remove();
 
-        const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels');
+        const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
 
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
             .data(arcs, d => d.data._x);
