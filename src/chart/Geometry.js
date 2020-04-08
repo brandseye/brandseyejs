@@ -30,6 +30,7 @@ export class Geometry {
         this._size = null;
         this._scale_x = null;
         this._scale_y = null;
+        this._axis_max_value = null;
         this._facet_selector = null;
         this._chart_colour_scale = null;
         this._colour_scale = null;
@@ -263,6 +264,12 @@ export class Geometry {
     height(height) {
         if (arguments.length === 0) return this._height;
         this._height = height;
+        return this;
+    }
+
+    axisMaxValue(v) {
+        if (arguments.length === 0) return this._axis_max_value;
+        this._axis_max_value = v;
         return this;
     }
 
