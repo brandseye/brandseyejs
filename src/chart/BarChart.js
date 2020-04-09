@@ -111,11 +111,11 @@ class BarHistogram extends Geometry {
                       .attr("width", 0)
                       .attr("height", yGroup.bandwidth())
                       .style("cursor", "pointer")
+                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                      .merge(bars)
                       .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this.strokeWidth())
-                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                      .merge(bars)
                       .attr("class", d => "bar series series-" + toColourKey(d._colour))
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
