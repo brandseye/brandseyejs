@@ -61,6 +61,8 @@ class FantasticChart {
         this._legend_colours = () => null;
         this._y_axis_label = null;
         this._x_axis_label = null;
+        this._hide_x_axis_min = false;
+        this._hide_y_axis_min = false;
         this._show_x_axis = true;
         this._show_y_axis = true;
         this._label_formatter = null;
@@ -201,6 +203,18 @@ class FantasticChart {
     showYAxis(show) {
         if (arguments.length === 0) return this._show_y_axis;
         this._show_y_axis = !!show;
+        return this;
+    }
+
+    hideXAxisMin(show) {
+        if (arguments.length === 0) return this._hide_x_axis_min;
+        this._hide_x_axis_min = !!show;
+        return this;
+    }
+
+    hideYAxisMin(show) {
+        if (arguments.length === 0) return this._hide_y_axis_min;
+        this._hide_y_axis_min = !!show;
         return this;
     }
 
@@ -400,7 +414,9 @@ class FantasticChart {
             fontSize: this._font_size,
             xLabelAngle: this._x_label_angle,
             gridLineOpacity: this._grid_line_opacity,
-            axisBox: this._axis_box
+            axisBox: this._axis_box,
+            hideXAxisMin: this._hide_x_axis_min,
+            hideYAxisMin: this._hide_y_axis_min
         }
 
         //-----------------------------------------------

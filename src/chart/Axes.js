@@ -91,11 +91,13 @@ export function xaxis(selection, height, width, axisObject, importance, options)
 
             labelWidth = fontSize * 1.2  // getBoundingClientRect doesn't seem to consider the rotation?
         } else {
-            adjustFirstXTickLabel(axis)
+            if (!options.hideYAxisMin) adjustFirstXTickLabel(axis)
         }
+        if (options.hideXAxisMin) axis.select("text").remove()
         if (labelWidth > width) removeOverlappingXTicks(axis, labelWidth)
     } else {
-        adjustFirstXTickLabel(axis)
+        if (!options.hideYAxisMin) adjustFirstXTickLabel(axis)
+        if (options.hideXAxisMin) axis.select("text").remove()
         if (tv) removeOverlappingXTicks(axis, labelWidth) // ticks might not be evenly spaced
     }
 
@@ -140,6 +142,8 @@ export function yaxis(selection, axis, options) {
 
     let tickSize = axis.tickSize()
     if (tickSize && options.axisBox) y.append("line").attr("x2", -tickSize).attr("stroke", "currentColor")
+
+    if (options.hideYAxisMin) y.select("text").remove()
 
     y.selectAll("text").style("font-size", fontSize + "px").style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
     y.selectAll("path").style("opacity", gridLineOpacity)
