@@ -237,7 +237,7 @@ class FantasticChart {
      */
     colourScale(colours) {
         if (arguments.length === 0) return this._colour_scale;
-        if (typeof colours !== 'object' || !colours.length) throw new Error("colour must be an Array");
+        if (colours && (typeof colours !== 'object' || !colours.length)) throw new Error("colour must be an Array");
         this._colour_scale = colours;
         return this;
     }
@@ -407,8 +407,9 @@ class FantasticChart {
         //-----------------------------------------------
         // Setup initial data
 
+        const geometries = this.sortGeometries();
         const bs = buckets(this._data, this._colour, this._individual_colours, this._size);
-        const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale())
+        const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale() || geometries[0].colourScale())
                                                       .domain(Array.from(bs.colours));
         const axisOptions = {
             fontSize: this._font_size,
@@ -425,8 +426,7 @@ class FantasticChart {
 
         const yAxisRestriction = Math.max((this._width * 0.07), 25);
 
-        const geometries = this.sortGeometries();
-        geometries.forEach(geom => this.setupGeom(geom));
+        geometries.forEach(geom => this.setupGeom(geom, bs));
 
         let axisWidth = 0;
         if (this._show_y_axis){
@@ -670,9 +670,10 @@ class FantasticChart {
     /*
      * Ensures that each geom has the settings that it needs.
      */
-    setupGeom(geom) {
+    setupGeom(geom, bs) {
+        if (!geom.setupY()) geom.setupY(this._y_getter)
+
         geom.setupX(this._x_getter)
-            .setupY(this._y_getter)
             .setupColour(this._colour)
             .setupSize(this._size)
             .setupScaleX(this._scale_x)
@@ -680,14 +681,20 @@ class FantasticChart {
             .setupFormatX(this._x_formatter)
             .setupFormatY(this._y_formatter)
             .setupFormatLabel(this._label_formatter)
-            .setupColourScale(this._colour_scale)
-            .setupIndividualColours(this._individual_colours)
             .setupModifyColour(this._modify_colour)
             .setupShowLabels(this._show_labels)
-            .d3ColourScale(this._d3_colour_scale)
             .setupYAxisLabel(this._y_axis_label)
             .setupXAxisLabel(this._x_axis_label)
             .fontSize(this._font_size);
+
+        if (this._colour_scale) {
+            geom.setupColourScale(this._colour_scale)
+            if (this._d3_colour_scale) geom.d3ColourScale(this._d3_colour_scale)
+        } else {
+            geom.d3ColourScale(d3.scaleOrdinal(geom.colourScale()).domain(Array.from(bs.colours)))
+        }
+        if (this._individual_colours) geom.setupIndividualColours(this._individual_colours)
+
         geom._dispatch.on("elementClick", (e) => {
             this._dispatch.call("elementClick", this, e);
         });

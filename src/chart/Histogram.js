@@ -232,7 +232,7 @@ class Histogram extends Geometry {
         let p = this._padding
         if (data[0].data.length > 1 && p === 0) p = 0.2
         return d3.scaleBand()
-                 .rangeRound([0, width])
+                 .range([0, width])
                  .padding(p)
                  .domain(data.map(d => d._key));
     }

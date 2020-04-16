@@ -31,13 +31,13 @@ class Line extends Geometry {
         this._curve = 'curveCatmullRom'
     }
 
-  curve(curve) {
-    if (arguments.length === 0) return this._curve;
-    this._curve = curve;
-    return this;
-  }
+    curve(curve) {
+        if (arguments.length === 0) return this._curve;
+        this._curve = curve;
+        return this;
+    }
 
-  render() {
+    render() {
         const element = this._element;
         const data = this.prepareData(null, true);
         const width = this._width,
@@ -59,6 +59,8 @@ class Line extends Geometry {
         let circle = false;
         let lastMouse = null;
         let lastMin = null;
+        const firstGeometry = !this._index
+        let that = this
 
         if (lineGroup.empty()) {
             lineGroup = element
@@ -67,16 +69,17 @@ class Line extends Geometry {
                 .attr("width", this.width())
                 .attr("height", this.height());
 
-            // This is needed to provide area for mouse interactions.
-            lineGroup
-                .append("rect")
-                .style("opacity", "0")
-                .attr("width", "100%")
-                .attr("height", "100%");
+            if (firstGeometry) { // only add the bg rectangle if we are the first geometry or we will obscure the others
+                // This is needed to provide area for mouse interactions.
+                lineGroup
+                    .append("rect")
+                    .style("opacity", "0")
+                    .attr("width", "100%")
+                    .attr("height", "100%");
+            }
         }
 
-        if (this.scaleX().isContinuous()) {
-            lineGroup
+        if (this.scaleX().isContinuous() && firstGeometry) {
             lineGroup
                 .on("mousemove", (d, i, nodes) => { // Darken the bar on mouse over
                     const mouse = d3.mouse(nodes[i]);
@@ -126,7 +129,8 @@ class Line extends Geometry {
                                 point: min,
                                 series: data[min._s_i],
                                 seriesIndex: min._s_i,
-                                value: min._y
+                                value: min._y,
+                                geometry: that
                             })
                         })
                         .on("mouseover", () => {
@@ -135,7 +139,8 @@ class Line extends Geometry {
                                 point: min,
                                 series: data[min._s_i],
                                 seriesIndex: min._s_i,
-                                value: min._y
+                                value: min._y,
+                                geometry: that
                             })
                         })
                         .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
@@ -202,112 +207,132 @@ class Line extends Geometry {
 
         element.selectAll(".domain-selector").remove();
         if (this.scaleX().isDiscrete()) {
-            const selectors = element
-                .selectAll(".domain-selector")
-                .data(x.domain());
+            if (!firstGeometry) { // can't use bars as we are on top of another geometry
+                let mid = x.bandwidth() / 2
+                let r = Math.max(mid, 3)
 
-            selectors.enter()
-                     .append("g")
-                     .attr("class", "domain-selector")
-                     .each((d, i, nodes) => {
-                         const selector = d3.select(nodes[i]);
-                         selector.append("rect")
-                             .attr("x", d => x(d))
-                             .attr("y", y.range()[1])
-                             .attr("width", x.bandwidth() + "px")
-                             .attr("height", Math.abs(y.range()[0] - y.range()[1]))
-                             .style("fill", d3.color("#487329"))
-                             .style("opacity", 0);
+                let dsg = lineGroup.selectAll('g.domain-selector').data(data, d => d._key)
+                dsg.exit().remove()
+                dsg = dsg.enter().append("g").attr("class", "domain-selector").merge(dsg)
+                dsg.each(function(row) {
+                    let colour = d3.hcl(that.getD3Colour(row.data[0]))
+                    let sel = d3.select(this)
+                    let circles = sel.selectAll("circle.target").data(row.data)
+                    circles.exit().remove()
+                    circles = circles.enter().append("circle").attr("class", "target").merge(circles)
+                    circles.attr("r", r).attr("cx", d => x(d._x) + mid).attr("cy", d => y(d._y)).attr("fill", colour)
+                        .attr("opacity", 0.0)
+                        .on("mouseenter", d => that._dispatch.call("tooltipShow", that, { e: d3.event, point: d, geometry: that }))
+                        .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                        .on("click auxclick", d => that._dispatch.call("elementClick", that, { e: d3.event, point: d, geometry: that }))
+                })
+            } else {
+                const selectors = element
+                    .selectAll(".domain-selector")
+                    .data(x.domain());
 
-                         const STANDARD_OPACITY = 0.7;
-                         const RADIUS = 10;
+                selectors.enter()
+                         .append("g")
+                         .attr("class", "domain-selector")
+                         .each((d, i, nodes) => {
+                             const selector = d3.select(nodes[i]);
+                             selector.append("rect")
+                                 .attr("x", d => x(d))
+                                 .attr("y", y.range()[1])
+                                 .attr("width", x.bandwidth() + "px")
+                                 .attr("height", Math.abs(y.range()[0] - y.range()[1]))
+                                 .style("fill", d3.color("#487329"))
+                                 .style("opacity", 0);
 
-                         selector.on("mouseenter", d => {
-                                 const rect = selector.select("rect");
-                                 rect.interrupt("selector:highlight")
-                                     .transition("selector:highlight")
-                                     .duration(500)
-                                     .style("opacity", 0.2);
+                             const STANDARD_OPACITY = 0.7;
+                             const RADIUS = 10;
 
-                                 var inSelection = data
-                                     .map(line => {
-                                         return line.data.filter(p => {
-                                             return equals(p._x, d);
-                                         })
-                                     })
-                                     .flat();
+                             selector.on("mouseenter", d => {
+                                     const rect = selector.select("rect");
+                                     rect.interrupt("selector:highlight")
+                                         .transition("selector:highlight")
+                                         .duration(250)
+                                         .style("opacity", 0.2);
 
-                                 if (inSelection.length) {
-                                     // this._dispatch.call("tooltipShow", this, {
-                                     //     e: d3.event,
-                                     //     point: inSelection[0],
-                                     //     points: inSelection
-                                     // });
-
-                                     selector
-                                         .selectAll(".line-highlight")
-                                         .data(inSelection)
-                                         .enter()
-                                         .append("circle")
-                                             .attr("class", "line-highlight")
-                                             .attr("cx", d => x(d._x) + x.bandwidth() / 2)
-                                             .attr("cy", d => y(d._y))
-                                             .attr("r", 1)
-                                             .style("cursor", "pointer")
-                                             .style("opacity", 0)
-                                             .style("fill", d => this.getD3Colour(d))
-                                             .style("stroke", determineStrokeColour)
-                                         .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                                         .on("click auxclick", d => {
-                                             this._dispatch.call("elementClick", this, {
-                                                 e: d3.event,
-                                                 point: d
+                                     var inSelection = data
+                                         .map(line => {
+                                             return line.data.filter(p => {
+                                                 return equals(p._x, d);
                                              })
                                          })
-                                         .on("mouseover", (d, i, nodes) => {
-                                             this._dispatch.call("tooltipShow", this, {
-                                                 e: d3.event,
-                                                 point: d
-                                             });
+                                         .flat();
 
-                                             d3.select(nodes[i])
-                                               .interrupt()
-                                               .transition()
-                                               .style("opacity", 1)
-                                               .attr("r", 15);
-                                         })
-                                         .on("mouseout", (d, i, nodes) => {
-                                             d3.select(nodes[i])
-                                               .interrupt()
-                                               .transition()
-                                               .style("opacity", STANDARD_OPACITY)
-                                               .attr("r", RADIUS);
-                                         })
+                                     if (inSelection.length) {
+                                         // this._dispatch.call("tooltipShow", this, {
+                                         //     e: d3.event,
+                                         //     point: inSelection[0],
+                                         //     points: inSelection
+                                         // });
+
+                                         selector
+                                             .selectAll(".line-highlight")
+                                             .data(inSelection)
+                                             .enter()
+                                             .append("circle")
+                                                 .attr("class", "line-highlight")
+                                                 .attr("cx", d => x(d._x) + x.bandwidth() / 2)
+                                                 .attr("cy", d => y(d._y))
+                                                 .attr("r", 1)
+                                                 .style("cursor", "pointer")
+                                                 .style("opacity", 0)
+                                                 .style("fill", d => this.getD3Colour(d))
+                                                 .style("stroke", determineStrokeColour)
+                                             .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+                                             .on("click auxclick", d => {
+                                                 this._dispatch.call("elementClick", this, {
+                                                     e: d3.event,
+                                                     point: d
+                                                 })
+                                             })
+                                             .on("mouseover", (d, i, nodes) => {
+                                                 this._dispatch.call("tooltipShow", this, {
+                                                     e: d3.event,
+                                                     point: d
+                                                 });
+
+                                                 d3.select(nodes[i])
+                                                   .interrupt()
+                                                   .transition()
+                                                   .style("opacity", 1)
+                                                   .attr("r", 15);
+                                             })
+                                             .on("mouseout", (d, i, nodes) => {
+                                                 d3.select(nodes[i])
+                                                   .interrupt()
+                                                   .transition()
+                                                   .style("opacity", STANDARD_OPACITY)
+                                                   .attr("r", RADIUS);
+                                             })
+                                             .transition()
+                                                 .delay(150)
+                                                 .duration(250)
+                                                 .attr("r", RADIUS)
+                                                 .style("opacity", STANDARD_OPACITY);
+                                     }
+
+
+
+                                 })
+                                 .on("mouseleave", d => {
+                                     const rect = selector.select("rect");
+                                     rect.interrupt("selector:highlight")
                                          .transition()
-                                             .delay(300)
-                                             .duration(500)
-                                             .attr("r", RADIUS)
-                                             .style("opacity", STANDARD_OPACITY);
-                                 }
+                                         .style("opacity", 0);
 
-
-
-                             })
-                             .on("mouseleave", d => {
-                                 const rect = selector.select("rect");
-                                 rect.interrupt("selector:highlight")
-                                     .transition()
-                                     .style("opacity", 0);
-
-                                 selector.selectAll(".line-highlight")
-                                         .interrupt()
-                                         .transition()
-                                         .style("opacity", 0)
-                                         .attr("r", 1)
-                                         .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
-                             });
-                     })
-
+                                     selector.selectAll(".line-highlight")
+                                             .interrupt()
+                                             .transition()
+                                             .style("opacity", 0)
+                                             .attr("r", 1)
+                                             .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
+                                 });
+                         })
+            }
         }
     }
 
