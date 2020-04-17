@@ -276,7 +276,7 @@ export class ColumnChart extends Chart {
         // Calculate scales and so on.
 
         const x = d3.scaleBand()
-            .rangeRound([0, width])
+            .range([0, width])
             .padding(this._interbarProportion !== null ? this._interbarProportion : (this._data.length > 1 ? 0.08 : 0.1));
 
         const xGroup = d3.scaleBand()

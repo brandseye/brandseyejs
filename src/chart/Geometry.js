@@ -56,6 +56,7 @@ export class Geometry {
         this._d3_colour_scale = null;
         this._stroke_width = null;
         this._font_size = 12;
+        this._padding = 0;
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -336,6 +337,12 @@ export class Geometry {
         if (arguments.length === 0) return this._font_size;
         if (typeof px !== "number" && px > 0) throw new Error("fontSize must be a positive number");
         this._font_size = px;
+        return this;
+    }
+
+    padding(padding) {
+        if (arguments.length === 0) return this._padding;
+        this._padding = padding;
         return this;
     }
 

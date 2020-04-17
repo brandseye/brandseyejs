@@ -346,6 +346,7 @@ class Line extends Geometry {
 
         return d3.scaleBand()
             .range([0, width])
+            .paddingInner(this._padding || 0)    // must use padding so lines fit properly over bars
             .domain(data.map(d => d._x));
     }
 

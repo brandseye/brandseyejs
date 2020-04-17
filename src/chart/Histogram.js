@@ -32,15 +32,6 @@ class Histogram extends Geometry {
         this._stroke_width = 1
     }
 
-    /**
-     * Set the padding between bar groups. 0 padding is a standard histogram.
-     */
-    padding(padding) {
-        if (arguments.length === 0) return this._padding;
-        this._padding = padding;
-        return this;
-    }
-
     render() {
         const element = this._element;
         const data = this.prepareData(null, true);
@@ -233,7 +224,7 @@ class Histogram extends Geometry {
         if (data[0].data.length > 1 && p === 0) p = 0.2
         return d3.scaleBand()
                  .range([0, width])
-                 .padding(p)
+                 .paddingInner(p)
                  .domain(data.map(d => d._key));
     }
 
