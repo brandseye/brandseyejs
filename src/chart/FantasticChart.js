@@ -42,7 +42,6 @@ class FantasticChart {
         this._element = null;
         this._width = 900;
         this._height = 512;
-        this._colour = () => colours.eighteen.midGrey;
         this._size = () => 1;
         this._scale_x = scaleIdentity();
         this._scale_y = scaleIdentity();
@@ -439,10 +438,14 @@ class FantasticChart {
 
         //-----------------------------------------------
         // Draw the legend
-        if (!this._show_legend) removeLegend(svg);
-        const legendHeight = this._show_legend
-            ? renderLegend(svg, bs, (d) => this._legend_colours(d) || bs.bucketColour[d] || colourScale(d), this._width, this._height, null, axisOptions)
-            : 0;
+
+        let legendHeight = 0
+        if (this._show_legend) {
+            legendHeight = renderLegend(svg, bs, d => this._legend_colours(d) || bs.bucketColour[d] || colourScale(d),
+                this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
+        } else {
+            removeLegend(svg)
+        }
 
         //-----------------------------------------------
         // Calculate margins without knowing the final height.
