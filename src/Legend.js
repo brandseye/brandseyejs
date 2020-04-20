@@ -24,7 +24,7 @@ export function removeLegend(element) {
     element.selectAll(".legend").remove();
 }
 
-export function renderLegend(element, buckets, colourScale, width, height, min, options) {
+export function renderLegend(element, geomBuckets, colourScale, width, height, min, options) {
     if (!options) options = { }
     let fontSize = options.fontSize || 12
 
@@ -32,26 +32,24 @@ export function renderLegend(element, buckets, colourScale, width, height, min, 
     removeLegend(element);
 
     // Only if we have multiple series.
-    if (!buckets || !buckets.colours.size) return 0;
+    if (!geomBuckets.find(b => b.colours.size)) return 0
 
-    const colours = Array.from(buckets.colours);
-    if (colours.length < min) return 0;
-
-    const boundings = getBoundings(element, colours);
-
-    const legend = element.append("g")
-                          .attr("class", "legend");
-
-    let elements = legend.selectAll(".legend-element")
-                         .data(colours);
-
-    console.log("colours", colours)
+    const legend = element.append("g").attr("class", "legend");
 
     let position = 0
     let position_height = 0
     let maxWidth = width - 40
 
-    elements.enter()
+    geomBuckets.forEach(buckets => {
+        let gm = legend.append("g").attr("class", "geometry-legend")
+        const colours = Array.from(buckets.colours);
+        if (colours.length < min) return 0;
+
+        const boundings = getBoundings(element, colours);
+
+        let elements = gm.selectAll(".legend-element").data(colours);
+
+        elements.enter()
             .append("g")
             .attr("class", (d, i) => "legend-element series series-" + toColourKey(d))
             .style("cursor", "default")
@@ -59,21 +57,21 @@ export function renderLegend(element, buckets, colourScale, width, height, min, 
                 let element = d3.select(nodes[i]);
 
                 element.append("rect")
-                       .attr("width", 10)
-                       .attr("height", 10)
-                       .attr("rx", 2)
-                       .attr("ry", 2)
-                       .attr("y", -10)
-                       .style("fill", d => colourScale(d));
+                    .attr("width", 10)
+                    .attr("height", 10)
+                    .attr("rx", 2)
+                    .attr("ry", 2)
+                    .attr("y", -10)
+                    .style("fill", d => colourScale(d, buckets));
 
                 element.append("text")
-                       .text(d => d)
-                       .attr("dx", 12)
-                       .style("font-size", fontSize + "px")
-                       .style("fill", schema.eighteen.darkGrey);
+                    .text(d => d)
+                    .attr("dx", 12)
+                    .style("font-size", fontSize + "px")
+                    .style("fill", schema.eighteen.darkGrey);
 
                 element.append("title")
-                       .text(d => d);
+                    .text(d => d);
 
                 element.attr("transform", "translate(" + position + "," + position_height +")");
                 const positionDelta = boundings[d].width + 25;
@@ -89,20 +87,21 @@ export function renderLegend(element, buckets, colourScale, width, height, min, 
             })
             .on("mouseover", (d, i, nodes) => {
                 element.selectAll(".series:not(.series-" + toColourKey(d) + ")")
-                   .interrupt("legend:highlight")
-                   .transition("legend:highlight")
-                   .style("opacity", 0.3);
+                    .interrupt("legend:highlight")
+                    .transition("legend:highlight")
+                    .style("opacity", 0.3);
             })
             .on("mouseout", (d, i, nodes) => {
                 element.selectAll(".series")
-                   .interrupt("legend:highlight")
-                   .transition("legend:highlight")
-                   .style("opacity", 1);
+                    .interrupt("legend:highlight")
+                    .transition("legend:highlight")
+                    .style("opacity", 1);
             })
             .style("opacity", 0)
             .transition()
             .duration(1000)
             .style("opacity", 1);
+    })
 
     let bb = legend.node().getBBox()
     legend.attr("transform", "translate(" + ((width - bb.width)/2) + "," + (height - bb.height) + ")")

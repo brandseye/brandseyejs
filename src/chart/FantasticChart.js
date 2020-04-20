@@ -407,9 +407,14 @@ class FantasticChart {
         // Setup initial data
 
         const geometries = this.sortGeometries();
-        const bs = buckets(this._data, this._colour, this._individual_colours, this._size);
-        const colourScale = this._d3_colour_scale = d3.scaleOrdinal(this.colourScale() || geometries[0].colourScale())
-                                                      .domain(Array.from(bs.colours));
+
+        let geomBuckets = geometries.map(g => {
+            let b = buckets(this._data, g._colour || this._colour, this._individual_colours, this._size)
+            b.geometry = g
+            b.colourScale = d3.scaleOrdinal(g.colourScale()).domain(Array.from(b.colours))
+            return b
+        })
+
         const axisOptions = {
             fontSize: this._font_size,
             xLabelAngle: this._x_label_angle,
@@ -425,7 +430,7 @@ class FantasticChart {
 
         const yAxisRestriction = Math.max((this._width * 0.07), 25);
 
-        geometries.forEach(geom => this.setupGeom(geom, bs));
+        geometries.forEach((geom,i) => this.setupGeom(geom, geomBuckets[i]));
 
         let axisWidth = 0;
         if (this._show_y_axis){
@@ -441,8 +446,9 @@ class FantasticChart {
 
         let legendHeight = 0
         if (this._show_legend) {
-            legendHeight = renderLegend(svg, bs, d => this._legend_colours(d) || bs.bucketColour[d] || colourScale(d),
-                this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
+            legendHeight = renderLegend(svg, geomBuckets,
+                (d,bs) => this._legend_colours(d) || bs.bucketColour[d] || bs.colourScale(d),
+                    this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
         } else {
             removeLegend(svg)
         }
