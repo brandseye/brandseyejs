@@ -441,7 +441,8 @@ class FantasticChart {
         const geometries = this.sortGeometries();
 
         let geomBuckets = geometries.map(g => {
-            let b = buckets(this._data, g._colour || this._colour, this._individual_colours, this._size)
+            let b = buckets(this._data, g._colour || this._colour,
+                g._individual_colours || this._individual_colours, this._size)
             b.geometry = g
             b.colourScale = d3.scaleOrdinal(g.colourScale()).domain(Array.from(b.colours))
             return b
