@@ -209,23 +209,25 @@ export function xGrid(selection, height, show, axis) {
         .style("opacity", 1);
 }
 
-export function yAxisLabel(element, height, margins, label, options) {
+export function yAxisLabel(element, height, margins, label, options, y2x) {
     let { fontSize } = ensureOptions(options)
 
-    element.selectAll(".y-axis-label").remove();
+    let cls = y2x ? "y2-axis-label" : "y-axis-label"
+    element.selectAll("." + cls).remove();
 
     if (!label) return;
     let text = label;
     if (text.long) text = text.long;
 
-    let x = -(margins.top + height / 2);
+    let x = y2x || 20
+    let y = -(margins.top + height / 2)
 
     let labelElement = element.append("g")
-        .attr("class", "y-axis-label")
+        .attr("class", cls)
         .append("text")
         .style("font-size", fontSize + "px")
         .text(text)
-        .attr("transform", "rotate(-90 0,0) translate(" + x + ", 20)")
+        .attr("transform", "rotate(-90 0,0) translate(" + y + "," + x + ")")
         .style("fill", d3.hcl(colours.eighteen.darkGrey).brighter());
 
     let width = labelElement.node().getBBox().width;

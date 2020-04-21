@@ -58,12 +58,15 @@ class FantasticChart {
         this._show_labels = true;
         this._show_legend = true;
         this._legend_colours = () => null;
-        this._y_axis_label = null;
         this._x_axis_label = null;
+        this._y_axis_label = null;
+        this._y2_axis_label = null;
         this._hide_x_axis_min = false;
         this._hide_y_axis_min = false;
+        this._hide_y2_axis_min = false;
         this._show_x_axis = true;
         this._show_y_axis = true;
+        this._show_y2_axis = true;
         this._label_formatter = null;
         this._font_size = 12;
         this._x_grid_lines = false;
@@ -73,6 +76,7 @@ class FantasticChart {
         this._grid_line_opacity = 0.15;
         this._x_tick_values_fn = null;
         this._y_tick_values_fn = null;
+        this._y2_tick_values_fn = null;
         return this;
     }
 
@@ -181,15 +185,21 @@ class FantasticChart {
         return this;
     }
 
+    xAxisLabel(label) {
+        if (arguments.length === 0) return this._x_axis_label;
+        this._x_axis_label = label;
+        return this;
+    }
+
     yAxisLabel(label) {
         if (arguments.length === 0) return this._y_axis_label;
         this._y_axis_label = label;
         return this;
     }
 
-    xAxisLabel(label) {
-        if (arguments.length === 0) return this._x_axis_label;
-        this._x_axis_label = label;
+    y2AxisLabel(label) {
+        if (arguments.length === 0) return this._y2_axis_label;
+        this._y2_axis_label = label;
         return this;
     }
 
@@ -205,6 +215,12 @@ class FantasticChart {
         return this;
     }
 
+    showY2Axis(show) {
+        if (arguments.length === 0) return this._show_y2_axis;
+        this._show_y2_axis = !!show;
+        return this;
+    }
+
     hideXAxisMin(show) {
         if (arguments.length === 0) return this._hide_x_axis_min;
         this._hide_x_axis_min = !!show;
@@ -214,6 +230,12 @@ class FantasticChart {
     hideYAxisMin(show) {
         if (arguments.length === 0) return this._hide_y_axis_min;
         this._hide_y_axis_min = !!show;
+        return this;
+    }
+
+    hideY2AxisMin(show) {
+        if (arguments.length === 0) return this._hide_y2_axis_min;
+        this._hide_y2_axis_min = !!show;
         return this;
     }
 
@@ -352,12 +374,22 @@ class FantasticChart {
     }
 
     /**
-     * The function is passed the yScale and must return null or an array of values to use for ticks.
+     * The function is passed the scale and must return null or an array of values to use for ticks.
      */
     yTickValuesFn(fn) {
         if (arguments.length === 0) return this._y_tick_values_fn;
         if (fn && typeof fn !== "function") throw new Error("fn must be an function or null");
         this._y_tick_values_fn = fn;
+        return this;
+    }
+
+    /**
+     * The function is passed the scale and must return null or an array of values to use for ticks.
+     */
+    y2TickValuesFn(fn) {
+        if (arguments.length === 0) return this._y2_tick_values_fn;
+        if (fn && typeof fn !== "function") throw new Error("fn must be an function or null");
+        this._y2_tick_values_fn = fn;
         return this;
     }
 
@@ -432,13 +464,23 @@ class FantasticChart {
 
         geometries.forEach((geom,i) => this.setupGeom(geom, geomBuckets[i]));
 
-        let axisWidth = 0;
-        if (this._show_y_axis){
-            axisWidth = geometries.length
-                ? maxBounding(svg, geometries[0].yValues()
-                                                .map(geometries[0].formatY())
-                                                .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
-                : 0;
+        let yAxisWidth = 0, y2AxisWidth = 0, firstY2AxisGeom = null;
+        if (geometries.length) {
+            if (this._show_y_axis){
+                yAxisWidth = maxBounding(svg, geometries[0].yValues()
+                    .map(geometries[0].formatY())
+                    .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
+            }
+            if (this._show_y2_axis) {
+                for (let i = 1; i < geometries.length; i++) {
+                    let geom = geometries[i];
+                    if (!geom.useY2Axis()) continue
+                    firstY2AxisGeom = geom
+                    y2AxisWidth = maxBounding(svg, geom.yValues()
+                        .map(geom.formatY())
+                        .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 20
+                }
+            }
         }
 
         //-----------------------------------------------
@@ -462,14 +504,14 @@ class FantasticChart {
 
         const margin = {
             top: outerPadding,
-            right: outerPadding,
+            right: outerPadding + y2AxisWidth,
             bottom: outerPadding + legendHeight,
-            left: outerPadding + axisWidth
+            left: outerPadding + yAxisWidth
         };
         if (this._show_y_axis && this._y_axis_label) margin.left += 20;
         if (this._show_x_axis && this._x_axis_label) margin.bottom += 40;
+        if (y2AxisWidth && this._y2_axis_label) margin.right += 15;
         const width  = this._width - margin.left - margin.right;
-        const leftOuterPadding = outerPadding + (this._y_axis_label ? 20 : 0);
 
         //-----------------------------------------------
         // Determine initial facet / small multiple information
@@ -559,19 +601,15 @@ class FantasticChart {
 
         xAxisArea.attr("transform", "translate(" + margin.left + "," + (margin.top + height) +")").lower();
 
-        let yAxisArea = svg.select(".y-axis-area");
-        const yTickCount = Math.floor(height / 90);
+        svg.select(".y-axis-area").remove()
+        svg.select(".y2-axis-area").remove()
 
-        yAxisArea.remove();
-        yAxisArea = svg
-            .append("g")
-            .attr("class", "y-axis-area")
+        let yAxisArea = svg.append("g").attr("class", "y-axis-area")
             .attr("transform", "translate(" + margin.left +"," + margin.top + ")").lower();
 
-        const yScale = geometries.length ? geometries[0].height(height).getD3YScale() : null;
         if (geometries.length) {
             // Draw the yaxis.
-
+            const yScale = geometries[0].height(height).getD3YScale()
             let tv = this._y_tick_values_fn ? this._y_tick_values_fn(yScale) : null
             let tc = Math.floor(height / 30)
             if (tc <= 2 && !tv) tv = yScale.domain()
@@ -581,8 +619,26 @@ class FantasticChart {
                         .tickSize(this._y_grid_lines ? -width : 0)
                         .tickPadding(6)
                         .tickValues(tv)
-                        .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)), //;.tickFormat(this._tickFormat));
+                        .tickFormat((d, i) => restrictLength(geometries[0].formatY()(d, i), yAxisRestriction)),
                     axisOptions);
+            }
+
+            if (y2AxisWidth && firstY2AxisGeom) {  // Draw the y2 axis
+                let y2AxisArea = svg.append("g").attr("class", "y2-axis-area")
+                    .attr("transform", "translate(" + (margin.left + width) +" ," + margin.top + ")").lower();
+
+                const y2Scale = firstY2AxisGeom.height(height).getD3YScale()
+                let tv = this._y2_tick_values_fn ? this._y2_tick_values_fn(y2Scale) : null
+                let tc = Math.floor(height / 30)
+                if (tc <= 2 && !tv) tv = y2Scale.domain()
+                axisOptions.hideYAxisMin = this._hide_y2_axis_min
+                yaxis(y2AxisArea,
+                    d3.axisRight(y2Scale).ticks(tc)
+                        .tickSize(0)
+                        .tickPadding(3)
+                        .tickValues(tv)
+                        .tickFormat((d, i) => restrictLength(firstY2AxisGeom.formatY()(d, i), yAxisRestriction)),
+                    axisOptions)
             }
 
             // Draw a little x-axis for every facet.
@@ -614,12 +670,11 @@ class FantasticChart {
         //-----------------------------------------------
         // Setup labels
 
-        if (this._show_y_axis) {
-            yAxisLabel(svg, height, margin, this._y_axis_label, axisOptions);
+        if (this._show_y_axis) yAxisLabel(svg, height, margin, this._y_axis_label, axisOptions, 0);
+        if (this._show_y2_axis) {
+            yAxisLabel(svg, height, margin, this._y2_axis_label, axisOptions, margin.left + width + y2AxisWidth + 20);
         }
-        if (this._show_x_axis) {
-            xAxisLabel(svg, width, height, margin, this._x_axis_label, axisOptions);
-        }
+        if (this._show_x_axis) xAxisLabel(svg, width, height, margin, this._x_axis_label, axisOptions);
 
         //-----------------------------------------------
         // Draw individual geometries.
@@ -686,15 +741,16 @@ class FantasticChart {
             .setupColour(this._colour)
             .setupSize(this._size)
             .setupScaleX(this._scale_x)
-            .setupScaleY(this._scale_y)
             .setupFormatX(this._x_formatter)
-            .setupFormatY(this._y_formatter)
             .setupFormatLabel(this._label_formatter)
             .setupModifyColour(this._modify_colour)
             .setupShowLabels(this._show_labels)
             .setupYAxisLabel(this._y_axis_label)
             .setupXAxisLabel(this._x_axis_label)
             .fontSize(this._font_size);
+
+        if (!geom.setupFormatY()) geom.setupFormatY(this._y_formatter)
+        if (!geom.useY2Axis()) geom.setupScaleY(this._scale_y)
 
         if (this._colour_scale) {
             geom.setupColourScale(this._colour_scale)

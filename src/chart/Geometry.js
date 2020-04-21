@@ -57,6 +57,7 @@ export class Geometry {
         this._stroke_width = null;
         this._font_size = 12;
         this._padding = 0;
+        this._use_y2_axis = false;
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -300,7 +301,7 @@ export class Geometry {
 
     xAxisLabel(label) {
         if (arguments.length === 0) return this._chart_x_axis_label || this._x_axis_label;
-        this._y_axis_label = label;
+        this._x_axis_label = label;
         return this;
     }
 
@@ -343,6 +344,12 @@ export class Geometry {
     padding(padding) {
         if (arguments.length === 0) return this._padding;
         this._padding = padding;
+        return this;
+    }
+
+    useY2Axis(on) {
+        if (arguments.length === 0) return this._use_y2_axis;
+        this._use_y2_axis = !!on;
         return this;
     }
 

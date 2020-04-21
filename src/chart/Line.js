@@ -17,9 +17,9 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { Geometry } from './Geometry';
-import { toColourKey } from "../Legend";
-import { equals } from "../helpers";
+import {Geometry} from './Geometry';
+import {toColourKey} from "../Legend";
+import {equals} from "../helpers";
 import {colours} from "../Colours";
 
 
@@ -209,7 +209,7 @@ class Line extends Geometry {
         if (this.scaleX().isDiscrete()) {
             if (!firstGeometry) { // can't use bars as we are on top of another geometry
                 let mid = x.bandwidth() / 2
-                let r = Math.max(mid, 3)
+                let r = Math.min(Math.max(mid, 3), 12)
 
                 let dsg = lineGroup.selectAll('g.domain-selector').data(data, d => d._key)
                 dsg.exit().remove()
@@ -356,8 +356,8 @@ class Line extends Geometry {
                            .reduce((acc, val) => acc.concat(val));
         height = height || this.height();
 
-      let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0)
-      return d3.scaleLinear()
+        let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0)
+        return d3.scaleLinear()
           .range([height, 0])
           .nice(5)
           .domain([Math.min(0, d3.min(data, d => d._y)), max]);
