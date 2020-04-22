@@ -17,9 +17,8 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import {colours} from '../Colours';
 import {scaleIdentity} from "./Scales";
-import {xaxis, xAxisLabel, yaxis, yAxisLabel, yGrid} from "./Axes";
+import {xaxis, xAxisLabel, yaxis, yAxisLabel} from "./Axes";
 import {maxBounding} from "../helpers";
 import {buckets, removeLegend, renderLegend} from "../Legend";
 import {restrictLength} from "../Strings";
@@ -444,7 +443,7 @@ class FantasticChart {
             let b = buckets(this._data, g._colour || this._colour,
                 g._individual_colours || this._individual_colours, this._size)
             b.geometry = g
-            b.colourScale = d3.scaleOrdinal(g.colourScale()).domain(Array.from(b.colours))
+            b.colourScale = d3.scaleOrdinal(g.colourScale() || this.colourScale()).domain(Array.from(b.colours))
             return b
         })
 
@@ -755,7 +754,7 @@ class FantasticChart {
 
         if (this._colour_scale) {
             geom.setupColourScale(this._colour_scale)
-            if (this._d3_colour_scale) geom.d3ColourScale(this._d3_colour_scale)
+            if (this._d3_colour_scale) geom.d3ColourScale(d3.scaleOrdinal(this._d3_colour_scale))
         } else {
             geom.d3ColourScale(d3.scaleOrdinal(geom.colourScale()).domain(Array.from(bs.colours)))
         }
