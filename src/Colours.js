@@ -64,7 +64,7 @@ export let colours = {
       darkGrey: "#444444",   // All text
       sentiment: {
         positive: "#00b0b9", // blue
-        neutral: "#e9e9e9",  // light grey
+        neutral: "#e0e0e0",  // light grey
         negative: "#ee2737", // Red
         net: "#1c1f2a"       // Elite
       }
