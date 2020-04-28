@@ -93,35 +93,52 @@ class Pie extends Geometry {
       return textHeight
     }
 
+    _getSegmentLabelBoundingPoints(label, atPoint) {
+        /*
+        assumes label is centred around a given point. e.g.:
+         - text-anchor: middle
+         - left === atPoint[0] + width/2
+         - top === atPoint[1] + height/2
+        */
+        const bounds = label.node().getBBox();
+        const w = bounds.width;
+        const h = bounds.height;
+        const x = atPoint[0];
+        const y = atPoint[1];
+        return [
+            {x: x-w/2, y: y-h/2},
+            {x: x+w/2, y: y-h/2},
+            {x: x-w/2, y: y+h/2},
+            {x: x+w/2, y: y+h/2}
+        ];
+    }
+
     _allPointsWithinSegment(points, segment, arc){
         const startAngle = segment.startAngle;
         const endAngle = segment.endAngle;
         const innerRadius = arc.innerRadius()();
         const outerRadius = arc.outerRadius()();
 
-        points.forEach( point => {
-            const sq = n => Math.pow(n,2)
+        const anyPointOutOfBounds = points.some( point => {
 
-            const lineLength = Math.sqrt(sq(point.x) + sq(point.y))
-            if (lineLength <= 0) return false
+            const lineLength = Math.sqrt( Math.pow(point.x, 2) + Math.pow(point.y, 2))
 
-            // radius out of bounds
-            if ( lineLength > outerRadius || lineLength < innerRadius) return false
+            // point is outside radius bounds
+            if ( lineLength <= 0 || lineLength > outerRadius || lineLength < innerRadius) return true
 
             const normalisedRads = Math.acos(Math.abs(point.y) / lineLength)
             const circle = Math.PI * 2;
 
             let lineAngle = (
-                  point.x > 0 && point.y < 0 ?                normalisedRads // top right
-                : point.x > 0 && point.y > 0 ? circle * 0.5 - normalisedRads // bottom right
-                : point.x < 0 && point.y > 0 ? circle * 0.5 + normalisedRads // bottom left
-                : point.x < 0 && point.y < 0 ? circle       - normalisedRads // top left
+                  point.x >= 0 && point.y < 0 ?                 normalisedRads // top right
+                : point.x >= 0 && point.y >= 0 ? circle * 0.5 - normalisedRads // bottom right
+                : point.x < 0 &&  point.y >= 0 ? circle * 0.5 + normalisedRads // bottom left
+                : point.x < 0 &&  point.y < 0 ?  circle       - normalisedRads // top left
                 : null
             )
-            if (lineAngle === null) return false
 
-            // angle out of bounds
-            if ( lineAngle < startAngle || lineAngle > endAngle ) return false
+            // angle is invalid or out of bounds
+            if (lineAngle === null || lineAngle < startAngle || lineAngle > endAngle ) return true
 
             // debug - draw line
             // d3.select('.pie')
@@ -132,7 +149,7 @@ class Pie extends Geometry {
             //     .attr('points', [[0,0], [point.x,point.y]])
         })
 
-        return true
+        return !anyPointOutOfBounds
     }
 
     _addCentreLabel(innerRadius) {
@@ -389,21 +406,9 @@ class Pie extends Geometry {
                     const arcLength = radians * radius;
                     maxLabelWidth = arcLength;
 
-                    const bounds = xLabel.node().getBBox();
-                    const centroid = labelArc.centroid(segment);
-                    const w = bounds.width;
-                    const h = bounds.height;
-                    const x = centroid[0];
-                    const y = centroid[1];
-                    const points = [
-                        {x: x-w/2, y: y-h/2},
-                        {x: x+w/2, y: y-h/2},
-                        {x: x-w/2, y: y+h/2},
-                        {x: x+w/2, y: y+h/2}
-                    ];
-
                     // TODO: use this
-                    const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
+                    // const points = this._getSegmentLabelBoundingPoints(xLabel, labelArc.centroid(segment));
+                    // const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
 
                      /*
 
@@ -535,14 +540,14 @@ class Pie extends Geometry {
             // hide intersecting or too-wide labels
             // giving preference to labels a lower arc index
             // only do this for outside labels for now
-            .each((d, i, nodes) => {
+            .each((segment, i, nodes) => {
                 const labelWrapper = d3.select(nodes[i]);
                 const label = labelWrapper.select('text');
                 if (useOutsideLabels){
                     let hide = label.node().getBBox().width > maxLabelWidth;
-                    if (!hide && d.index !== 0 && this.useOutsideLabels()){ // skip first label
-                        const thisLabel = labelSizes[d.index];
-                        const previousLabel = labelSizes[d.index - 1];
+                    if (!hide && segment.index !== 0 && this.useOutsideLabels()){ // skip first label
+                        const thisLabel = labelSizes[segment.index];
+                        const previousLabel = labelSizes[segment.index - 1];
 
                         if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
                             // different sides – ignore
@@ -554,9 +559,9 @@ class Pie extends Geometry {
                     }
                     labelWrapper.style('visibility', hide ? 'hidden' : null);
                 } else {
-                    const radians = d.endAngle - d.startAngle;
-                    const arcLength = radians * radius;
-                    labelWrapper.style('visibility', label.node().getBBox().width > arcLength ? 'hidden' : null);
+                    const points = this._getSegmentLabelBoundingPoints(label, labelArc.centroid(segment));
+                    const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
+                    labelWrapper.style('visibility', isWithinSegment ? null : 'hidden');
                 }
             })
 
