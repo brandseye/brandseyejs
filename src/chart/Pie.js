@@ -295,14 +295,14 @@ class Pie extends Geometry {
             .innerRadius(minDimension / 2 + 10)
             .outerRadius(minDimension / 2 + 10)
 
-        const arcs = d3.pie().value(this.y())(data);
+        const segments = d3.pie().value(this.y())(data);
 
         const midAngle = d => d.startAngle + (d.endAngle - d.startAngle)/2;
 
         const segmentWrapper = this._appendIfEmpty(pie, 'g', 'segments');
 
         const paths = segmentWrapper.selectAll('.segment')
-          .data(arcs, d => d.data._x);
+          .data(segments, d => d.data._x);
 
         paths.enter()
             .append('path')
@@ -355,7 +355,7 @@ class Pie extends Geometry {
         const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
 
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
-            .data(arcs, d => d.data._x);
+            .data(segments, d => d.data._x);
 
         const labelSizes = [];
 
@@ -363,14 +363,14 @@ class Pie extends Geometry {
             .append('g')
             .attr('class', 'segment-label')
             .merge(segmentLabels)
-            .each((d, i, nodes) => {
+            .each((segment, i, nodes) => {
 
                 const labelWrapper = d3.select(nodes[i]);
                 const text = this._appendIfEmpty(labelWrapper, 'text', 'label-wrapper');
 
                 const textColour = useOutsideLabels
                     ? d3.hcl(colours.eighteen.darkGrey).brighter()
-                    : this._getOverlayLabelColour(d);
+                    : this._getOverlayLabelColour(segment);
 
                 text.attr('pointer-events', 'none')
                     .attr('fill', textColour)
@@ -379,19 +379,18 @@ class Pie extends Geometry {
                 const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
                 const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
 
-                let xLabelText = this.formatX()(this.x()(d.data));
+                let xLabelText = this.formatX()(this.x()(segment.data));
                 xLabel
                     .attr("dy", this.showLabels() ? "-0.3em" : "0.3em")
                     .text(xLabelText);
 
                 if (!useOutsideLabels){
-                    // TODO: calculate based on intersection of arc and text label
-                    const radians = d.endAngle - d.startAngle;
+                    const radians = segment.endAngle - segment.startAngle;
                     const arcLength = radians * radius;
                     maxLabelWidth = arcLength;
 
                     const bounds = xLabel.node().getBBox();
-                    const centroid = labelArc.centroid(d);
+                    const centroid = labelArc.centroid(segment);
                     const w = bounds.width;
                     const h = bounds.height;
                     const x = centroid[0];
@@ -402,7 +401,10 @@ class Pie extends Geometry {
                         {x: x-w/2, y: y+h/2},
                         {x: x+w/2, y: y+h/2}
                     ];
-                    this._allPointsWithinSegment(points, d, arc);
+
+                    // TODO: use this
+                    const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
+
                      /*
 
                         if xspan width > available width  && ytext has spaces
@@ -412,7 +414,6 @@ class Pie extends Geometry {
                             measure spans
                             ... same for yspan
 
-                        measure height of both
                         */
                 }
 
@@ -460,7 +461,7 @@ class Pie extends Geometry {
                     yLabel
                         .attr("dy", "1em")
                         .attr("x", "0")
-                        .text(this.formatLabel()(this.y()(d.data)));
+                        .text(this.formatLabel()(this.y()(segment.data)));
                 } else {
                     yLabel.remove();
                 }
@@ -493,11 +494,11 @@ class Pie extends Geometry {
                         }
                     })
 
-                const finalPos = outerArc.centroid(d);
-                const rightHandSide = midAngle(d) < Math.PI;
+                const finalPos = outerArc.centroid(segment);
+                const rightHandSide = midAngle(segment) < Math.PI;
                 const rect = text.node().getBoundingClientRect();
 
-                labelSizes[d.index] = {y: finalPos[1], height: rect.height, rightHandSide};
+                labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
 
                 const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
 
