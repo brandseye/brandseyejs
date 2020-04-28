@@ -364,12 +364,12 @@ class Line extends Geometry {
                            .reduce((acc, val) => acc.concat(val));
         height = height || this.height();
 
-        let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0)
-        return d3.scaleLinear()
-          .range([height, 0])
-          .nice(5)
-          .domain([Math.min(0, d3.min(data, d => d._y)), max]);
-
+        let extent = d3.extent(data, d => d._y)
+        let max = Math.max(extent[1], this._axis_max_value || 0)
+        let scale = d3.scaleLinear().range([height, 0]).nice(5).domain([Math.min(0, extent[0]), max])
+        scale._dataExtent = extent  // this hack is so code rendering gradients for lines can make them fit the
+                                    // actual bounding box of the line when the axis is adjusted through axisMaxValue
+        return scale
     }
 }
 
