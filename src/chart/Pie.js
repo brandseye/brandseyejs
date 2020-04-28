@@ -93,7 +93,49 @@ class Pie extends Geometry {
       return textHeight
     }
 
-    _addCentreLabel() {
+    _allPointsWithinSegment(points, segment, arc){
+        const startAngle = segment.startAngle;
+        const endAngle = segment.endAngle;
+        const innerRadius = arc.innerRadius()();
+        const outerRadius = arc.outerRadius()();
+
+        points.forEach( point => {
+            const sq = n => Math.pow(n,2)
+
+            const lineLength = Math.sqrt(sq(point.x) + sq(point.y))
+            if (lineLength <= 0) return false
+
+            // radius out of bounds
+            if ( lineLength > outerRadius || lineLength < innerRadius) return false
+
+            const normalisedRads = Math.acos(Math.abs(point.y) / lineLength)
+            const circle = Math.PI * 2;
+
+            let lineAngle = (
+                  point.x > 0 && point.y < 0 ?                normalisedRads // top right
+                : point.x > 0 && point.y > 0 ? circle * 0.5 - normalisedRads // bottom right
+                : point.x < 0 && point.y > 0 ? circle * 0.5 + normalisedRads // bottom left
+                : point.x < 0 && point.y < 0 ? circle       - normalisedRads // top left
+                : null
+            )
+            if (lineAngle === null) return false
+
+            // angle out of bounds
+            if ( lineAngle < startAngle || lineAngle > endAngle ) return false
+
+            // debug - draw line
+            // d3.select('.pie')
+            //     .append('polyline')
+            //     .attr('class','dev-polyline' + segment.data._x)
+            //     .style('stroke-width', '1px')
+            //     .style('stroke', 'rgba(0,0,0,0.3)')
+            //     .attr('points', [[0,0], [point.x,point.y]])
+        })
+
+        return true
+    }
+
+    _addCentreLabel(innerRadius) {
         let xText = this.xAxisLabel();
         let yText = this.yAxisLabel();
 
@@ -231,7 +273,9 @@ class Pie extends Geometry {
         const minDimension = Math.min(availableWidth, availableHeight);
 
         const pie = this._appendIfEmpty(this._element, 'g', 'pie');
-        pie.attr("transform", `translate(${availableWidth/2 + widestLabelWidth},${minDimension/2 + labelHeight})`)
+        const pieCentre = [availableWidth/2 + widestLabelWidth, minDimension/2 + labelHeight]
+
+        pie.attr("transform", `translate(${pieCentre[0]},${pieCentre[1]})`)
 
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
@@ -345,6 +389,31 @@ class Pie extends Geometry {
                     const radians = d.endAngle - d.startAngle;
                     const arcLength = radians * radius;
                     maxLabelWidth = arcLength;
+
+                    const bounds = xLabel.node().getBBox();
+                    const centroid = labelArc.centroid(d);
+                    const w = bounds.width;
+                    const h = bounds.height;
+                    const x = centroid[0];
+                    const y = centroid[1];
+                    const points = [
+                        {x: x-w/2, y: y-h/2},
+                        {x: x+w/2, y: y-h/2},
+                        {x: x-w/2, y: y+h/2},
+                        {x: x+w/2, y: y+h/2}
+                    ];
+                    this._allPointsWithinSegment(points, d, arc);
+                     /*
+
+                        if xspan width > available width  && ytext has spaces
+                            try x line wrap
+                            split in half by spaces (closest to center space)
+                            re-add spans in correct y position
+                            measure spans
+                            ... same for yspan
+
+                        measure height of both
+                        */
                 }
 
                 let currWidth = xLabel.node().getBBox().width;
