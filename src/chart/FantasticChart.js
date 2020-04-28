@@ -486,11 +486,17 @@ class FantasticChart {
         //-----------------------------------------------
         // Draw the legend
 
-        let legendHeight = 0
+        let legendHeight = 0, renderLegendFn
         if (this._show_legend) {
-            legendHeight = renderLegend(svg, geomBuckets,
-                (d,bs) => this._legend_colours(d) || bs.bucketColour[d] || bs.colourScale(d),
-                    this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
+            renderLegendFn = () => {
+                let csFn = (d, bs) => {
+                    if (bs.geometry.gradientId) return "url(#" + bs.geometry.gradientId + ")"
+                    return this._legend_colours(d) || bs.bucketColour[d] || bs.colourScale(d);
+                }
+                return renderLegend(svg, geomBuckets,
+                    csFn, this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
+            }
+            legendHeight = renderLegendFn()
         } else {
             removeLegend(svg)
         }
@@ -728,6 +734,9 @@ class FantasticChart {
                 area.select(".x-axis").raise();
             })
 
+        // re-render the legend if any geometries are using gradients so the legend can use the gradient which is
+        // only created when the geometry is rendered
+        if (renderLegendFn && geometries.find(g => g.gradientId)) renderLegendFn()
     }
 
 

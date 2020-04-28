@@ -51,6 +51,13 @@ class Line extends Geometry {
         const y = this.getD3YScale(allData, height);
         const invert = d3.scaleQuantize().domain(x.range()).range(x.domain());
 
+        // render gradient to match the scale if needed
+        let gradientId
+        if (this._gradient_fn) {
+            element.select("g.gradient").remove()
+            this.gradientId = gradientId = this._gradient_fn(element.append("g").attr("class", "gradient"), y, this)
+        }
+
         //---------------------------------
         // append the lines
         let lineGroup = element.select(".lines");
@@ -178,12 +185,13 @@ class Line extends Geometry {
         const transparentColour = d3.hcl(colours.eighteen.darkGrey);
         transparentColour.opacity = 0.8;
         const determineStrokeColour = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
+        const strokeFn = d => gradientId ? "url(#" + gradientId + ")" : d3.hcl(this.getD3Colour(d.data[0]))
 
         lines.interrupt("line:resize")
             .transition("line:resize")
             .duration(500)
             .attr("d", d => lineGeom(d.data))
-            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])))
+            .attr("stroke", strokeFn)
             .style("stroke-width", determineStrokeWidth);
 
         lines
@@ -193,11 +201,11 @@ class Line extends Geometry {
                 .attr("fill", "none")
                 .attr("stroke-linejoin", "round")
                 .attr("stroke-linecap", "round")
-                .style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data[0])))
                 .style("opacity", 0)
                 .attr("d", d => flatGeom(d.data))
             .merge(lines)
+            .style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
+            .attr("stroke", strokeFn)
             .transition("line:introduction")
             .duration(500)
             .delay(100)
@@ -215,7 +223,7 @@ class Line extends Geometry {
                 dsg.exit().remove()
                 dsg = dsg.enter().append("g").attr("class", "domain-selector").merge(dsg)
                 dsg.each(function(row) {
-                    let colour = d3.hcl(that.getD3Colour(row.data[0]))
+                    let colour = strokeFn(row)
                     let sel = d3.select(this)
                     let circles = sel.selectAll("circle.target").data(row.data)
                     circles.exit().remove()

@@ -58,6 +58,7 @@ export class Geometry {
         this._font_size = 12;
         this._padding = 0;
         this._use_y2_axis = false;
+        this._gradient_fn = null;
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -308,6 +309,13 @@ export class Geometry {
     setupXAxisLabel(label) {
         if (arguments.length === 0) return this._chart_x_axis_label;
         this._chart_x_axis_label = label;
+        return this;
+    }
+
+    gradientFn(fn) {
+        if (arguments.length === 0) return this._gradient_fn;
+        if (fn && typeof fn !== "function") throw new Error("gradientFn must be a function");
+        this._gradient_fn = fn;
         return this;
     }
 
