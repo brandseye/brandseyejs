@@ -25,7 +25,9 @@ export class Geometry {
         this._chart_x_getter = null;
         this._chart_y_getter = null;
         this._x_getter = null;
+        this._x2_getter = null;
         this._y_getter = null;
+        this._y2_getter = null;
         this._colour = null;
         this._size = null;
         this._scale_x = null;
@@ -100,10 +102,24 @@ export class Geometry {
         return this;
     }
 
+    x2(getter) {
+        if (arguments.length === 0) return this._x2_getter
+        if (getter && typeof getter !== 'function') throw new Error("x2 getter must be a function");
+        this._x2_getter = getter;
+        return this;
+    }
+
     y(getter) {
         if (arguments.length === 0) return this._y_getter || this._chart_y_getter;
         if (typeof getter !== 'function') throw new Error("y getter must be a function");
         this._y_getter = getter;
+        return this;
+    }
+
+    y2(getter) {
+        if (arguments.length === 0) return this._y2_getter;
+        if (getter && typeof getter !== 'function') throw new Error("y2 getter must be a function");
+        this._y2_getter = getter;
         return this;
     }
 
@@ -372,7 +388,9 @@ export class Geometry {
         if (!data || !data.length) return [];
 
         const x = this.x(),
+              x2 = this.x2(),
               y = this.y(),
+              y2 = this.y2(),
               scaleX = this.scaleX(),
               scaleY = this.scaleY();
 
@@ -386,6 +404,8 @@ export class Geometry {
                 _colour: this.colour()(d),
                 _size: this.size()(d)
             }, d);
+            if (x2) object._x2 = scaleX.transform(x2(d))
+            if (y2) object._y2 = scaleY.transform(y2(d))
 
             const key = getKey(object);
             object._key = key;

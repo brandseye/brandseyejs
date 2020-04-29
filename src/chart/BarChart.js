@@ -51,6 +51,7 @@ class BarHistogram extends Geometry {
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(data, height);
+        const usingX2 = !!this._x2_getter   // bars extend from d._x to d._x2
         const yGroup = this.getD3GroupScale(data, y);
         const colours = this.d3ColourScale();
 
@@ -166,7 +167,7 @@ class BarHistogram extends Geometry {
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .attr("x", d => x(Math.min(0, d._x)))
                       .attr("height", yGroup.bandwidth())
-                      .attr("width", d => (Math.abs(x(0) - x(d._x))));
+                      .attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
               });
 
         // Labels loaded after our last bar grows.
@@ -237,16 +238,19 @@ class BarHistogram extends Geometry {
     }
 
     getD3XScale(data, width) {
-        data = data || this.prepareData(null, false);
+        data = (data || this.prepareData(null, false)).map(d => d.data).reduce((acc, val) => acc.concat(val));
         width = width || this.width();
 
+        let extent = d3.extent(data, d => d._x)
+        if (this._x2_getter) {
+            let e2 = d3.extent(data, d => d._x2)
+            extent[0] = Math.min(extent[0], e2[0])
+            extent[1] = Math.max(extent[1], e2[1])
+        }
 
-        const max = Math.max(d3.max(data, d => d3.max(d.data, d => d._x)), this._axis_max_value || 0);
-        const min = Math.min(0, d3.min(data, d => d3.min(d.data, d => d._x)));
-        return d3.scaleLinear()
-                 .rangeRound([0, width])
-                 .nice()
-                 .domain([min, max]);
+        const max = Math.max(extent[1], this._axis_max_value || 0)
+        const min = Math.min(0, extent[0])
+        return d3.scaleLinear().rangeRound([0, width]).nice().domain([min, max])
     }
 
     getD3YScale(data, height) {
