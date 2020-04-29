@@ -182,6 +182,216 @@ class Pie extends Geometry {
         return !anyPointOutOfBounds
     }
 
+    _renderSegmentLabels(pie, segments, outerRadius, innerRadius, arc, outerArc, labelArc, maxLabelWidth) {
+        const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
+
+        const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
+            .data(segments, d => d.data._x);
+
+        const labelSizes = [];
+
+        const midAngle = d => d.startAngle + (d.endAngle - d.startAngle)/2;
+
+        segmentLabels.enter()
+            .append('g')
+            .attr('class', 'segment-label')
+            .merge(segmentLabels)
+            .each((segment, i, nodes) => {
+
+                const labelWrapper = d3.select(nodes[i]);
+                const text = this._appendIfEmpty(labelWrapper, 'g', 'label-wrapper');
+
+                const textColour = this._use_outside_labels
+                    ? d3.hcl(colours.eighteen.darkGrey).brighter()
+                    : this._getOverlayLabelColour(segment);
+
+                text.attr('pointer-events', 'none')
+                    .attr('fill', textColour)
+                    .style('font-size', this._font_size + 'px')
+
+                const xLabel = this._appendIfEmpty(text, 'text', 'x-label');
+                const yLabel = this._appendIfEmpty(text, 'text', 'y-label');
+
+                let xLabelText = this.formatX()(this.x()(segment.data));
+                xLabel
+                    .attr("y", this.showLabels() ? "-0.3em" : "0.3em")
+                    .text(xLabelText);
+
+                if (!this._use_outside_labels){
+                    const radians = segment.endAngle - segment.startAngle;
+                    const arcLength = radians * outerRadius;
+                    maxLabelWidth = arcLength;
+
+                    // TODO: use this
+                    // const points = this._getSegmentLabelBoundingPoints(xLabel, labelArc.centroid(segment));
+                    // const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
+
+                     /*
+
+                        if xspan width > available width  && ytext has spaces
+                            try x line wrap
+                            split in half by spaces (closest to center space)
+                            re-add spans in correct y position
+                            measure spans
+                            ... same for yspan
+
+                        */
+                }
+
+                let currWidth = xLabel.node().getBBox().width;
+
+                // string-based
+                // let truncSize = 2; // string-based
+                // const half = Math.floor(xLabelText.length / 2);
+                // const start = xLabelText.slice(0, half);
+                // const end = xLabelText.slice(half);
+
+                // word-based
+                let truncSize = 1;
+                let labelLength = xLabelText.length;
+
+                const minChars = 5;
+                const ellipsis = '...'; //\u2026
+
+                while( currWidth > maxLabelWidth ){
+
+                    // word-based
+                    const xLabelWords = xLabelText.split(' ')
+                    xLabelWords.splice(Math.ceil(xLabelWords.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
+                    const truncatedText = xLabelWords.join(' ');
+                    labelLength = truncatedText.length;
+
+                    // string-based
+                    // const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
+
+                    if (labelLength - ellipsis.length < minChars) {
+                        break;
+                    }
+
+                    xLabel.text(truncatedText);
+                    const newWidth = xLabel.node().getBBox().width;
+                    if (newWidth >= currWidth){
+                        break;
+                    } else {
+                        currWidth = newWidth;
+                        ++truncSize;
+                    }
+                }
+
+                if (this.showLabels()){
+                    yLabel
+                        .attr("y", "1em")
+                        .text(this.formatLabel()(this.y()(segment.data)));
+                } else {
+                    yLabel.remove();
+                }
+
+                this._transformSegmentLabel(text, labelArc, outerArc, outerRadius, midAngle)
+
+                const finalPos = outerArc.centroid(segment);
+                const rightHandSide = midAngle(segment) < Math.PI;
+                const rect = text.node().getBoundingClientRect();
+
+                labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
+
+                this._renderLeaderLines(labelWrapper, arc, outerArc, outerRadius, midAngle)
+            })
+            // hide intersecting or too-wide labels
+            // giving preference to labels a lower arc index
+            // only do this for outside labels for now
+            .each((segment, i, nodes) => {
+                const labelWrapper = d3.select(nodes[i]);
+                const label = labelWrapper.select('text');
+                if (this._use_outside_labels){
+                    let hide = label.node().getBBox().width > maxLabelWidth;
+                    if (!hide && segment.index !== 0 && this._use_outside_labels){ // skip first label
+                        const thisLabel = labelSizes[segment.index];
+                        const previousLabel = labelSizes[segment.index - 1];
+
+                        if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
+                            // different sides – ignore
+                        } else if (thisLabel.rightHandSide) {
+                            hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                        } else {
+                            hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                        }
+                    }
+                    labelWrapper.style('visibility', hide ? 'hidden' : null);
+                } else {
+                    const points = this._getSegmentLabelBoundingPoints(label, labelArc.centroid(segment));
+                    const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, innerRadius, outerRadius);
+                    labelWrapper.style('visibility', isWithinSegment ? null : 'hidden');
+                }
+            })
+
+        segmentLabels.exit().remove();
+    }
+
+    _renderLeaderLines(labelWrapper, arc, outerArc, outerRadius, midAngle) {
+        const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
+
+        if (this._use_outside_labels) {
+            line
+                .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
+                .attr('opacity', 0.5)
+                .attr('stroke-width', '1px')
+                .attr('fill', 'none')
+                .style('mix-blend-mode', 'multiply')
+                .transition().duration(this._transition_duration)
+                .attrTween("points", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                        var d2 = interpolate(t);
+                        var start = arc.centroid(d2);
+                        var elbow = outerArc.centroid(d2);
+                        var terminal = outerArc.centroid(d2);
+                        const leftAligned = midAngle(d2) < Math.PI;
+                        terminal[0] = outerRadius * 1.05 * (leftAligned ? 1 : -1);
+                        const positions = [start, elbow];
+                        if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
+                            positions.push(terminal);
+                        }
+                        return positions;
+                    };
+                });
+        } else {
+            line.remove()
+        }
+    }
+
+    _transformSegmentLabel(text, labelArc, outerArc, outerRadius, midAngle) {
+        const useOutsideLabels = this._use_outside_labels;
+        text
+            .transition().duration(this._transition_duration)
+            .attrTween("transform", function(arcData) {
+                this._current = this._current || arcData;
+                const interpolate = d3.interpolate(this._current, arcData);
+                this._current = interpolate(0);
+
+                return function(t) {
+                    const dInt = interpolate(t);
+                    if (useOutsideLabels){
+                        const pos = outerArc.centroid(dInt);
+                        pos[0] = outerRadius * 1.09 * (midAngle(dInt) < Math.PI ? 1 : -1);
+                        return "translate("+ pos +")";
+                    } else {
+                        return "translate(" + labelArc.centroid(dInt) + ")";
+                    }
+                };
+            })
+            .styleTween("text-anchor", function(arcData){
+                this._current = this._current || arcData;
+                const interpolate = d3.interpolate(this._current, arcData);
+                this._current = interpolate(0);
+                return function(t) {
+                    const dInt = interpolate(t);
+                    return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
+                }
+            })
+    }
+
     _addCentreLabel(innerRadius) {
 
         let xText = this.xAxisLabel();
@@ -375,6 +585,7 @@ class Pie extends Geometry {
         let labelHeight = 0;
 
         let maxLabelWidth = availableWidth / 4;
+
         const useOutsideLabels = this.useOutsideLabels();
 
         if (useOutsideLabels){
@@ -412,206 +623,10 @@ class Pie extends Geometry {
 
         const segments = d3.pie().value(this.y())(data);
 
-        const midAngle = d => d.startAngle + (d.endAngle - d.startAngle)/2;
 
         this._renderSegmentPaths(pie, segments, arc)
 
-        const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
-
-        const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
-            .data(segments, d => d.data._x);
-
-        const labelSizes = [];
-
-        segmentLabels.enter()
-            .append('g')
-            .attr('class', 'segment-label')
-            .merge(segmentLabels)
-            .each((segment, i, nodes) => {
-
-                const labelWrapper = d3.select(nodes[i]);
-                const text = this._appendIfEmpty(labelWrapper, 'g', 'label-wrapper');
-
-                const textColour = useOutsideLabels
-                    ? d3.hcl(colours.eighteen.darkGrey).brighter()
-                    : this._getOverlayLabelColour(segment);
-
-                text.attr('pointer-events', 'none')
-                    .attr('fill', textColour)
-                    .style('font-size', this._font_size + 'px')
-
-                const xLabel = this._appendIfEmpty(text, 'text', 'x-label');
-                const yLabel = this._appendIfEmpty(text, 'text', 'y-label');
-
-                let xLabelText = this.formatX()(this.x()(segment.data));
-                xLabel
-                    .attr("y", this.showLabels() ? "-0.3em" : "0.3em")
-                    .text(xLabelText);
-
-                if (!useOutsideLabels){
-                    const radians = segment.endAngle - segment.startAngle;
-                    const arcLength = radians * outerRadius;
-                    maxLabelWidth = arcLength;
-
-                    // TODO: use this
-                    // const points = this._getSegmentLabelBoundingPoints(xLabel, labelArc.centroid(segment));
-                    // const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
-
-                     /*
-
-                        if xspan width > available width  && ytext has spaces
-                            try x line wrap
-                            split in half by spaces (closest to center space)
-                            re-add spans in correct y position
-                            measure spans
-                            ... same for yspan
-
-                        */
-                }
-
-                let currWidth = xLabel.node().getBBox().width;
-
-                // string-based
-                // let truncSize = 2; // string-based
-                // const half = Math.floor(xLabelText.length / 2);
-                // const start = xLabelText.slice(0, half);
-                // const end = xLabelText.slice(half);
-
-                // word-based
-                let truncSize = 1;
-                let labelLength = xLabelText.length;
-
-                const minChars = 5;
-                const ellipsis = '...'; //\u2026
-
-                while( currWidth > maxLabelWidth ){
-
-                    // word-based
-                    const xLabelWords = xLabelText.split(' ')
-                    xLabelWords.splice(Math.ceil(xLabelWords.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
-                    const truncatedText = xLabelWords.join(' ');
-                    labelLength = truncatedText.length;
-
-                    // string-based
-                    // const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
-
-                    if (labelLength - ellipsis.length < minChars) {
-                        break;
-                    }
-
-                    xLabel.text(truncatedText);
-                    const newWidth = xLabel.node().getBBox().width;
-                    if (newWidth >= currWidth){
-                        break;
-                    } else {
-                        currWidth = newWidth;
-                        ++truncSize;
-                    }
-                }
-
-                if (this.showLabels()){
-                    yLabel
-                        .attr("y", "1em")
-                        .text(this.formatLabel()(this.y()(segment.data)));
-                } else {
-                    yLabel.remove();
-                }
-
-                text
-                    .transition().duration(this._transition_duration)
-                    .attrTween("transform", function(arcData) {
-                        this._current = this._current || arcData;
-                        const interpolate = d3.interpolate(this._current, arcData);
-                        this._current = interpolate(0);
-
-                        return function(t) {
-                            const dInt = interpolate(t);
-                            if (useOutsideLabels){
-                                const pos = outerArc.centroid(dInt);
-                                pos[0] = outerRadius * 1.09 * (midAngle(dInt) < Math.PI ? 1 : -1);
-                                return "translate("+ pos +")";
-                            } else {
-                                return "translate(" + labelArc.centroid(dInt) + ")";
-                            }
-                        };
-                    })
-                    .styleTween("text-anchor", function(arcData){
-                        this._current = this._current || arcData;
-                        const interpolate = d3.interpolate(this._current, arcData);
-                        this._current = interpolate(0);
-                        return function(t) {
-                            const dInt = interpolate(t);
-                            return useOutsideLabels ? ( midAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
-                        }
-                    })
-
-                const finalPos = outerArc.centroid(segment);
-                const rightHandSide = midAngle(segment) < Math.PI;
-                const rect = text.node().getBoundingClientRect();
-
-                labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
-
-                const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
-
-                if (useOutsideLabels) {
-                    line
-                        .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
-                        .attr('opacity', 0.5)
-                        .attr('stroke-width', '1px')
-                        .attr('fill', 'none')
-                        .style('mix-blend-mode', 'multiply')
-                        .transition().duration(this._transition_duration)
-                        .attrTween("points", function(d){
-                            this._current = this._current || d;
-                            var interpolate = d3.interpolate(this._current, d);
-                            this._current = interpolate(0);
-                            return function(t) {
-                                var d2 = interpolate(t);
-                                var start = arc.centroid(d2);
-                                var elbow = outerArc.centroid(d2);
-                                var terminal = outerArc.centroid(d2);
-                                const leftAligned = midAngle(d2) < Math.PI;
-                                terminal[0] = outerRadius * 1.05 * (leftAligned ? 1 : -1);
-                                const positions = [start, elbow];
-                                if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
-                                    positions.push(terminal);
-                                }
-                                return positions;
-                            };
-                        });
-                } else {
-                    line.remove()
-                }
-            })
-            // hide intersecting or too-wide labels
-            // giving preference to labels a lower arc index
-            // only do this for outside labels for now
-            .each((segment, i, nodes) => {
-                const labelWrapper = d3.select(nodes[i]);
-                const label = labelWrapper.select('text');
-                if (useOutsideLabels){
-                    let hide = label.node().getBBox().width > maxLabelWidth;
-                    if (!hide && segment.index !== 0 && this.useOutsideLabels()){ // skip first label
-                        const thisLabel = labelSizes[segment.index];
-                        const previousLabel = labelSizes[segment.index - 1];
-
-                        if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
-                            // different sides – ignore
-                        } else if (thisLabel.rightHandSide) {
-                            hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
-                        } else {
-                            hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
-                        }
-                    }
-                    labelWrapper.style('visibility', hide ? 'hidden' : null);
-                } else {
-                    const points = this._getSegmentLabelBoundingPoints(label, labelArc.centroid(segment));
-                    const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, innerRadius, outerRadius);
-                    labelWrapper.style('visibility', isWithinSegment ? null : 'hidden');
-                }
-            })
-
-        segmentLabels.exit().remove();
+        this._renderSegmentLabels(pie, segments, outerRadius, innerRadius, arc, outerArc, labelArc, maxLabelWidth)
 
         this.isDonut()
             ? this._addCentreLabel(innerRadius)
