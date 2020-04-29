@@ -490,7 +490,7 @@ class FantasticChart {
         if (this._show_legend) {
             renderLegendFn = () => {
                 let csFn = (d, bs) => {
-                    if (bs.geometry.gradientId) return "url(#" + bs.geometry.gradientId + ")"
+                    if (bs.geometry.gradientId) return "url(#" + bs.geometry.gradientId + "-legend)"
                     return this._legend_colours(d) || bs.bucketColour[d] || bs.colourScale(d);
                 }
                 return renderLegend(svg, geomBuckets,
@@ -579,15 +579,10 @@ class FantasticChart {
         // An area for us to render the geometries in to.
 
         let drawingArea = svg.select('.drawing-area');
-
         if (drawingArea.empty()) {
-            drawingArea = svg
-                .append("g")
-                .attr("class", "drawing-area")
+            drawingArea = svg.append("svg").attr("class", "drawing-area").style("overflow", "visible")
         }
-
-        drawingArea.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+        drawingArea.attr("x", margin.left).attr("y", margin.top)
 
         //-----------------------------------------------
         // Set up small multiples / facets
