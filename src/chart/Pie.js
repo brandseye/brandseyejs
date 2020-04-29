@@ -53,15 +53,14 @@ class Pie extends Geometry {
             .append('text')
             .style('font-size', this._font_size + 'px')
             .attr('class', 'label-width-check')
+            .style('visibility', 'hidden')
 
         text.selectAll('tspan')
             .data(allLabels)
             .enter()
             .append('tspan')
-                .text(d => d)
-                .style('opacity', 0.3)
-                .attr('x', 0)
-                .attr('dy', '1em')
+            .attr('x','0')
+            .text(d => d)
 
         const textWidth = text.node().getBBox().width;
 
@@ -75,6 +74,7 @@ class Pie extends Geometry {
         .append('text')
         .style('font-size', this._font_size + 'px')
         .attr('class', 'label-height-check')
+        .style('visibility', 'hidden')
 
       const data = this.showLabels() ? ['Category', 'Value'] : ['Category'];
 
@@ -95,16 +95,20 @@ class Pie extends Geometry {
 
     _getSegmentLabelBoundingPoints(label, atPoint) {
         /*
-        assumes label is centred around a given point. e.g.:
+        assumes:
+        • label is centred around a given point. e.g.:
          - text-anchor: middle
          - left === atPoint[0] + width/2
          - top === atPoint[1] + height/2
+        • label.node() is not a tspan
         */
+
         const bounds = label.node().getBBox();
-        const w = bounds.width;
+        const w = bounds.width; //label.node().getComputedTextLength();
         const h = bounds.height;
         const x = atPoint[0];
         const y = atPoint[1];
+
         return [
             {x: x-w/2, y: y-h/2},
             {x: x+w/2, y: y-h/2},
@@ -113,18 +117,37 @@ class Pie extends Geometry {
         ];
     }
 
-    _allPointsWithinSegment(points, segment, arc){
-        const startAngle = segment.startAngle;
-        const endAngle = segment.endAngle;
-        const innerRadius = arc.innerRadius()();
-        const outerRadius = arc.outerRadius()();
+    /**
+     * @param {{x: number, y: number}[]} points Array of points
+     * @param {number} startAngle Number in radians
+     * @param {number} endAngle Number in radians
+     * @param {number} innerRadius
+     * @param {number} outerRadius
+     */
+    _allPointsWithinSegment(points, startAngle, endAngle, innerRadius, outerRadius){
 
         const anyPointOutOfBounds = points.some( point => {
 
+            // edge case where point is exactly centered in a pie chart
+            // and therefore always valid
+            if (innerRadius === 0 && point.x === 0 && point.y === 0) return false
+
             const lineLength = Math.sqrt( Math.pow(point.x, 2) + Math.pow(point.y, 2))
 
+            let failCondition = (
+                lineLength === 0 ? 'line length === 0'
+              : lineLength > outerRadius ? 'lineLength > outerRadius'
+              : lineLength < innerRadius ? 'lineLength < innerRadius'
+              : null
+            )
+            if (failCondition) console.log(failCondition)
+
             // point is outside radius bounds
-            if ( lineLength <= 0 || lineLength > outerRadius || lineLength < innerRadius) return true
+            // -
+            // zero line length here refers to a point at the centre of a donut chart
+            // It's a case technically caught by by lineLength, but want to be sure to avoid
+            // divide by 0 errors below
+            if ( lineLength === 0 || lineLength > outerRadius || lineLength < innerRadius) return true
 
             const normalisedRads = Math.acos(Math.abs(point.y) / lineLength)
             const circle = Math.PI * 2;
@@ -137,13 +160,20 @@ class Pie extends Geometry {
                 : null
             )
 
+            failCondition = (
+                lineAngle === null ? 'lineAngle === null'
+              : lineAngle < startAngle ? 'lineAngle < startAngle'
+              : lineAngle > endAngle ? 'lineAngle > endAngle'
+              : null
+            )
+            if (failCondition) console.log(failCondition)
+
             // angle is invalid or out of bounds
             if (lineAngle === null || lineAngle < startAngle || lineAngle > endAngle ) return true
 
             // debug - draw line
             // d3.select('.pie')
             //     .append('polyline')
-            //     .attr('class','dev-polyline' + segment.data._x)
             //     .style('stroke-width', '1px')
             //     .style('stroke', 'rgba(0,0,0,0.3)')
             //     .attr('points', [[0,0], [point.x,point.y]])
@@ -153,6 +183,7 @@ class Pie extends Geometry {
     }
 
     _addCentreLabel(innerRadius) {
+
         let xText = this.xAxisLabel();
         let yText = this.yAxisLabel();
 
@@ -162,7 +193,7 @@ class Pie extends Geometry {
         if (hasXText) xText = xText && xText.short || xText;
         if (hasYText) yText = yText && yText.short || yText;
 
-        const centreText = this._appendIfEmpty(this._element.select('.pie'), 'text', 'centre-label')
+        const centreText = this._appendIfEmpty(this._element.select('.pie'), 'g', 'centre-label')
             .style('font-family', 'sans-serif')
             .style('font-size', this._font_size + 'px')
             .attr('text-anchor', 'middle');
@@ -172,24 +203,90 @@ class Pie extends Geometry {
             return
         }
 
-        const ySpan = this._appendIfEmpty(centreText, 'tspan', 'y');
-        const xSpan = this._appendIfEmpty(centreText, 'tspan', 'x');
+        const ySpan = this._appendIfEmpty(centreText, 'text', 'y');
+        const xSpan = this._appendIfEmpty(centreText, 'text', 'x');
 
         // populate spans or remove unneeded
         hasYText
             ? ySpan
-                .attr('dy', hasXText ? '-0.3em' : '0.3em')
+                .attr('y', hasXText ? '-0.3em' : '0.3em')
                 .text(yText)
             : ySpan
                 .remove();
 
         hasXText
             ? xSpan
-                .attr('dy', hasYText ? '1em' : '0.3em')
+                .attr('y', hasYText ? '1em' : '0.3em')
                 .attr('x', '0')
                 .text(xText)
             : xSpan
                 .remove();
+
+        if (hasYText) {
+            const yLabelPoints = this._getSegmentLabelBoundingPoints(ySpan, [0,0]);
+            const yLabelOutOfBounds = !this._allPointsWithinSegment(yLabelPoints, 0, 2 * Math.PI, 0, innerRadius);
+            console.log('yLabelExtendsBeyondCentre', yLabelOutOfBounds)
+        }
+        if (hasXText) {
+            const xLabelPoints = this._getSegmentLabelBoundingPoints(xSpan, [0,0]);
+            const xLabelOutOfBounds = !this._allPointsWithinSegment(xLabelPoints, 0, 2 * Math.PI, 0, innerRadius);
+            console.log('xLabelExtendsBeyondCentre', xLabelOutOfBounds)
+        }
+
+    }
+
+    _renderSegmentPaths(pie, segments, arc) {
+        const segmentWrapper = this._appendIfEmpty(pie, 'g', 'segments');
+        const paths = segmentWrapper.selectAll('.segment')
+            .data(segments, d => d.data._x);
+
+        paths.enter()
+          .append('path')
+          .attr('class','segment')
+          .merge(paths)
+          .on("mouseover", (d, i, nodes) => {
+              d3.select(nodes[i])
+              .interrupt("hover:colour")
+              .transition("hover:colour")
+              .duration(50)
+              .attr("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
+              .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
+              this._dispatch.call("tooltipShow", this, {
+                  e: d3.event,
+                  point: d.data,
+                  series: d.data._series,
+                  seriesIndex: 0,//s_i
+                  value: d.data._y
+              })
+          })
+          .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
+              d3.select(nodes[i])
+              .interrupt("hover:colour")
+              .transition("hover:colour")
+              .duration(100)
+              .attr("fill", d => this.getD3Colour(d.data))
+              .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
+              this._dispatch.call("tooltipHide", this);
+          })
+          .on("click auxclick", (d, i, nodes) => {
+              this._dispatch.call("elementClick", this, {
+                  e: d3.event,
+                  point: d.data,
+                  series: d.data._series,
+                  seriesIndex: 0, //d.data._s_i,
+                  value: d.data._y
+              })
+          })
+          .transition().duration(this._transition_duration)
+          .attr("fill", d => this.getD3Colour(d.data))
+          .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
+          .attrTween('d', function(p,pi,pnodes){
+              var pInt = d3.interpolate(this._current, p);
+              this._current = pInt(0);
+              return t => arc(pInt(t));
+          })
+
+        paths.exit().remove();
     }
 
     isDonut(bool) {
@@ -296,78 +393,28 @@ class Pie extends Geometry {
 
         const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
+        const innerRadius = this.isDonut() ? minDimension / 4 : 0;
+        const outerRadius = minDimension / 2;
+
         const arc = d3.arc()
-            .innerRadius(this.isDonut() ? minDimension / 4 : 0)
-            .outerRadius(minDimension / 2);
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
 
         const labelArc = this.isDonut()
             ? arc
             : d3.arc()
                 .innerRadius(minDimension / 6)
-                .outerRadius(minDimension / 2)
-
-        const radius = arc.outerRadius()();
+                .outerRadius(outerRadius)
 
         const outerArc = d3.arc()
-            .innerRadius(minDimension / 2 + 10)
-            .outerRadius(minDimension / 2 + 10)
+            .innerRadius(outerRadius + 10)
+            .outerRadius(outerRadius + 10)
 
         const segments = d3.pie().value(this.y())(data);
 
         const midAngle = d => d.startAngle + (d.endAngle - d.startAngle)/2;
 
-        const segmentWrapper = this._appendIfEmpty(pie, 'g', 'segments');
-
-        const paths = segmentWrapper.selectAll('.segment')
-          .data(segments, d => d.data._x);
-
-        paths.enter()
-            .append('path')
-            .attr('class','segment')
-            .merge(paths)
-            .on("mouseover", (d, i, nodes) => {
-                d3.select(nodes[i])
-                .interrupt("hover:colour")
-                .transition("hover:colour")
-                .duration(50)
-                .attr("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
-                this._dispatch.call("tooltipShow", this, {
-                    e: d3.event,
-                    point: d.data,
-                    series: d.data._series,
-                    seriesIndex: 0,//s_i
-                    value: d.data._y
-                })
-            })
-            .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-                d3.select(nodes[i])
-                .interrupt("hover:colour")
-                .transition("hover:colour")
-                .duration(100)
-                .attr("fill", d => this.getD3Colour(d.data))
-                .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
-                this._dispatch.call("tooltipHide", this);
-            })
-            .on("click auxclick", (d, i, nodes) => {
-                this._dispatch.call("elementClick", this, {
-                    e: d3.event,
-                    point: d.data,
-                    series: d.data._series,
-                    seriesIndex: 0, //d.data._s_i,
-                    value: d.data._y
-                })
-            })
-            .transition().duration(this._transition_duration)
-            .attr("fill", d => this.getD3Colour(d.data))
-            .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
-            .attrTween('d', function(p,pi,pnodes){
-                var pInt = d3.interpolate(this._current, p);
-                this._current = pInt(0);
-                return t => arc(pInt(t));
-            })
-
-        paths.exit().remove();
+        this._renderSegmentPaths(pie, segments, arc)
 
         const segmentLabelsWrapper = this._appendIfEmpty(pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
 
@@ -383,7 +430,7 @@ class Pie extends Geometry {
             .each((segment, i, nodes) => {
 
                 const labelWrapper = d3.select(nodes[i]);
-                const text = this._appendIfEmpty(labelWrapper, 'text', 'label-wrapper');
+                const text = this._appendIfEmpty(labelWrapper, 'g', 'label-wrapper');
 
                 const textColour = useOutsideLabels
                     ? d3.hcl(colours.eighteen.darkGrey).brighter()
@@ -393,17 +440,17 @@ class Pie extends Geometry {
                     .attr('fill', textColour)
                     .style('font-size', this._font_size + 'px')
 
-                const xLabel = this._appendIfEmpty(text, 'tspan', 'x-label');
-                const yLabel = this._appendIfEmpty(text, 'tspan', 'y-label');
+                const xLabel = this._appendIfEmpty(text, 'text', 'x-label');
+                const yLabel = this._appendIfEmpty(text, 'text', 'y-label');
 
                 let xLabelText = this.formatX()(this.x()(segment.data));
                 xLabel
-                    .attr("dy", this.showLabels() ? "-0.3em" : "0.3em")
+                    .attr("y", this.showLabels() ? "-0.3em" : "0.3em")
                     .text(xLabelText);
 
                 if (!useOutsideLabels){
                     const radians = segment.endAngle - segment.startAngle;
-                    const arcLength = radians * radius;
+                    const arcLength = radians * outerRadius;
                     maxLabelWidth = arcLength;
 
                     // TODO: use this
@@ -464,8 +511,7 @@ class Pie extends Geometry {
 
                 if (this.showLabels()){
                     yLabel
-                        .attr("dy", "1em")
-                        .attr("x", "0")
+                        .attr("y", "1em")
                         .text(this.formatLabel()(this.y()(segment.data)));
                 } else {
                     yLabel.remove();
@@ -482,7 +528,7 @@ class Pie extends Geometry {
                             const dInt = interpolate(t);
                             if (useOutsideLabels){
                                 const pos = outerArc.centroid(dInt);
-                                pos[0] = radius * 1.09 * (midAngle(dInt) < Math.PI ? 1 : -1);
+                                pos[0] = outerRadius * 1.09 * (midAngle(dInt) < Math.PI ? 1 : -1);
                                 return "translate("+ pos +")";
                             } else {
                                 return "translate(" + labelArc.centroid(dInt) + ")";
@@ -525,7 +571,7 @@ class Pie extends Geometry {
                                 var elbow = outerArc.centroid(d2);
                                 var terminal = outerArc.centroid(d2);
                                 const leftAligned = midAngle(d2) < Math.PI;
-                                terminal[0] = radius * 1.05 * (leftAligned ? 1 : -1);
+                                terminal[0] = outerRadius * 1.05 * (leftAligned ? 1 : -1);
                                 const positions = [start, elbow];
                                 if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
                                     positions.push(terminal);
@@ -560,7 +606,7 @@ class Pie extends Geometry {
                     labelWrapper.style('visibility', hide ? 'hidden' : null);
                 } else {
                     const points = this._getSegmentLabelBoundingPoints(label, labelArc.centroid(segment));
-                    const isWithinSegment = this._allPointsWithinSegment(points, segment, arc);
+                    const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, innerRadius, outerRadius);
                     labelWrapper.style('visibility', isWithinSegment ? null : 'hidden');
                 }
             })
@@ -568,7 +614,7 @@ class Pie extends Geometry {
         segmentLabels.exit().remove();
 
         this.isDonut()
-            ? this._addCentreLabel()
+            ? this._addCentreLabel(innerRadius)
             : this._element.select('.centre-label').remove();
     }
 
