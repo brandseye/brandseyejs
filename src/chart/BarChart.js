@@ -54,6 +54,13 @@ class BarHistogram extends Geometry {
         const yGroup = this.getD3GroupScale(data, y);
         const colours = this.d3ColourScale();
 
+        // render gradient to match the scale if needed
+        let gradientId
+        if (this._gradient_fn) {
+            element.select("g.gradient").remove()
+            this.gradientId = gradientId = this._gradient_fn(element.append("g").attr("class", "gradient"), x, this)
+        }
+
         let groups = element.select(".bars").selectAll('.group');
 
         //----------------------------------------------
@@ -78,6 +85,8 @@ class BarHistogram extends Geometry {
         groups = groups.data(data, d => d._key);
 
         groups.exit().remove();
+
+        const fillFn = d => gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
 
         groups.enter()
               .append("g")
@@ -113,7 +122,7 @@ class BarHistogram extends Geometry {
                       .style("cursor", "pointer")
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                      .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
+                      .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this.strokeWidth())
                       .attr("class", d => "bar series series-" + toColourKey(d._colour))
@@ -151,7 +160,7 @@ class BarHistogram extends Geometry {
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
-                      .style("fill", d => this.getD3Colour(d)) //colours(d._colour))
+                      .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .attr("x", d => x(Math.min(0, d._x)))
                       .attr("height", yGroup.bandwidth())

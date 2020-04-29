@@ -46,30 +46,26 @@ class Histogram extends Geometry {
         const xGroup = this.getD3XGroupScale(data, x);
         const colours = this.d3ColourScale();
 
-        let groups = element.select(".bars").selectAll('.group');
-
-        //----------------------------------------------
-        // Get rid of current labels
-
-        element.select(".chart-labels")
-           .remove();
-
-        //----------------------------------------------
-
-        if (groups.empty()) {
-            groups = element
-                .append("g")
-                .attr("class", "bars")
-                .selectAll(".group");
+        // render gradient to match the scale if needed
+        let gradientId
+        if (this._gradient_fn) {
+            element.select("g.gradient").remove()
+            this.gradientId = gradientId = this._gradient_fn(element.append("g").attr("class", "gradient"), y, this)
         }
 
+        let groups = element.select(".bars").selectAll('.group');
+
+        element.select(".chart-labels").remove();
+
+        if (groups.empty()) groups = element.append("g").attr("class", "bars").selectAll(".group")
+
         // Ensure that we're always using the correct height.
-        element.select(".bars")
-           .attr("transform", "translate(0, " + height + "), scale(1, -1)");
+        element.select(".bars").attr("transform", "translate(0, " + height + "), scale(1, -1)");
 
-        groups = groups.data(data);
+        groups = groups.data(data)
+        groups.exit().remove()
 
-        groups.exit().remove();
+        const fillFn = d => gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
 
         groups.enter()
               .append("g")
@@ -106,7 +102,7 @@ class Histogram extends Geometry {
                           .attr("y", height - y(0))
                           .attr("width", xGroup.bandwidth())
                           .attr("class", d => "bar series series-" + toColourKey(d._colour))
-                          .style("fill", d => this.getD3Colour(d)) // colours(d._colour))
+                          .style("fill", fillFn)
                           .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                           .style("stroke-width", this._stroke_width)
                       .on("click auxclick", (d, i, nodes) => {
@@ -119,11 +115,12 @@ class Histogram extends Geometry {
                           })
                       })
                       .on("mouseover", (d, i, nodes) => { // Darken the bar on mouse over
-                          d3.select(nodes[i])
+                          let sel = d3.select(nodes[i])
                             .interrupt("hover:colour")
                             .transition("hover:colour")
-                            .duration(400)
-                            .style("fill", d3.hcl(this.getD3Colour(d)).darker());
+                            .duration(150)
+                          if (gradientId) sel.style("opacity", "0.5")
+                          else sel.style("fill", d3.hcl(this.getD3Colour(d)).darker())
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d,
@@ -133,17 +130,18 @@ class Histogram extends Geometry {
                           })
                       })
                       .on("mouseout", (d, i, nodes) => { // bar is regular colour on mouse out.
-                          d3.select(nodes[i])
-                            .interrupt("hover:colour")
-                            .transition("hover:colour")
-                            .duration(400)
-                            .style("fill", d => this.getD3Colour(d));
+                          let sel = d3.select(nodes[i])
+                              .interrupt("hover:colour")
+                              .transition("hover:colour")
+                              .duration(100)
+                          if (gradientId) sel.style("opacity", "1.0")
+                          else sel.style("fill", d => this.getD3Colour(d))
                           this._dispatch.call("tooltipHide", this);
                       })
                       .interrupt("bar:growth")    // Animate bars growing.
                       .transition("bar:growth")
                       .delay(() => this.calcBarGrowth(s_i, nodes.length))
-                          .style("fill", d => this.getD3Colour(d)) //colours(d._colour))
+                          .style("fill", fillFn)
                           .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                           .attr("y", d => height - y(Math.min(0, d._y)))
                           .attr("height", d => (Math.abs(y(0) - y(d._y))));
