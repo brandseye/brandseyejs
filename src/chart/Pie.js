@@ -26,6 +26,7 @@ class Pie extends Geometry {
         this._is_donut = (typeof isDonut !== 'undefined' && isDonut !== null) ? isDonut : false;
         this._use_outside_labels = (typeof useOutsideLabels !== 'undefined' && useOutsideLabels !== null) ? useOutsideLabels : false;
         this._transition_duration = 200;
+        this._line_height = 1.2;
     }
 
     _appendIfEmpty(appendTo, elementName, className) {
@@ -97,7 +98,7 @@ class Pie extends Geometry {
       return textHeight
     }
 
-    _getSegmentLabelBoundingPoints(label, atPoint) {
+    _getLabelBoundingPoints(label, atPoint) {
         /*
         assumes:
         • label is centred around a given point. e.g.:
@@ -138,6 +139,7 @@ class Pie extends Geometry {
 
             const lineLength = Math.sqrt( Math.pow(point.x, 2) + Math.pow(point.y, 2))
 
+            /*
             let failCondition = (
                 lineLength === 0 ? 'line length === 0'
               : lineLength > outerRadius ? 'lineLength > outerRadius'
@@ -145,6 +147,7 @@ class Pie extends Geometry {
               : null
             )
             if (failCondition) console.log(failCondition)
+            */
 
             // point is outside radius bounds
             // -
@@ -164,6 +167,7 @@ class Pie extends Geometry {
                 : null
             )
 
+            /*
             failCondition = (
                 lineAngle === null ? 'lineAngle === null'
               : lineAngle < startAngle ? 'lineAngle < startAngle'
@@ -171,6 +175,7 @@ class Pie extends Geometry {
               : null
             )
             if (failCondition) console.log(failCondition)
+            */
 
             // angle is invalid or out of bounds
             if (lineAngle === null || lineAngle < startAngle || lineAngle > endAngle ) return true
@@ -208,18 +213,7 @@ class Pie extends Geometry {
         // if (!this._use_outside_labels){
         //     const radians = segment.endAngle - segment.startAngle;
         //     const arcLength = radians * this._outer_radius;
-        //     maxLabelWidth = arcLength;
-
-            /*
-
-                if xspan width > available width  && ytext has spaces
-                    try x line wrap
-                    split in half by spaces (closest to center space)
-                    re-add spans in correct y position
-                    measure spans
-                    ... same for yspan
-
-                */
+        //     this._max_label_width = arcLength;
         // }
 
         let currWidth = xLabel.node().getBBox().width;
@@ -236,7 +230,6 @@ class Pie extends Geometry {
 
         const minChars = 5;
         const ellipsis = '...'; //\u2026
-
 
         while( currWidth > this._max_label_width ){
 
@@ -301,7 +294,7 @@ class Pie extends Geometry {
             }
             labelWrapper.style('visibility', hide ? 'hidden' : null);
         } else {
-            const points = this._getSegmentLabelBoundingPoints(label, this._label_arc.centroid(segment));
+            const points = this._getLabelBoundingPoints(label, this._label_arc.centroid(segment));
             const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, this._inner_radius, this._outer_radius);
             labelWrapper.style('visibility', isWithinSegment ? null : 'hidden');
         }
@@ -336,8 +329,10 @@ class Pie extends Geometry {
 
     _renderLeaderLines(labelWrapper) {
         const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
-        const that = this;
-        if (this._use_outside_labels) {
+        if (!this._use_outside_labels) {
+            line.remove()
+        } else {
+            const that = this;
             line
                 .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
                 .attr('opacity', 0.5)
@@ -364,8 +359,6 @@ class Pie extends Geometry {
                         return positions;
                     };
                 });
-        } else {
-            line.remove()
         }
     }
 
@@ -401,7 +394,177 @@ class Pie extends Geometry {
             })
     }
 
-    _addCentreLabel(innerRadius) {
+    _getWrappedWords(string) {
+
+        const minChars = 3
+
+        if (string.indexOf(' ') === -1){
+            return [string]
+        }
+
+        const halfIndex = Math.floor(string.length/2);
+        const maxIndex = string.length - 1;
+        let preIndex = string.slice(0, halfIndex + 1).lastIndexOf(' ');
+        let postIndex = string.slice(halfIndex).indexOf(' ');
+
+        preIndex = preIndex === -1 ? maxIndex : preIndex
+        postIndex = postIndex === -1 ? maxIndex : postIndex + halfIndex
+
+        const preferredIndex = Math.min(
+            preIndex  !== -1 && halfIndex - preIndex > minChars ? maxIndex : preIndex,
+            postIndex !== -1 && maxIndex - postIndex < minChars ? maxIndex : postIndex
+        );
+
+        if ( preferredIndex < maxIndex - minChars && preferredIndex >= minChars){
+            return [ string.slice(0, preferredIndex), string.slice(preferredIndex + 1) ]
+        }
+
+        return [string]
+    }
+
+    _getTruncatedText(text) {
+        const minChars = 5;
+        const ellipsis = '...'; //\u2026
+
+        // while( currWidth > this._max_label_width ){
+
+        //     // word-based
+        //     const xLabelWords = xLabelText.split(' ')
+        //     xLabelWords.splice(Math.ceil(xLabelWords.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
+        //     const truncatedText = xLabelWords.join(' ');
+        //     labelLength = truncatedText.length;
+
+        //     // string-based
+        //     // const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
+
+        //     if (labelLength - ellipsis.length < minChars) {
+        //         break;
+        //     }
+
+        //     xLabel.text(truncatedText);
+        //     const newWidth = xLabel.node().getBBox().width;
+        //     if (newWidth >= currWidth){
+        //         break;
+        //     } else {
+        //         currWidth = newWidth;
+        //         ++truncSize;
+        //     }
+        // }
+
+        // Dummy
+        return text.slice(0,minChars) + ellipsis;
+    }
+
+    _addLabels(selection) {
+        selection
+            .enter()
+            .append('text')
+            .merge(selection)
+            .text(string => string.value)
+            .attr('y',(string, i, nodes) => {
+                const lineFactor = i - nodes.length/2 + 1;
+                return lineFactor * this._font_size * this._line_height +'px'
+            })
+            .exit()
+            .remove()
+    }
+
+    /**
+     *
+     * @param {string[]} strings
+     * @param {object} element
+     * @param {function} testFn
+     * @param {integer} attempts
+     */
+    _fitLabelsInSegment(initialStrings, element, testFn) { //, attempts
+
+        // console.log(strings, attempts)
+
+        // if (attempts > 10) {
+        //     return false
+        // }
+
+        let attempts = 0;
+        const maxAttempts = 10;
+        const texts = element.selectAll('text'); //.data(initialStrings)
+
+        // let didFit = false
+        // add text to dom()
+        //   measure
+        //   did it fit?
+        // no - change text
+        // add text to dom()
+        //   measure
+        //   did it fit?
+        // no - change text
+        let didFit = false
+        let strings = initialStrings.slice()
+
+        while (!didFit && attempts < maxAttempts){
+            console.log('strings',strings)
+            const newStrings = []
+            const t = this._addLabels(texts)
+            console.log(t)
+            texts
+                .enter()
+                .merge(texts)
+                .each((string, i, nodes) => {
+                    const text = d3.select(nodes[i]);
+                    if (testFn(text)){
+                        newStrings.push({value: string.value});
+                        console.log('newStrings AAA', newStrings)
+                    } else {
+                        // try wrap
+                        const words = this._getWrappedWords(string.value)
+                        words.forEach(s => newStrings.push({value: s}))
+                        console.log('words',words)
+
+                        // if wrap fails irretrievably, try truncate
+                        // newStrings.push({value: this._getTruncatedText(string.value), triedTruncate: true});
+                        didFit = false
+                    }
+                })
+            console.log('newStrings',newStrings)
+            strings = newStrings;
+            attempts += 1;
+        }
+
+        // const newStrings = [];
+        // let didFit = true;
+
+
+        // texts.enter()
+        //     .append('text')
+        //     .merge(texts)
+        //     .text(string => string.value)
+        //     .attr('y',(string, i, nodes) => {
+        //         const lineFactor = i - nodes.length/2 + 1;
+        //         return lineFactor * this._font_size * this._line_height +'px'
+        //     })
+        //     .each((string, i, nodes) => {
+        //         const text = d3.select(nodes[i]);
+        //         if (testFn(text)){
+        //             newStrings.push({value: string.value});
+        //         } else {
+        //             // try wrap
+        //             this._getWrappedWords(string.value).forEach(s => newStrings.push({value: s}))
+
+        //             // if wrap fails irretrievably, try truncate
+        //             // newStrings.push({value: this._getTruncatedText(string.value), triedTruncate: true});
+        //             didFit = false
+        //         }
+        //     })
+        //     .exit()
+        //     .remove()
+
+        // if (!didFit) {
+        //     return this._fitLabelsInSegment(newStrings, element, testFn, attempts + 1)
+        // } else {
+        //     return true
+        // }
+    }
+
+    _addCentreLabel() {
 
         let xText = this.xAxisLabel();
         let yText = this.yAxisLabel();
@@ -409,52 +572,38 @@ class Pie extends Geometry {
         const hasYText = yText || yText === 0;
         const hasXText = xText || xText === 0;
 
-        if (hasXText) xText = xText && xText.short || xText;
-        if (hasYText) yText = yText && yText.short || yText;
+        const strings = [];
 
-        const centreText = this._appendIfEmpty(this._element.select('.pie'), 'g', 'centre-label')
+        if (hasYText) strings.push({value: yText && yText.short || yText});
+        if (hasXText) strings.push({value: xText && xText.short || xText});
+        // strings.push({value: 'b'})
+        // strings.push({value: 'c'})
+        // strings.push({value: 'd'})
+        // strings.push({value: 'e'})
+
+        const centreText = this._appendIfEmpty(this._pie, 'g', 'centre-label')
             .style('font-family', 'sans-serif')
             .style('font-size', this._font_size + 'px')
             .attr('text-anchor', 'middle');
 
-        if (!hasXText && !hasYText){
+        if (strings.length === 0){
             centreText.remove();
             return
         }
 
-        const ySpan = this._appendIfEmpty(centreText, 'text', 'y');
-        const xSpan = this._appendIfEmpty(centreText, 'text', 'x');
-
-        // populate spans or remove unneeded
-        hasYText
-            ? ySpan
-                .attr('y', hasXText ? '-0.3em' : '0.3em')
-                .text(yText)
-            : ySpan
-                .remove();
-
-        hasXText
-            ? xSpan
-                .attr('y', hasYText ? '1em' : '0.3em')
-                .attr('x', '0')
-                .text(xText)
-            : xSpan
-                .remove();
-
-        if (hasYText) {
-            const yLabelPoints = this._getSegmentLabelBoundingPoints(ySpan, [0,0]);
-            const yLabelOutOfBounds = !this._allPointsWithinSegment(yLabelPoints, 0, 2 * Math.PI, 0, innerRadius);
-            console.log('yLabelExtendsBeyondCentre', yLabelOutOfBounds)
-        }
-        if (hasXText) {
-            const xLabelPoints = this._getSegmentLabelBoundingPoints(xSpan, [0,0]);
-            const xLabelOutOfBounds = !this._allPointsWithinSegment(xLabelPoints, 0, 2 * Math.PI, 0, innerRadius);
-            console.log('xLabelExtendsBeyondCentre', xLabelOutOfBounds)
+        const isWithinSegment = label => {
+            const boundingPoints = this._getLabelBoundingPoints(label, [0,0])
+            return this._allPointsWithinSegment(boundingPoints, 0, 2 * Math.PI, 0, this._inner_radius)
         }
 
+        const labelDidFit = this._fitLabelsInSegment(strings, centreText, isWithinSegment)
+
+        //console.log('labelDidFit',labelDidFit)
+
+        return labelDidFit
     }
 
-    _renderSegmentPaths() {
+    _renderSegments() {
         const segmentWrapper = this._appendIfEmpty(this._pie, 'g', 'segments');
         const paths = segmentWrapper.selectAll('.segment')
             .data(this._segments, d => d.data._x);
@@ -588,8 +737,8 @@ class Pie extends Geometry {
     }
 
     render() {
-        let availableWidth = this.width();
-        let availableHeight = this.height();
+        let availableWidth = this._width;
+        let availableHeight = this._height;
 
         let widestLabelWidth = 0;
         let labelHeight = 0;
@@ -611,9 +760,7 @@ class Pie extends Geometry {
 
         this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + labelHeight) + ')')
 
-        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
-
-        this._inner_radius = this.isDonut() ? minDimension / 4 : 0;
+        this._inner_radius = this._is_donut ? minDimension / 4 : 0;
         this._outer_radius = minDimension / 2;
 
         this._outer_arc = d3.arc()
@@ -624,19 +771,20 @@ class Pie extends Geometry {
             .innerRadius(this._inner_radius)
             .outerRadius(this._outer_radius);
 
-        this._label_arc = this.isDonut()
+        this._label_arc = this._is_donut
             ? this._arc
             : d3.arc()
                 .innerRadius(minDimension / 6)
                 .outerRadius(this._outer_radius)
 
+        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
         this._segments = d3.pie().value(this.y())(data);
 
-        this._renderSegmentPaths()
+        this._renderSegments()
 
         this._renderSegmentLabels()
 
-        this.isDonut()
+        this._is_donut
             ? this._addCentreLabel()
             : this._element.select('.centre-label').remove();
     }
