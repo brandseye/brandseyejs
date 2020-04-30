@@ -366,7 +366,8 @@ class Line extends Geometry {
 
         let extent = d3.extent(data, d => d._y)
         let max = Math.max(extent[1], this._axis_max_value || 0)
-        return d3.scaleLinear().range([height, 0]).nice(5).domain([Math.min(0, extent[0]), max])
+        let min = Math.min(this._axis_min_value || 0, extent[0])
+        return d3.scaleLinear().range([height, 0]).nice(5).domain([min, max])
     }
 }
 

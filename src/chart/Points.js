@@ -152,17 +152,12 @@ class Point extends Geometry {
     }
 
     getD3YScale(data, height) {
-        data = data || this.prepareData()
-            .map(d => d.data)
-            .reduce((acc, val) => acc.concat(val));
+        data = data || this.prepareData().map(d => d.data).reduce((acc, val) => acc.concat(val))
         height = height || this.height();
 
-        let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0);
-        return d3.scaleLinear()
-            .range([height, 0])
-            .nice(5)
-            .domain([Math.min(0, d3.min(data, d => d._y)), max]);
-
+        let max = Math.max(d3.max(data, d => d._y), this._axis_max_value || 0)
+        let min = Math.min(this._axis_min_value || 0, d3.min(data, d => d._y))
+        return d3.scaleLinear().range([height, 0]).nice(5).domain([min, max])
     }
 
     getSizeScale(data) {

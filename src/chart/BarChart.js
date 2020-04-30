@@ -249,7 +249,7 @@ class BarHistogram extends Geometry {
         }
 
         const max = Math.max(extent[1], this._axis_max_value || 0)
-        const min = Math.min(0, extent[0])
+        const min = Math.min(this._axis_min_value || 0, extent[0])
         return d3.scaleLinear().rangeRound([0, width]).nice().domain([min, max])
     }
 
