@@ -37,6 +37,7 @@ class Point extends Geometry {
         const totalElements = data.map(d => d.data.length).reduce( (acc, val) => acc + val);
 
         element.classed("points", true);
+        element.style("opacity", this._opacity === null ? 1.0 : this._opacity)
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(allData, height);

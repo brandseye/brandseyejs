@@ -45,6 +45,7 @@ class Line extends Geometry {
         const allData = this.prepareData(null, false).map(d => d.data).reduce((acc, val) => acc.concat(val));
 
         element.classed("line-chart", true);
+        element.style("opacity", this._opacity === null ? 1.0 : this._opacity)
 
 
         const x = this.getD3XScale(allData, width);

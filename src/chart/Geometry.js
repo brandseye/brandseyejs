@@ -62,6 +62,7 @@ export class Geometry {
         this._padding = 0;
         this._use_y2_axis = false;
         this._gradient_fn = null;
+        this._opacity = null
         this._index = 0;  // Used for generating unique keys
     }
 
@@ -339,6 +340,13 @@ export class Geometry {
         if (arguments.length === 0) return this._gradient_fn;
         if (fn && typeof fn !== "function") throw new Error("gradientFn must be a function");
         this._gradient_fn = fn;
+        return this;
+    }
+
+    opacity(v) {
+        if (arguments.length === 0) return this._opacity;
+        if (v && typeof v !== "number") throw new Error("opacity must be a number");
+        this._opacity = v;
         return this;
     }
 
