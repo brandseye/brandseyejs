@@ -202,6 +202,7 @@ class Pie extends Geometry {
             .attr('fill', textColour)
             .style('font-size', this._font_size + 'px')
 
+            /* previosu approach
         const xLabel = this._appendIfEmpty(text, 'text', 'x-label');
         const yLabel = this._appendIfEmpty(text, 'text', 'y-label');
 
@@ -259,17 +260,26 @@ class Pie extends Geometry {
         if (this.showLabels()){
             yLabel
                 .attr("y", "1em")
-                .text(this.formatLabel()(this.y()(segment.data)));
+                .text();
         } else {
             yLabel.remove();
         }
+        */
+        const labels = [this.formatX()(this.x()(segment.data))]
+        if (this.showLabels()) labels.push(this.formatLabel()(this.y()(segment.data)))
 
+        const isWithinSegment = label => {
+            const boundingPoints = this._getLabelBoundingPoints(label, this._label_arc.centroid(segment))
+            return this._allPointsWithinSegment(boundingPoints, segment.startAngle, segment.endAngle, this._inner_radius, this._outer_radius)
+        }
+
+        const didFit = this._fitLabelsInSegment(labels.map(l => l.toString()), text, isWithinSegment)
+        console.log('didFit', didFit, labels)
         this._transformSegmentLabel(text)
 
         const finalPos = this._outer_arc.centroid(segment);
         const rightHandSide = this._getMidAngle(segment) < Math.PI;
         const rect = text.node().getBoundingClientRect();
-
         labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
 
         this._renderLeaderLines(labelWrapper)
@@ -422,51 +432,27 @@ class Pie extends Geometry {
         return [string]
     }
 
-    _getTruncatedText(text) {
-        const minChars = 5;
+    _getTruncatedText(text, truncSize) {
+        const minChars = 3;
         const ellipsis = '...'; //\u2026
 
-        // while( currWidth > this._max_label_width ){
+        const words = text.split(' ');
+        words.splice(Math.ceil(words.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
+        const truncatedText = words.join(' ');
+        const labelLength = truncatedText.length;
 
-        //     // word-based
-        //     const xLabelWords = xLabelText.split(' ')
-        //     xLabelWords.splice(Math.ceil(xLabelWords.length / 2) - Math.floor(truncSize / 2), truncSize, ellipsis);
-        //     const truncatedText = xLabelWords.join(' ');
-        //     labelLength = truncatedText.length;
-
-        //     // string-based
-        //     // const truncatedText = start.slice(0, -truncSize) + ellipsis + end.slice(truncSize);
-
-        //     if (labelLength - ellipsis.length < minChars) {
-        //         break;
-        //     }
-
-        //     xLabel.text(truncatedText);
-        //     const newWidth = xLabel.node().getBBox().width;
-        //     if (newWidth >= currWidth){
-        //         break;
-        //     } else {
-        //         currWidth = newWidth;
-        //         ++truncSize;
-        //     }
-        // }
-
-        // Dummy
-        return text.slice(0,minChars) + ellipsis;
+        if (labelLength - ellipsis.length < minChars) {
+            return text
+        } else {
+            return truncatedText
+        }
     }
 
-    _addLabels(selection) {
-        selection
-            .enter()
-            .append('text')
-            .merge(selection)
-            .text(string => string.value)
-            .attr('y',(string, i, nodes) => {
-                const lineFactor = i - nodes.length/2 + 1;
-                return lineFactor * this._font_size * this._line_height +'px'
-            })
-            .exit()
-            .remove()
+    _arrayEquals(a, b) {
+        if (a === b) return true
+        if (a === null || b === null || a.length !== b.length) return false
+        a.forEach((item, index) => { if (item !== b[index]) return false } )
+        return true
     }
 
     /**
@@ -474,94 +460,82 @@ class Pie extends Geometry {
      * @param {string[]} strings
      * @param {object} element
      * @param {function} testFn
-     * @param {integer} attempts
      */
-    _fitLabelsInSegment(initialStrings, element, testFn) { //, attempts
+    _fitLabelsInSegment(initialStrings, element, testFn) {
 
-        // console.log(strings, attempts)
-
-        // if (attempts > 10) {
-        //     return false
-        // }
-
-        let attempts = 0;
+        let numAttempts = 0;
         const maxAttempts = 10;
-        const texts = element.selectAll('text'); //.data(initialStrings)
 
-        // let didFit = false
-        // add text to dom()
-        //   measure
-        //   did it fit?
-        // no - change text
-        // add text to dom()
-        //   measure
-        //   did it fit?
-        // no - change text
         let didFit = false
         let strings = initialStrings.slice()
 
-        while (!didFit && attempts < maxAttempts){
-            console.log('strings',strings)
-            const newStrings = []
-            const t = this._addLabels(texts)
-            console.log(t)
+        let attempts = [];
+        let newStrings = []
+        let wrapFailed = false
+
+        // loop lines
+        while (!didFit && numAttempts < maxAttempts){
+
+            didFit = true
+            const texts = element.selectAll('text');
+
+            newStrings = []
+
             texts
+                .data(strings)
                 .enter()
+                .append('text')
                 .merge(texts)
+                .text(string => string)
+                .attr('y',(string, i, nodes) => {
+                    const lineFactor = i - nodes.length/2 + 1;
+                    return lineFactor * this._font_size * this._line_height +'px'
+                })
                 .each((string, i, nodes) => {
                     const text = d3.select(nodes[i]);
                     if (testFn(text)){
-                        newStrings.push({value: string.value});
-                        console.log('newStrings AAA', newStrings)
-                    } else {
-                        // try wrap
-                        const words = this._getWrappedWords(string.value)
-                        words.forEach(s => newStrings.push({value: s}))
-                        console.log('words',words)
-
-                        // if wrap fails irretrievably, try truncate
-                        // newStrings.push({value: this._getTruncatedText(string.value), triedTruncate: true});
+                        newStrings.push(string);
+                    } else if (!wrapFailed){
                         didFit = false
+                        // split into strings for next iteration
+                        const words = this._getWrappedWords(string)
+                        words.forEach(s => newStrings.push(s))
+                    } else {
+                        // try truncing
+                        let truncSize = 0
+                        while( truncSize < string.length) {
+                            const truncatedText = this._getTruncatedText(string, truncSize);
+                            if (truncatedText === string){
+                                didFit = false
+                                break
+                            }
+                            text.text(truncatedText)
+                            if(testFn(text)) {
+                                newStrings.push(truncatedText)
+                                break
+                            } else {
+                                truncSize += 1
+                            }
+                        }
+                        if (truncSize === string.length){
+                            didFit = false
+                        }
                     }
                 })
-            console.log('newStrings',newStrings)
+                .exit()
+                .remove()
+
+            attempts.push(strings)
+
+            const stringsEqual = this._arrayEquals(strings, newStrings);
+            console.log('attempt:', numAttempts, 'strings: ', strings, newStrings, 'equal?', stringsEqual)
+            if (stringsEqual && !wrapFailed) wrapFailed = true
+
             strings = newStrings;
-            attempts += 1;
+            numAttempts += 1;
         }
 
-        // const newStrings = [];
-        // let didFit = true;
-
-
-        // texts.enter()
-        //     .append('text')
-        //     .merge(texts)
-        //     .text(string => string.value)
-        //     .attr('y',(string, i, nodes) => {
-        //         const lineFactor = i - nodes.length/2 + 1;
-        //         return lineFactor * this._font_size * this._line_height +'px'
-        //     })
-        //     .each((string, i, nodes) => {
-        //         const text = d3.select(nodes[i]);
-        //         if (testFn(text)){
-        //             newStrings.push({value: string.value});
-        //         } else {
-        //             // try wrap
-        //             this._getWrappedWords(string.value).forEach(s => newStrings.push({value: s}))
-
-        //             // if wrap fails irretrievably, try truncate
-        //             // newStrings.push({value: this._getTruncatedText(string.value), triedTruncate: true});
-        //             didFit = false
-        //         }
-        //     })
-        //     .exit()
-        //     .remove()
-
-        // if (!didFit) {
-        //     return this._fitLabelsInSegment(newStrings, element, testFn, attempts + 1)
-        // } else {
-        //     return true
-        // }
+        return true
     }
 
     _addCentreLabel() {
@@ -572,21 +546,17 @@ class Pie extends Geometry {
         const hasYText = yText || yText === 0;
         const hasXText = xText || xText === 0;
 
-        const strings = [];
+        const labels = [];
 
-        if (hasYText) strings.push({value: yText && yText.short || yText});
-        if (hasXText) strings.push({value: xText && xText.short || xText});
-        // strings.push({value: 'b'})
-        // strings.push({value: 'c'})
-        // strings.push({value: 'd'})
-        // strings.push({value: 'e'})
+        if (hasYText) labels.push(yText && yText.short || yText);
+        if (hasXText) labels.push(xText && xText.short || xText);
 
         const centreText = this._appendIfEmpty(this._pie, 'g', 'centre-label')
             .style('font-family', 'sans-serif')
             .style('font-size', this._font_size + 'px')
             .attr('text-anchor', 'middle');
 
-        if (strings.length === 0){
+        if (labels.length === 0){
             centreText.remove();
             return
         }
@@ -596,9 +566,9 @@ class Pie extends Geometry {
             return this._allPointsWithinSegment(boundingPoints, 0, 2 * Math.PI, 0, this._inner_radius)
         }
 
-        const labelDidFit = this._fitLabelsInSegment(strings, centreText, isWithinSegment)
+        const labelDidFit = this._fitLabelsInSegment(labels.map(l => l.toString()), centreText, isWithinSegment)
 
-        //console.log('labelDidFit',labelDidFit)
+        console.log('labelDidFit',labelDidFit, labels)
 
         return labelDidFit
     }
