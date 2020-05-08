@@ -212,6 +212,19 @@ class Pie extends Geometry {
         this._renderLeaderLines(labelWrapper)
     }
 
+    _getLastVisibleLabel(labelSizes, index) {
+        const attempt = labelSizes[index];
+
+        // step back until we hit
+        // the start of the array
+        // or a label not flagged as hidden
+        return (
+              typeof attempt === 'undefined' ? null
+            : !attempt.isHidden ? attempt
+            : this._getLastVisibleLabel(labelSizes, index - 1) // recurse
+        )
+    }
+
     _hideOutOfBoundLabels(labelWrapper, segment, labelSizes) {
         const texts = labelWrapper.selectAll('text');
 
@@ -221,20 +234,20 @@ class Pie extends Geometry {
             const text = d3.select(nodes[i]);
             if (this._use_outside_labels){
                 let hide = text.node().getBBox().width > this._max_label_width;
-                if (!hide && segment.index !== 0 && this._use_outside_labels){ // skip first label
-                    const thisLabel = labelSizes[segment.index];
-                    let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
-                    console.log(lastVisibleLabel)
-                    if (lastVisibleLabel === null || thisLabel.rightHandSide !== lastVisibleLabel.rightHandSide){
-                        // different sides – ignore
-                    } else if (thisLabel.rightHandSide) {
+                const thisLabel = labelSizes[segment.index];
+                let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
+
+                let ignore = segment.index === 0 || lastVisibleLabel === null || thisLabel.rightHandSide !== lastVisibleLabel.rightHandSide;
+                if (!ignore && !hide){
+                    if (thisLabel.rightHandSide) {
                         hide = (lastVisibleLabel.y + lastVisibleLabel.height) > thisLabel.y;
                     } else {
                         hide = ( thisLabel.y + thisLabel.height ) > lastVisibleLabel.y;
                     }
                 }
-                if (hide) withinBounds = false
+
                 thisLabel.isHidden = hide;
+                if (hide) withinBounds = false
             } else {
                 const points = this._getLabelBoundingPoints(text, this._label_arc.centroid(segment));
                 const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, this._inner_radius, this._outer_radius);
