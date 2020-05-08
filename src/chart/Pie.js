@@ -148,16 +148,6 @@ class Pie extends Geometry {
 
             const lineLength = Math.sqrt( Math.pow(point.x, 2) + Math.pow(point.y, 2))
 
-            /*
-            let failCondition = (
-                lineLength === 0 ? 'line length === 0'
-              : lineLength > outerRadius ? 'lineLength > outerRadius'
-              : lineLength < innerRadius ? 'lineLength < innerRadius'
-              : null
-            )
-            if (failCondition) console.log(failCondition)
-            */
-
             // point is outside radius bounds
             // -
             // zero line length here refers to a point at the centre of a donut chart
@@ -176,28 +166,9 @@ class Pie extends Geometry {
                 : null
             )
 
-            /*
-            failCondition = (
-                lineAngle === null ? 'lineAngle === null'
-              : lineAngle < startAngle ? 'lineAngle < startAngle'
-              : lineAngle > endAngle ? 'lineAngle > endAngle'
-              : null
-            )
-            if (failCondition) console.log(failCondition)
-            */
-
             // angle is invalid or out of bounds
             if (lineAngle === null || lineAngle < startAngle || lineAngle > endAngle ) return true
 
-            // dev
-            // if (showLines){
-            //     d3.select('.pie')
-            //         .append('polyline')
-            //         .attr('class','dev')
-            //         .style('stroke-width', '1px')
-            //         .style('stroke', 'rgba(0,0,0,0.3)')
-            //         .attr('points', [[0,0], [point.x,point.y]])
-            // }
         })
 
         return !anyPointOutOfBounds
@@ -252,27 +223,26 @@ class Pie extends Geometry {
                 let hide = text.node().getBBox().width > this._max_label_width;
                 if (!hide && segment.index !== 0 && this._use_outside_labels){ // skip first label
                     const thisLabel = labelSizes[segment.index];
-                    const previousLabel = labelSizes[segment.index - 1];
-
-                    if (thisLabel.rightHandSide !== previousLabel.rightHandSide){
+                    let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
+                    console.log(lastVisibleLabel)
+                    if (lastVisibleLabel === null || thisLabel.rightHandSide !== lastVisibleLabel.rightHandSide){
                         // different sides – ignore
                     } else if (thisLabel.rightHandSide) {
-                        hide = (previousLabel.y + previousLabel.height) > thisLabel.y;
+                        hide = (lastVisibleLabel.y + lastVisibleLabel.height) > thisLabel.y;
                     } else {
-                        hide = ( thisLabel.y + thisLabel.height ) > previousLabel.y;
+                        hide = ( thisLabel.y + thisLabel.height ) > lastVisibleLabel.y;
                     }
                 }
                 if (hide) withinBounds = false
+                thisLabel.isHidden = hide;
             } else {
                 const points = this._getLabelBoundingPoints(text, this._label_arc.centroid(segment));
-                const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, this._inner_radius, this._outer_radius, string === '351');
-                // console.log(string, isWithinSegment)
+                const isWithinSegment = this._allPointsWithinSegment(points, segment.startAngle, segment.endAngle, this._inner_radius, this._outer_radius);
                 if (!isWithinSegment) withinBounds = false
             }
         })
 
         labelWrapper.style('visibility', withinBounds ? null : 'hidden');
-
 
     }
 
