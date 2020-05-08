@@ -271,11 +271,11 @@ class Pie extends Geometry {
 
     }
 
-    _renderSegmentLabels() {
+    _renderSegmentLabels(segments) {
         const segmentLabelsWrapper = this._appendIfEmpty(this._pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
 
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
-            .data(this._segments, d => d.data._x);
+            .data(segments, d => d.data._x);
 
         const labelSizes = [];
 
@@ -573,10 +573,10 @@ class Pie extends Geometry {
         centreText.style('visibility', fitted ? null : 'hidden')
     }
 
-    _renderSegments() {
+    _renderSegments(segments) {
         const segmentWrapper = this._appendIfEmpty(this._pie, 'g', 'segments');
         const paths = segmentWrapper.selectAll('.segment')
-            .data(this._segments, d => d.data._x);
+            .data(segments, d => d.data._x);
 
         const that = this;
         paths.enter()
@@ -619,6 +619,7 @@ class Pie extends Geometry {
           .transition().duration(this._transition_duration)
           .attr("fill", d => this.getD3Colour(d.data))
           .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
+          .style("cursor", "pointer")
           .attrTween('d', function(p,pi,pnodes){
               var pInt = d3.interpolate(this._current, p);
               this._current = pInt(0);
@@ -701,12 +702,26 @@ class Pie extends Geometry {
                  .domain([min, max]);
     }
 
+    getD3Colour(data) {
+        let colour = Geometry.prototype.getD3Colour.call(this, data);
+        if (this._tints) {
+            colour = this._tints[data._key] || colour
+        }
+        return colour
+    }
+
     immediatelyRenderLabels(show){
         this.showLabels(!!show);
         this.render();
     }
 
     render() {
+
+        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val), []);
+
+        /*
+        Set up dimensions
+        */
         let availableWidth = this._width;
         let availableHeight = this._height;
 
@@ -724,10 +739,9 @@ class Pie extends Geometry {
 
         const minDimension = Math.min(availableWidth, availableHeight);
 
-        this._pie = this._appendIfEmpty(this._element, 'g', 'pie');
-
-        this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + labelHeight) + ')')
-
+        /*
+        Set up arcs
+        */
         this._inner_radius = this._is_donut ? minDimension / 4 : 0;
         this._outer_radius = minDimension / 2;
 
@@ -745,12 +759,47 @@ class Pie extends Geometry {
                 .innerRadius(minDimension / 5)
                 .outerRadius(this._outer_radius)
 
-        const data = this.prepareData(null, true).map(d => d.data).reduce((acc, val) => acc.concat(val));
-        this._segments = d3.pie().value(this.y())(data);
+        /*
+            Prep tints if necessary
+        */
+        let firstColour;
+        let useTintShift = true;
+        // if we encounter more than one colour,
+        // don't use tint shift
+        for(let i = 0; i < data.length; i++) {
+            const colour = Geometry.prototype.getD3Colour.call(this,data[i]);
+            if (typeof firstColour === 'undefined'){
+                firstColour = colour;
+            } else if (colour !== firstColour) {
+                useTintShift = false;
+                break
+            }
+        }
 
-        this._renderSegments()
+        if (useTintShift) {
+            const tints = [];
+            const shiftLevels = 3; //in both directions
+            const cycleLength = shiftLevels * 4;
 
-        this._renderSegmentLabels()
+            data.forEach((d, index) => {
+                const colour = Geometry.prototype.getD3Colour.call(this, d);
+                const shiftFactor = Math.abs( shiftLevels * 2 - Math.abs(index - shiftLevels) % cycleLength) - shiftLevels;
+                tints.push(d3.hsl(colour).brighter(shiftFactor * 0.4));
+                // TODO: test for black and white
+                // TODO: consider zigzag palette within given hue
+            })
+            this._tints = tints;
+        }
+
+        const segments = d3.pie().value(this.y())(data);
+
+        this._pie = this._appendIfEmpty(this._element, 'g', 'pie');
+
+        this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + labelHeight) + ')')
+
+        this._renderSegments(segments)
+
+        this._renderSegmentLabels(segments)
 
         this._is_donut
             ? this._addCentreLabel()
