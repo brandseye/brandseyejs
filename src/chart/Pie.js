@@ -39,11 +39,15 @@ class Pie extends Geometry {
     _getOverlayLabelColour(d){
         const segmentColour = d3.hcl(this.getD3Colour(d.data));
         let labelColour = d3.hcl(colours.eighteen.darkGrey);
+        let multiply = true;
 
         // invert
-        if (segmentColour.l < 60) labelColour.l += Math.min(labelColour.l + 50, 100)
+        if (segmentColour.l < 65) {
+            labelColour.l += Math.min(labelColour.l + 50, 100);
+            multiply = false
+        }
 
-        return labelColour
+        return { colour: labelColour, multiply: multiply }
     }
 
     _getWidthOfWidestLabel(){
@@ -201,13 +205,14 @@ class Pie extends Geometry {
 
     _renderSegmentLabel(labelWrapper, segment, labelSizes) {
         const textWrapper = this._appendIfEmpty(labelWrapper, 'g', 'text-wrapper');
-
+        const overlayColour = this._getOverlayLabelColour(segment);
         const textColour = this._use_outside_labels
             ? d3.hcl(colours.eighteen.darkGrey).brighter()
-            : this._getOverlayLabelColour(segment);
+            : overlayColour.colour;
 
         textWrapper.attr('pointer-events', 'none')
             .attr('fill', textColour)
+            .style('mix-blend-mode', overlayColour.multiply ? 'multiply' : null)
             .style('font-size', this._font_size + 'px');
 
         const labels = [this.formatX()(this.x()(segment.data))];
