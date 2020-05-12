@@ -118,7 +118,7 @@ class Pie extends Geometry {
         const yOffset = parseFloat(label.attr('y') || 0);
 
         const bounds = label.node().getBBox();
-        const w = bounds.width; //label.node().getComputedTextLength();
+        const w = bounds.width;
         const h = bounds.height;
         const x = atPoint[0] + xOffset;
         const y = atPoint[1] + yOffset;
@@ -184,7 +184,6 @@ class Pie extends Geometry {
         textWrapper.attr('pointer-events', 'none')
             .attr('fill', textColour)
             .style('mix-blend-mode', overlayColour.multiply ? 'multiply' : null)
-            .style('font-size', this._font_size + 'px');
 
         const labels = [this.formatX()(this.x()(segment.data))];
         if (this.showLabels()) labels.push(this.formatLabel()(this.y()(segment.data)));
@@ -424,16 +423,11 @@ class Pie extends Geometry {
 
         const options = Object.assign(defaultOptions, opts || {});
 
-        if (typeof options.maxAttempts !== 'undefined' && (typeof options.maxAttempts !== 'number' || parseInt(options.maxAttempts) !== options.maxAttempts)){
-            console.error('options.maxAttempts should be an integer')
-        }
-
         let numAttempts = 0;
 
         let didFit = false
         let strings = initialStrings.slice()
 
-        // let attempts = [];
         let newStrings = []
         let wrapFailed = false
 
@@ -454,16 +448,17 @@ class Pie extends Geometry {
                 .append('text')
                 .merge(texts)
                 .text(string => string)
+                .style('font-size', this._font_size + 'px')
                 .attr('y',(string, i, nodes) => {
                     const lineHeightFactor = i - nodes.length/2 + 1;
-                    return lineHeightFactor * this._font_size * this._line_height +'px'
+                    return lineHeightFactor *  Math.round(this._font_size * this._line_height) + 'px'
                 })
                 .each((string, i, nodes) => {
                     const text = d3.select(nodes[i]);
                     const keepLastString = options.keepTrailingString && i === nodes.length - 1;
                     if (testFn(text) || keepLastString){
                         newStrings.push(string);
-                    } else if (options.tryLineWrap && !wrapFailed){ //&& strings.length < 3
+                    } else if (options.tryLineWrap && !wrapFailed){
                         didFit = false
                         // split into strings for next iteration
                         const words = this._splitInHalfByNearestSpace(string)
@@ -496,8 +491,6 @@ class Pie extends Geometry {
                 .exit()
                 .remove()
 
-            // attempts.push(strings);
-
             let numEllipses = 0;
             newStrings = newStrings.filter((string, i, arr) => {
                 const beginsWithEllipsis = string.trim().indexOf(this._ellipsis) === 0;
@@ -516,6 +509,7 @@ class Pie extends Geometry {
                 return true
             })
 
+            // two ... is ... too much
             if (numEllipses > 1) newStrings = []
 
             const justEllipses = newStrings.filter(s => s === this._ellipsis).length;
