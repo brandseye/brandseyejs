@@ -200,7 +200,7 @@ class Pie extends Geometry {
 
         const testFn = this._use_outside_labels ? isntTooWide : isWithinSegment;
         const strings = labels.map(l => l.toString());
-        this._fitLabelsInSegment(strings, textWrapper, testFn, !this._use_outside_labels)
+        this._fitLabelsInSegment(strings, textWrapper, testFn, { tryLineWrap: !this._use_outside_labels, keepTrailingString: this.showLabels() })
 
         this._transformSegmentLabel(textWrapper)
 
@@ -412,14 +412,23 @@ class Pie extends Geometry {
      * @param {string[]} strings
      * @param {object} element
      * @param {function} testFn
+     * @param {object} options
      */
-    _fitLabelsInSegment(initialStrings, element, testFn, tryLineWrap, maxAttempts) {
-        if (typeof maxAttempts !== 'undefined' && (typeof maxAttempts !== 'number' || parseInt(maxAttempts) !== maxAttempts)){
-            console.error('maxAttempts should be an integer')
+    _fitLabelsInSegment(initialStrings, element, testFn, opts) {
+
+        const defaultOptions = {
+            tryLineWrap: true,
+            maxAttempts: 5,
+            keepTrailingString: false // for labels that contain a trailing value string that should be maintained
+        }
+
+        const options = Object.assign(defaultOptions, opts || {});
+
+        if (typeof options.maxAttempts !== 'undefined' && (typeof options.maxAttempts !== 'number' || parseInt(options.maxAttempts) !== options.maxAttempts)){
+            console.error('options.maxAttempts should be an integer')
         }
 
         let numAttempts = 0;
-        maxAttempts = maxAttempts || 5;
 
         let didFit = false
         let strings = initialStrings.slice()
@@ -429,7 +438,7 @@ class Pie extends Geometry {
         let wrapFailed = false
 
         // loop lines
-        while (!didFit && numAttempts < maxAttempts){
+        while (!didFit && numAttempts < options.maxAttempts){
 
             didFit = true;
 
@@ -451,9 +460,10 @@ class Pie extends Geometry {
                 })
                 .each((string, i, nodes) => {
                     const text = d3.select(nodes[i]);
-                    if (testFn(text)){
+                    const keepLastString = options.keepTrailingString && i === nodes.length - 1;
+                    if (testFn(text) || keepLastString){
                         newStrings.push(string);
-                    } else if (tryLineWrap && !wrapFailed){ //&& strings.length < 3
+                    } else if (options.tryLineWrap && !wrapFailed){ //&& strings.length < 3
                         didFit = false
                         // split into strings for next iteration
                         const words = this._splitInHalfByNearestSpace(string)
@@ -479,7 +489,6 @@ class Pie extends Geometry {
                         }
                         if (truncSize === string.length){
                             didFit = false
-                            // if ( i === 0 ) console.log(string, 'i == 0')
                             newStrings.push(i === 0 ? string : this._ellipsis)
                         }
                     }
@@ -489,9 +498,10 @@ class Pie extends Geometry {
 
             // attempts.push(strings);
 
-            const numEllipses = 0;
+            let numEllipses = 0;
             newStrings = newStrings.filter((string, i, arr) => {
                 const beginsWithEllipsis = string.trim().indexOf(this._ellipsis) === 0;
+                if (string.indexOf(this._ellipsis) !== -1) numEllipses ++;
 
                 if (beginsWithEllipsis && i === 0){
                     return false
@@ -511,18 +521,13 @@ class Pie extends Geometry {
             const justEllipses = newStrings.filter(s => s === this._ellipsis).length;
             if (justEllipses === newStrings.length) newStrings = []
 
-            // console.log(newStrings)
-            // console.log(' ')
-
             if (this._arrayEquals(strings, newStrings) && !wrapFailed) wrapFailed = true;
 
             strings = newStrings;
             numAttempts += 1;
         }
 
-        // console.log(attempts)
-
-        return numAttempts < maxAttempts && didFit
+        return numAttempts < options.maxAttempts && didFit
 
     }
 
@@ -556,7 +561,7 @@ class Pie extends Geometry {
 
         const strings = labels.map(l => l.toString());
 
-        const fitted = this._fitLabelsInSegment(strings, centreText, isWithinSegment, true, 10 )
+        const fitted = this._fitLabelsInSegment(strings, centreText, isWithinSegment, { tryLineWrap: true, maxAttempts: 10 } )
 
         centreText.style('visibility', fitted ? null : 'hidden')
     }
