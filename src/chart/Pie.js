@@ -27,6 +27,7 @@ class Pie extends Geometry {
         this._use_outside_labels = (typeof useOutsideLabels !== 'undefined' && useOutsideLabels !== null) ? useOutsideLabels : false;
         this._transition_duration = 200;
         this._line_height = 1.1;
+        this._outside_labels_elbow_offset = 10;
         this._ellipsis = '...'; //\u2026
     }
 
@@ -94,7 +95,7 @@ class Pie extends Geometry {
         .append('tspan')
         .text(d => d)
         .attr('x',0)
-        .attr('dy','1em')
+        .attr('dy', Math.round(this._font_size * this._line_height) + 'px')
 
       const textHeight = text.node().getBBox().height;
 
@@ -451,7 +452,7 @@ class Pie extends Geometry {
                 .style('font-size', this._font_size + 'px')
                 .attr('y',(string, i, nodes) => {
                     const lineHeightFactor = i - nodes.length/2 + 1;
-                    return lineHeightFactor *  Math.round(this._font_size * this._line_height) + 'px'
+                    return lineHeightFactor * Math.round(this._font_size * this._line_height) + 'px'
                 })
                 .each((string, i, nodes) => {
                     const text = d3.select(nodes[i]);
@@ -509,7 +510,7 @@ class Pie extends Geometry {
                 return true
             })
 
-            // two ... is ... too much
+            // two ... is ... too many
             if (numEllipses > 1) newStrings = []
 
             const justEllipses = newStrings.filter(s => s === this._ellipsis).length;
@@ -713,15 +714,17 @@ class Pie extends Geometry {
         let availableHeight = this._height;
 
         let widestLabelWidth = 0;
-        let labelHeight = 0;
+        let verticalSpaceNeeded = 0;
 
         this._max_label_width = availableWidth / 4;
 
         if (this._use_outside_labels){
           widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
-          labelHeight = this._getLabelHeight();
+          const labelHeight = this._getLabelHeight();
+          const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed somehow?
+          verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
           availableWidth -= widestLabelWidth * 2;
-          availableHeight -= labelHeight * 2;
+          availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
         }
 
         const minDimension = Math.min(availableWidth, availableHeight);
@@ -733,8 +736,8 @@ class Pie extends Geometry {
         this._outer_radius = minDimension / 2;
 
         this._outer_arc = d3.arc()
-            .innerRadius(this._outer_radius + 10)
-            .outerRadius(this._outer_radius + 10)
+            .innerRadius(this._outer_radius + this._outside_labels_elbow_offset)
+            .outerRadius(this._outer_radius + this._outside_labels_elbow_offset)
 
         this._arc = d3.arc()
             .innerRadius(this._inner_radius)
@@ -782,7 +785,7 @@ class Pie extends Geometry {
 
         this._pie = this._appendIfEmpty(this._element, 'g', 'pie');
 
-        this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + labelHeight) + ')')
+        this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')')
 
         this._renderSegments(segments)
 
