@@ -72,12 +72,8 @@ class Histogram extends Geometry {
         groups.enter()
               .append("g")
                   .attr("class", "group")
-                  .attr("transform", d => "translate(" + x(d._key) + ",0)")
-                  .attr("width", x.bandwidth())
                   .attr("height", "100%")
               .merge(groups)
-              .interrupt("groups:move")
-              .transition("groups:move")
                   .attr("transform", d => "translate(" + x(d._key) + ",0)")
                   .attr("width", x.bandwidth())
               .each((s_d, s_i, nodes) => {
@@ -88,25 +84,20 @@ class Histogram extends Geometry {
 
                   bars.exit().remove();
 
-                  bars.interrupt("bar:move")     // Animate the bars to their new position.
-                      .transition("bar:move")
-                      .attr("width", xGroup.bandwidth())
-                      .attr("x", d => xGroup(d._key))
-                      .attr("y", 0);
-
                   bars.enter()
                       .append("rect")
-                          .attr("height", 0)
-                          .style("cursor", "pointer")
+                      .attr("height", 0)
+                      .style("cursor", "pointer")
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                          .attr("x", d => xGroup(d._key))
-                          .attr("y", height - y(0))
-                          .attr("width", xGroup.bandwidth())
-                          .attr("class", d => "bar series series-" + toColourKey(d._colour))
-                          .style("fill", fillFn)
-                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
-                          .style("stroke-width", this._stroke_width)
+                      .attr("class", d => "bar series series-" + toColourKey(d._colour))
+                      .attr("x", d => xGroup(d._key))
+                      .attr("y", d => height - y(Math.min(0, d._y)))
+                      .attr("width", xGroup.bandwidth())
+                      .style("fill", fillFn)
+                      .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
+                      .style("stroke-width", this._stroke_width)
+                      .style("fill", fillFn)
                       .on("click auxclick", (d, i, nodes) => {
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
@@ -140,23 +131,12 @@ class Histogram extends Geometry {
                           else sel.style("fill", d => this.getD3Colour(d))
                           this._dispatch.call("tooltipHide", this);
                       })
-                      .interrupt("bar:growth")    // Animate bars growing.
-                      .transition("bar:growth")
-                      .delay(() => this.calcBarGrowth(s_i, nodes.length))
-                          .style("fill", fillFn)
-                          .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
-                          .attr("y", d => height - y(Math.min(0, d._y)))
-                          .attr("height", d => Math.abs(y(usingY2 ? d._y2 : 0) - y(d._y)));
+                      .transition()
+                      .duration(1)
+                      .attr("height", d => Math.abs(y(usingY2 ? d._y2 : 0) - y(d._y)))
               });
 
-        // Labels loaded after our last bar grows.
-        if (this.showLabels()) {
-            element.transition("bar:growth")
-               .on("end", (d, i, nodes) => {
-                   if (i < nodes.length - 1) return;
-                   this.renderLabels(element, data, x, xGroup, y, colours);
-               })
-        }
+        if (this.showLabels()) this.renderLabels(element, data, x, xGroup, y, colours);
     }
 
     calcBarGrowth(i, max) {
