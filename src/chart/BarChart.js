@@ -88,7 +88,14 @@ class BarHistogram extends Geometry {
 
         groups.exit().remove();
 
-        const fillFn = d => gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
+        const fillFn = d => {
+            let colourFn = d._colourFn
+            if (colourFn) {
+                let c = colourFn(d)
+                if (c) return c
+            }
+            return gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
+        }
 
         groups.enter()
               .append("g")
@@ -141,9 +148,8 @@ class BarHistogram extends Geometry {
                           let sel = d3.select(nodes[i])
                             .interrupt("hover:colour")
                             .transition("hover:colour")
-                            .duration(150)
-                          if (gradientId) sel.style("opacity", "0.5")
-                          else sel.style("fill", d3.hcl(this.getD3Colour(d)).darker())
+                            .duration(1)
+                          sel.style("opacity", "0.7")
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d,
@@ -156,9 +162,8 @@ class BarHistogram extends Geometry {
                           let sel = d3.select(nodes[i])
                               .interrupt("hover:colour")
                               .transition("hover:colour")
-                              .duration(100)
-                          if (gradientId) sel.style("opacity", "1.0")
-                          else sel.style("fill", d => this.getD3Colour(d))
+                              .duration(1)
+                          sel.style("opacity", "1.0")
                           this._dispatch.call("tooltipHide", this);
                       })
                       .interrupt("bar:growth")    // Animate bars growing.
