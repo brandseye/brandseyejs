@@ -104,8 +104,6 @@ class BarHistogram extends Geometry {
               .attr("width", "100%")
               .attr("height", y.bandwidth())
               .merge(groups)
-              .interrupt("groups:move")
-              .transition("groups:move")
               .attr("transform", d => "translate(0," + y(d._key) +")")
               .attr("height", y.bandwidth())
               .each((s_d, s_i, nodes) => {
@@ -115,11 +113,6 @@ class BarHistogram extends Geometry {
                                   .data(s_d.data, d => d._y);
 
                   bars.exit().remove();
-
-                  bars.interrupt("bar:move")     // Animate the bars to their new position.
-                      .transition("bar:move")
-                      .attr("width", d => (Math.abs(x(0) - x(d._x))))
-                      .attr("y", d => yGroup(d._key));
 
                   bars.enter()
                       .append("rect")
@@ -166,13 +159,12 @@ class BarHistogram extends Geometry {
                           sel.style("opacity", "1.0")
                           this._dispatch.call("tooltipHide", this);
                       })
-                      .interrupt("bar:growth")    // Animate bars growing.
-                      .transition("bar:growth")
-                      .delay(() => this.calcBarGrowth(s_i, nodes.length))
                       .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .attr("x", d => x(Math.min(0, d._x)))
                       .attr("height", yGroup.bandwidth())
+                      .transition()
+                      .duration(1)
                       .attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
               });
 
