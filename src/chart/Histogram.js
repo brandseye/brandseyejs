@@ -67,7 +67,14 @@ class Histogram extends Geometry {
         groups = groups.data(data)
         groups.exit().remove()
 
-        const fillFn = d => gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
+        const fillFn = d => {
+            let colourFn = d._colourFn
+            if (colourFn) {
+                let c = colourFn(d)
+                if (c) return c
+            }
+            return gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)
+        }
 
         groups.enter()
               .append("g")
@@ -94,7 +101,6 @@ class Histogram extends Geometry {
                       .attr("x", d => xGroup(d._key))
                       .attr("y", d => height - y(Math.min(0, d._y)))
                       .attr("width", xGroup.bandwidth())
-                      .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this._stroke_width)
                       .style("fill", fillFn)
@@ -111,9 +117,8 @@ class Histogram extends Geometry {
                           let sel = d3.select(nodes[i])
                             .interrupt("hover:colour")
                             .transition("hover:colour")
-                            .duration(150)
-                          if (gradientId) sel.style("opacity", "0.5")
-                          else sel.style("fill", d3.hcl(this.getD3Colour(d)).darker())
+                            .duration(1)
+                          sel.style("opacity", "0.7")
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d,
@@ -126,9 +131,8 @@ class Histogram extends Geometry {
                           let sel = d3.select(nodes[i])
                               .interrupt("hover:colour")
                               .transition("hover:colour")
-                              .duration(100)
-                          if (gradientId) sel.style("opacity", "1.0")
-                          else sel.style("fill", d => this.getD3Colour(d))
+                              .duration(1)
+                          sel.style("opacity", "1.0")
                           this._dispatch.call("tooltipHide", this);
                       })
                       .transition()
