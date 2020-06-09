@@ -21,14 +21,15 @@ import { Geometry } from './Geometry';
 import { colours } from "../Colours";
 
 class Pie extends Geometry {
-    constructor(name, isDonut, useOutsideLabels){
+    constructor(name, isDonut, labelPlacement){
         super(name || 'PIE');
         this._is_donut = (typeof isDonut !== 'undefined' && isDonut !== null) ? isDonut : false;
-        this._use_outside_labels = (typeof useOutsideLabels !== 'undefined' && useOutsideLabels !== null) ? useOutsideLabels : false;
         this._transition_duration = 200;
         this._line_height = 1.1;
         this._outside_labels_elbow_offset = 10;
         this._ellipsis = '...'; //\u2026
+        this._colour = null;
+        this._label_placement = (typeof labelPlacement !== 'undefined' && labelPlacement !== null) ? labelPlacement : 'inside';
     }
 
     _appendIfEmpty(appendTo, elementName, className) {
@@ -175,10 +176,10 @@ class Pie extends Geometry {
         return !anyPointOutOfBounds
     }
 
-    _renderSegmentLabel(labelWrapper, segment, labelSizes) {
+    _renderSegmentLabel(labelWrapper, segment, labelSizes, outside) {
         const textWrapper = this._appendIfEmpty(labelWrapper, 'g', 'text-wrapper');
         const overlayColour = this._getOverlayLabelColour(segment);
-        const textColour = this._use_outside_labels
+        const textColour = outside
             ? d3.hcl(colours.eighteen.darkGrey).brighter()
             : overlayColour.colour;
 
@@ -198,18 +199,23 @@ class Pie extends Geometry {
             return label.node().getBBox().width < this._max_label_width;
         }
 
-        const testFn = this._use_outside_labels ? isntTooWide : isWithinSegment;
+        const testFn = outside ? isntTooWide : isWithinSegment;
         const strings = labels.map(l => l.toString());
-        this._fitLabelsInSegment(strings, textWrapper, testFn, { tryLineWrap: !this._use_outside_labels, keepTrailingString: this.showLabels() })
+        this._fitLabelsInSegment(strings, textWrapper, testFn, { tryLineWrap: !outside, keepTrailingString: this.showLabels() })
 
-        this._transformSegmentLabel(textWrapper)
+        this._transformSegmentLabel(textWrapper, outside)
 
         const finalPos = this._outer_arc.centroid(segment);
         const rightHandSide = this._getMidAngle(segment) < Math.PI;
         const rect = textWrapper.node().getBoundingClientRect();
         labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
 
-        this._renderLeaderLines(labelWrapper)
+        const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
+        if (outside) {
+            this._renderLeaderLines(line)
+        } else {
+            line.remove();
+        }
     }
 
     _getLastVisibleLabel(labelSizes, index) {
@@ -225,14 +231,14 @@ class Pie extends Geometry {
         )
     }
 
-    _hideOutOfBoundLabels(labelWrapper, segment, labelSizes) {
+    _maybeHideLabel(labelWrapper, segment, labelSizes, outside) {
         const texts = labelWrapper.selectAll('text');
 
         let withinBounds = true;
 
         texts.each((string, i, nodes) => {
             const text = d3.select(nodes[i]);
-            if (this._use_outside_labels){
+            if (outside){
                 let hide = text.node().getBBox().width > this._max_label_width;
                 const thisLabel = labelSizes[segment.index];
                 let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
@@ -257,6 +263,8 @@ class Pie extends Geometry {
 
         labelWrapper.style('visibility', withinBounds ? null : 'hidden');
 
+        return !withinBounds
+
     }
 
     _renderSegmentLabels(segments) {
@@ -267,65 +275,80 @@ class Pie extends Geometry {
 
         const labelSizes = [];
 
+        const segmentsWithHiddenLabels = {};
         segmentLabels.enter()
             .append('g')
             .attr('class', 'segment-label')
             .merge(segmentLabels)
             .each((segment, i, nodes) => {
                 const labelWrapper = d3.select(nodes[i]);
-                this._renderSegmentLabel(labelWrapper, segment, labelSizes)
+                this._renderSegmentLabel(labelWrapper, segment, labelSizes, this._label_placement === 'outside')
             })
-            // hide intersecting or too-wide labels
-            // giving preference to labels a lower arc index
-            // only do this for outside labels for now
             .each((segment, i, nodes) => {
                const labelWrapper = d3.select(nodes[i]);
-               this._hideOutOfBoundLabels(labelWrapper, segment, labelSizes);
+               const hidden = this._maybeHideLabel(labelWrapper, segment, labelSizes, this._label_placement === 'outside');
+               if (hidden) segmentsWithHiddenLabels[segment.data._key] = segment;
             })
 
+            // second pass for hybrid setup
+            // TODO: filter out labels that were rendered
+            .each((segment, i, nodes) => {
+                const hybrid = this._label_placement === 'hybrid';
+                if (hybrid && segmentsWithHiddenLabels.hasOwnProperty(segment.data._key)){
+                    const labelWrapper = d3.select(nodes[i]);
+                    this._renderSegmentLabel(labelWrapper, segment, labelSizes, true)
+                    labelWrapper.style('visibility', null);
+                }
+            })
+            .each((segment, i, nodes) => {
+                const hybrid = this._label_placement === 'hybrid';
+                if (hybrid && segmentsWithHiddenLabels.hasOwnProperty(segment.data._key)){
+                    const labelWrapper = d3.select(nodes[i]);
+                    const hidden = this._maybeHideLabel(labelWrapper, segment, labelSizes, true);
+                    if (hidden) segmentsWithHiddenLabels[segment.data._key] = segment;
+                }
+            })
+
+
         segmentLabels.exit().remove();
+
     }
 
-    _renderLeaderLines(labelWrapper) {
+    _renderLeaderLines(line) {
         const leaderArc = d3.arc()
             .innerRadius(this._outer_radius - 5)
             .outerRadius(this._outer_radius - 5);
 
-        const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
-        if (!this._use_outside_labels) {
-            line.remove()
-        } else {
-            const that = this;
-            line
-                .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
-                .attr('opacity', 0.5)
-                .attr('stroke-width', '1px')
-                .attr('fill', 'none')
-                .style('mix-blend-mode', 'multiply')
-                .transition().duration(this._transition_duration)
-                .attrTween("points", function(d){
-                    this._current = this._current || d;
-                    var interpolate = d3.interpolate(this._current, d);
-                    this._current = interpolate(0);
+        const that = this;
+        line
+            .attr('stroke', d3.hcl(colours.eighteen.darkGrey).brighter())
+            .attr('opacity', 0.5)
+            .attr('stroke-width', '1px')
+            .attr('fill', 'none')
+            .style('mix-blend-mode', 'multiply')
+            .transition().duration(this._transition_duration)
+            .attrTween("points", function(d){
+                this._current = this._current || d;
+                var interpolate = d3.interpolate(this._current, d);
+                this._current = interpolate(0);
 
-                    return function(t) {
-                        var d2 = interpolate(t);
-                        var start = leaderArc.centroid(d2);
-                        var elbow = that._outer_arc.centroid(d2);
-                        var terminal = that._outer_arc.centroid(d2);
-                        const leftAligned = that._getMidAngle(d2) < Math.PI;
-                        terminal[0] = that._outer_radius * 1.05 * (leftAligned ? 1 : -1);
-                        const positions = [start, elbow];
-                        if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
-                            positions.push(terminal);
-                        }
-                        return positions;
-                    };
-                });
-        }
+                return function(t) {
+                    var d2 = interpolate(t);
+                    var start = leaderArc.centroid(d2);
+                    var elbow = that._outer_arc.centroid(d2);
+                    var terminal = that._outer_arc.centroid(d2);
+                    const leftAligned = that._getMidAngle(d2) < Math.PI;
+                    terminal[0] = that._outer_radius * 1.05 * (leftAligned ? 1 : -1);
+                    const positions = [start, elbow];
+                    if (leftAligned ? terminal[0] > elbow[0] : elbow[0] > terminal[0]){
+                        positions.push(terminal);
+                    }
+                    return positions;
+                };
+            });
     }
 
-    _transformSegmentLabel(text) {
+    _transformSegmentLabel(text, outside) {
         const that = this;
         text
             .transition().duration(this._transition_duration)
@@ -336,7 +359,7 @@ class Pie extends Geometry {
 
                 return function(t) {
                     const dInt = interpolate(t);
-                    if (that._use_outside_labels){
+                    if (outside){
                         const pos = that._outer_arc.centroid(dInt);
                         pos[0] = that._outer_radius * 1.09 * (that._getMidAngle(dInt) < Math.PI ? 1 : -1);
                         return "translate("+ pos +")";
@@ -352,7 +375,7 @@ class Pie extends Geometry {
 
                 return function(t) {
                     const dInt = interpolate(t);
-                    return that._use_outside_labels ? ( that._getMidAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
+                    return outside ? ( that._getMidAngle(dInt) < Math.PI ? 'start' : 'end' ) : 'middle';
                 }
             })
     }
@@ -617,16 +640,30 @@ class Pie extends Geometry {
         paths.exit().remove();
     }
 
+    // no comparisons enabled for pie
+    colour(colour) {
+        if (arguments.length === 0) return this._colour;
+        return this
+    }
+
     isDonut(bool) {
         if (arguments.length === 0) return this._is_donut;
         this._is_donut = bool;
         return this
     }
 
+    // TODO: deprecated
     useOutsideLabels(bool) {
-        if (arguments.length === 0) return this._use_outside_labels;
-        this._use_outside_labels = bool;
+        if (arguments.length === 0) return this._label_placement === 'outside';
+        this._label_placement = bool ? 'outside' : 'inside';
         return this
+    }
+
+    // inside, outside, hybrid
+    labelPlacement(labelPlacement) {
+        if (arguments.length === 0) return this._label_placement;
+        this._label_placement = labelPlacement;
+        return this;
     }
 
     prepareData(data, faceted) {
@@ -718,13 +755,18 @@ class Pie extends Geometry {
 
         this._max_label_width = availableWidth / 4;
 
-        if (this._use_outside_labels){
-          widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
-          const labelHeight = this._getLabelHeight();
-          const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed somehow?
-          verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
-          availableWidth -= widestLabelWidth * 2;
-          availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
+        if (this._label_placement === 'hybrid') {
+            this._max_label_width *= 0.75; // reserve less space than we would for fully outside labels
+        }
+
+        if (this._label_placement === 'outside' || this._label_placement === 'hybrid'){
+            widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
+
+            const labelHeight = this._getLabelHeight();
+            const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed somehow?
+            verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
+            availableWidth -= widestLabelWidth * 2;
+            availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
         }
 
         const minDimension = Math.min(availableWidth, availableHeight);

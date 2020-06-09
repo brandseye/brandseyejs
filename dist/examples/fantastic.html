@@ -646,11 +646,15 @@ pieChart
         const interactions = document.createElement('div');
         const btn = document.createElement('button');
         const donutToggle = document.createElement('button');
-        const outsideLabelToggle = document.createElement('button');
+        const labelPlacementSelect = document.createElement('select');
 
         btn.innerHTML = 'Update data';
         donutToggle.innerHTML = 'Toggle donut';
-        outsideLabelToggle.innerHTML = 'Toggle outside labels';
+        labelPlacementSelect.innerHTML = `
+            <option value="inside" selected="selected">Inside</option>
+            <option value="outside">Outside</option>
+            <option value="hybrid">Hybrid</option>
+        `
 
         let i = 0;
         const mod = 3;
@@ -665,14 +669,14 @@ pieChart
           pieChart.render();
         });
 
-        outsideLabelToggle.addEventListener('click', function(){
-          pieGeom.useOutsideLabels(!pieGeom.useOutsideLabels());
+        labelPlacementSelect.addEventListener('change', function(){
+          pieGeom.labelPlacement(event.target.value);
           pieChart.render();
-        })
+        });
 
         interactions.appendChild(btn);
         interactions.appendChild(donutToggle);
-        interactions.appendChild(outsideLabelToggle);
+        interactions.appendChild(labelPlacementSelect);
 
         document.getElementById('pie-chart').parentElement.appendChild(interactions)
 
