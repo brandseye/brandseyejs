@@ -314,7 +314,7 @@ class Pie extends Geometry {
 
         legendItems.enter()
             .append('g')
-            .attr('class', 'legend-item')
+            .attr('class', segment => 'legend-item index-' + segment.index)
             .merge(legendItems)
             .each((segment, i, nodes) => {
                 const labelWrapper = d3.select(nodes[i]);
@@ -353,10 +353,22 @@ class Pie extends Geometry {
                 labelWrapper
                     .style('cursor', 'pointer' )
                     .on('mouseover', () => {
+                        legend.selectAll('.legend-item:not(.index-' + segment.index + ')')
+                            .interrupt('legendItemFade')
+                            .transition('legendItemFade')
+                            .duration(50)
+                            .style('opacity', 0.2)
+
                         this._toggleSegmentCallout([segment.index], true) ;
                         this._addCentreLabel(labels)
                     })
                     .on('mouseout', () => {
+                        legend.selectAll('.legend-item:not(.index-' + segment.index + ')')
+                            .interrupt('legendItemFade')
+                            .transition('legendItemFade')
+                            .duration(50)
+                            .style('opacity', 1)
+
                         this._toggleSegmentCallout([segment.index], false)
                         this._addCentreLabel()
                     })
