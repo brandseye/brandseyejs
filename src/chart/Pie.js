@@ -29,7 +29,13 @@ class Pie extends Geometry {
         this._outside_labels_elbow_offset = 10;
         this._ellipsis = '...'; //\u2026
         this._colour = null;
-        this._label_placement = (typeof labelPlacement !== 'undefined' && labelPlacement !== null) ? labelPlacement : 'inside';
+        this._supported_label_placements = ['inside', 'outside', 'hybrid', 'legend'];
+        if (this._supported_label_placements.indexOf(labelPlacement) === -1) {
+            console.warn('Unsupported label placement', labelPlacement);
+            this._label_placement = 'inside';
+        } else {
+            this._label_placement = labelPlacement;
+        }
     }
 
     _appendIfEmpty(appendTo, elementName, className) {
@@ -57,6 +63,7 @@ class Pie extends Geometry {
           ...this.xValues().map(xVal => this.formatX()(xVal)),
           ...this.yValues().map(yVal => this.formatLabel()(yVal))
         ];
+
         const text = this._element
             .append('text')
             .style('font-size', this._font_size + 'px')
@@ -267,19 +274,43 @@ class Pie extends Geometry {
 
     }
 
+    _toggleSegmentCallout(segmentIndices, on) {
+        const segmentWrapper = this._pie.select('g.segments');
+
+        segmentWrapper
+            .selectAll(segmentIndices.map(idx => '.segment.index-'+idx).join(', '))
+            .interrupt("callOutSegment")
+            .transition("callOutSegment")
+            .duration(on ? 50 : 120)
+            .style('transform', on ? 'scale(1.05,1.05)' : 'scale(1,1)')
+            .style('opacity', 1);
+
+        segmentWrapper
+            .selectAll('.segment' + segmentIndices.map(idx => ':not(.index-' + idx + ')').join(''))
+            .interrupt("fadeSegment")
+            .transition("fadeSegment")
+            .duration(on ? 120 : 50)
+            .style('opacity', on ? 0.3 : 1);
+    }
+
     _renderLegend(segments) {
         const legend = this._appendIfEmpty(this._pie, 'g', 'legend').style('font-family', 'sans-serif');
 
+        const labelSpacing = this._font_size/2;
+        const labelHeight = this._font_size + labelSpacing;
+        const maxItems = Math.min(segments.length, Math.floor(( this._height + labelSpacing ) / labelHeight) - 1); // - 1 for 'n more items' label
+        const legendHeight = labelHeight * maxItems - labelSpacing;
+
+        const visibleItems = []
+        const overflowItems = []
+
+        segments.forEach(segment => segment.index < maxItems ? visibleItems.push(segment) : overflowItems.push(segment));
 
         const legendItems = legend.selectAll('.legend-item')
-            .data(segments, d => d.data._x);
-
-        const labelPadding = this._font_size/2;
-        const labelHeight = this._font_size + labelPadding;
-        const legendHeight = labelHeight * segments.length - labelPadding;
+            .data(visibleItems, d => d.data._x);
 
         legend
-            .attr('transform', 'translate(' + (this._outer_radius + 20) + ',' + -legendHeight / 2 + ')')
+            .attr('transform', 'translate(' + (this._outer_radius + 20) + ',' + (-legendHeight / 2 + this._font_size) + ')')
 
         legendItems.enter()
             .append('g')
@@ -291,13 +322,19 @@ class Pie extends Geometry {
                 if (this.showLabels()) labels.push(this.formatLabel()(this.y()(segment.data)));
 
                 labelWrapper
-                    .attr('transform', 'translate(0,' + segment.index * labelHeight +')');
+                    .attr('transform', 'translate(0,' + segment.index * labelHeight +')')
 
-                labelWrapper
-                    .append('text')
-                    .attr('x', labelHeight/2 + 'px')
-                    .style('font-size', this._font_size + 'px')
-                    .text(labels.join(', '))
+                const isntTooWide = label => {
+                    return label.node().getBBox().width < this._max_label_width;
+                }
+
+                // TODO: need a way to send multiple strings into a single line
+                // currently, opinionated for outside labels, not legend
+                // TODO: if the value is formatted with space as thousands separator, it risks being cut in half.
+                this._fitLabelsInSegment([labels.join(', ')], labelWrapper, isntTooWide, { tryLineWrap: false, keepTrailingString: false }) // keepTrailingString: this.showLabels()
+
+                // reset label fitting method
+                labelWrapper.selectAll('text').attr('x', labelHeight/2 + 'px').attr('y',0)
 
                 labelWrapper
                     .append('circle')
@@ -305,8 +342,53 @@ class Pie extends Geometry {
                     .attr('cy', -labelHeight/4 + 'px')
                     .attr('fill', this.getD3Colour(segment.data))
 
+                // hover target
+                labelWrapper
+                    .append('rect')
+                    .attr('height', labelHeight + 'px')
+                    .attr('fill', 'transparent')
+                    .attr('y', -(labelHeight-this._font_size)*2)
+                    .attr('width', this._max_label_width)
+
+                labelWrapper
+                    .style('cursor', 'pointer' )
+                    .on('mouseover', () => {
+                        this._toggleSegmentCallout([segment.index], true) ;
+                        this._addCentreLabel(labels)
+                    })
+                    .on('mouseout', () => {
+                        this._toggleSegmentCallout([segment.index], false)
+                        this._addCentreLabel()
+                    })
                 //this._renderSegmentLabel(labelWrapper, segment, labelSizes, this._label_placement === 'outside')
             })
+
+        if (overflowItems.length > 0) {
+            const labels = [overflowItems.length + ' smaller items'];
+            if (this.showLabels()) labels.push(overflowItems.reduce((acc, seg) => acc += this.scaleY().transform(this.y()(seg.data)), 0))
+
+            legend
+                .append('g')
+                .attr('class', 'legend-item overflow-label')
+                .attr('transform', 'translate(0,' + visibleItems.length * labelHeight +')')
+                .style('cursor', 'pointer')
+                .on('mouseover', () => {
+                    this._toggleSegmentCallout(overflowItems.map(s => s.index), true) ;
+                    this._addCentreLabel(labels)
+                })
+                .on('mouseout', () => {
+                    this._toggleSegmentCallout(overflowItems.map(s => s.index), false)
+                    this._addCentreLabel()
+                })
+                .append('text')
+                .attr('x', labelHeight/2 + 'px')
+                .style('font-size', this._font_size + 'px')
+                .style('fill', '#999')
+                .style('font-style', 'italic')
+                .text(overflowItems.length + ' smaller items...')
+        } else {
+            legendItems.selectAll('.overflow-label').remove()
+        }
     }
 
 
@@ -592,18 +674,20 @@ class Pie extends Geometry {
 
     }
 
-    _addCentreLabel() {
+    _addCentreLabel(labels) {
 
-        let xText = this.xAxisLabel();
-        let yText = this.yAxisLabel();
+        if (!labels){
+            let xText = this.xAxisLabel();
+            let yText = this.yAxisLabel();
 
-        const hasYText = yText || yText === 0;
-        const hasXText = xText || xText === 0;
+            const hasYText = yText || yText === 0;
+            const hasXText = xText || xText === 0;
 
-        const labels = [];
+            labels = [];
 
-        if (hasYText) labels.push(yText && yText.short || yText);
-        if (hasXText) labels.push(xText && xText.short || xText);
+            if (hasYText) labels.push(yText && yText.short || yText);
+            if (hasXText) labels.push(xText && xText.short || xText);
+        }
 
         const centreText = this._appendIfEmpty(this._pie, 'g', 'centre-label')
             .style('font-family', 'sans-serif')
@@ -635,8 +719,8 @@ class Pie extends Geometry {
         const that = this;
         paths.enter()
           .append('path')
-          .attr('class','segment')
           .merge(paths)
+          .attr('class', d => 'segment index-' + d.index)
           .on("mouseover", (d, i, nodes) => {
               d3.select(nodes[i])
               .interrupt("hover:colour")
@@ -705,7 +789,12 @@ class Pie extends Geometry {
     // inside, outside, hybrid
     labelPlacement(labelPlacement) {
         if (arguments.length === 0) return this._label_placement;
-        this._label_placement = labelPlacement;
+        if (this._supported_label_placements.indexOf(labelPlacement) === -1) {
+            console.warn('Unsupported label placement', labelPlacement);
+            this._label_placement = 'inside';
+        } else {
+            this._label_placement = labelPlacement;
+        }
         return this;
     }
 
@@ -803,7 +892,7 @@ class Pie extends Geometry {
         }
 
         if (this._label_placement === 'legend') {
-            this._max_label_width === availableWidth / 2 - 20; // pad 20px
+            this._max_label_width = availableWidth / 2 - 20;
         }
 
         if (this._label_placement === 'outside' || this._label_placement === 'hybrid' || this._label_placement === 'legend'){

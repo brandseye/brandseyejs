@@ -662,7 +662,7 @@ pieChart
         let i = 0;
         const mod = 3;
         btn.addEventListener('click', function(){
-            pieData.forEach(item => item.count = (Math.random()*150).toFixed(2));
+            pieData.forEach(item => item.count = parseFloat((Math.random()*150).toFixed(2)));
             i === mod ? i = 0 : i += 1 ;
             pieChart.render();
         })
