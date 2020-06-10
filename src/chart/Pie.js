@@ -267,6 +267,49 @@ class Pie extends Geometry {
 
     }
 
+    _renderLegend(segments) {
+        const legend = this._appendIfEmpty(this._pie, 'g', 'legend').style('font-family', 'sans-serif');
+
+
+        const legendItems = legend.selectAll('.legend-item')
+            .data(segments, d => d.data._x);
+
+        const labelPadding = this._font_size/2;
+        const labelHeight = this._font_size + labelPadding;
+        const legendHeight = labelHeight * segments.length - labelPadding;
+
+        legend
+            .attr('transform', 'translate(' + (this._outer_radius + 20) + ',' + -legendHeight / 2 + ')')
+
+        legendItems.enter()
+            .append('g')
+            .attr('class', 'legend-item')
+            .merge(legendItems)
+            .each((segment, i, nodes) => {
+                const labelWrapper = d3.select(nodes[i]);
+                const labels = [this.formatX()(this.x()(segment.data))];
+                if (this.showLabels()) labels.push(this.formatLabel()(this.y()(segment.data)));
+
+                labelWrapper
+                    .attr('transform', 'translate(0,' + segment.index * labelHeight +')');
+
+                labelWrapper
+                    .append('text')
+                    .attr('x', labelHeight/2 + 'px')
+                    .style('font-size', this._font_size + 'px')
+                    .text(labels.join(', '))
+
+                labelWrapper
+                    .append('circle')
+                    .attr('r', this._font_size/2)
+                    .attr('cy', -labelHeight/4 + 'px')
+                    .attr('fill', this.getD3Colour(segment.data))
+
+                //this._renderSegmentLabel(labelWrapper, segment, labelSizes, this._label_placement === 'outside')
+            })
+    }
+
+
     _renderSegmentLabels(segments) {
         const segmentLabelsWrapper = this._appendIfEmpty(this._pie, 'g', 'segment-labels').style('font-family', 'sans-serif');
 
@@ -759,14 +802,22 @@ class Pie extends Geometry {
             this._max_label_width *= 0.75; // reserve less space than we would for fully outside labels
         }
 
-        if (this._label_placement === 'outside' || this._label_placement === 'hybrid'){
+        if (this._label_placement === 'legend') {
+            this._max_label_width === availableWidth / 2 - 20; // pad 20px
+        }
+
+        if (this._label_placement === 'outside' || this._label_placement === 'hybrid' || this._label_placement === 'legend'){
             widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
 
             const labelHeight = this._getLabelHeight();
-            const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed somehow?
-            verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
-            availableWidth -= widestLabelWidth * 2;
-            availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
+            const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed more deliberately?
+            if (this._label_placement === 'legend') {
+                availableWidth -= widestLabelWidth;
+            } else {
+                verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
+                availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
+                availableWidth -= widestLabelWidth * 2;
+            }
         }
 
         const minDimension = Math.min(availableWidth, availableHeight);
@@ -827,11 +878,21 @@ class Pie extends Geometry {
 
         this._pie = this._appendIfEmpty(this._element, 'g', 'pie');
 
-        this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')')
+        if (this._label_placement === 'legend') {
+            this._pie.attr("transform", 'translate(' + this._outer_radius + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')')
+        } else {
+            this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')');
+        }
 
-        this._renderSegments(segments)
+        this._renderSegments(segments);
 
-        this._renderSegmentLabels(segments)
+        if(this._label_placement === 'legend'){
+            this._element.select('.segment-labels').remove();
+            this._renderLegend(segments);
+        } else {
+            this._element.select('.legend').remove();
+            this._renderSegmentLabels(segments);
+        }
 
         this._is_donut
             ? this._addCentreLabel()

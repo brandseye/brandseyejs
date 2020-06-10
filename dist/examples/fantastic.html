@@ -646,14 +646,17 @@ pieChart
         const interactions = document.createElement('div');
         const btn = document.createElement('button');
         const donutToggle = document.createElement('button');
+        const valueLabelToggle = document.createElement('button');
         const labelPlacementSelect = document.createElement('select');
 
         btn.innerHTML = 'Update data';
         donutToggle.innerHTML = 'Toggle donut';
+        valueLabelToggle.innerHTML = 'Toggle value labels';
         labelPlacementSelect.innerHTML = `
             <option value="inside" selected="selected">Inside</option>
             <option value="outside">Outside</option>
             <option value="hybrid">Hybrid</option>
+            <option value="legend">Legend</option>
         `
 
         let i = 0;
@@ -665,9 +668,14 @@ pieChart
         })
 
         donutToggle.addEventListener('click', function(){
-          pieGeom.isDonut(!pieGeom.isDonut());
-          pieChart.render();
+            pieGeom.isDonut(!pieGeom.isDonut());
+            pieChart.render();
         });
+
+        valueLabelToggle.addEventListener('click', function(){
+            pieChart.showLabels(!pieChart.showLabels());
+            pieChart.render();
+        })
 
         labelPlacementSelect.addEventListener('change', function(){
           pieGeom.labelPlacement(event.target.value);
@@ -676,6 +684,7 @@ pieChart
 
         interactions.appendChild(btn);
         interactions.appendChild(donutToggle);
+        interactions.appendChild(valueLabelToggle);
         interactions.appendChild(labelPlacementSelect);
 
         document.getElementById('pie-chart').parentElement.appendChild(interactions)
