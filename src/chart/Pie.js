@@ -187,7 +187,7 @@ class Pie extends Geometry {
         return !anyPointOutOfBounds
     }
 
-    _renderOutsideLabel(textWrapper, segment, labelSizes) {
+    _renderOutsideLabel(textWrapper, segment) {
 
         const textColour = d3.hcl(colours.eighteen.darkGrey);
 
@@ -230,7 +230,8 @@ class Pie extends Geometry {
         const finalPos = this._outer_arc.centroid(segment);
         const rightHandSide = this._getMidAngle(segment) < Math.PI;
         const rect = textWrapper.node().getBoundingClientRect();
-        labelSizes[segment.index] = {y: finalPos[1], height: rect.height, rightHandSide};
+
+        return {y: finalPos[1], height: rect.height, rightHandSide};
     }
 
     _renderSegmentLabel(textWrapper, segment) {
@@ -464,7 +465,7 @@ class Pie extends Geometry {
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
             .data(segments, d => d.data._x);
 
-        const labelSizes = [];
+        let labelSizes = [];
 
         const segmentsWithHiddenLabels = {};
         segmentLabels.enter()
@@ -477,7 +478,7 @@ class Pie extends Geometry {
                 const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
 
                 if (this._label_placement === 'outside'){
-                    this._renderOutsideLabel(textWrapper, segment, labelSizes)
+                    labelSizes[segment.index] = this._renderOutsideLabel(textWrapper, segment);
                     this._renderLeaderLines(line)
                 } else {
                     textWrapper.attr('pointer-events', 'none'); // allow events to trigger on lower layers
@@ -496,7 +497,6 @@ class Pie extends Geometry {
                }
             })
 
-
         if (this._label_placement === 'hybrid'){
             segmentLabels
                 .each((segment, i, nodes) => {
@@ -504,7 +504,7 @@ class Pie extends Geometry {
                     const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
                     if (segmentsWithHiddenLabels.hasOwnProperty(segment.data._key)){
                         const textWrapper = this._appendIfEmpty(labelWrapper, 'g', 'text-wrapper');
-                        this._renderOutsideLabel(textWrapper, segment, labelSizes);
+                        labelSizes[segment.index] = this._renderOutsideLabel(textWrapper, segment);
                         this._renderLeaderLines(line);
                         labelWrapper.style('visibility', null);
                     } else {
