@@ -30,7 +30,7 @@ class Pie extends Geometry {
         this._ellipsis = '...'; //\u2026
         this._colour = null;
         this._supported_label_placements = ['inside', 'outside', 'hybrid', 'legend'];
-        if (this._supported_label_placements.indexOf(labelPlacement) === -1) {
+        if (typeof labelPlacement !== 'undefined' && this._supported_label_placements.indexOf(labelPlacement) === -1) {
             console.warn('Unsupported label placement', labelPlacement);
             this._label_placement = 'inside';
         } else {
@@ -59,10 +59,15 @@ class Pie extends Geometry {
     }
 
     _getWidthOfWidestLabel(){
-        const allLabels = [
+        let allLabels = [
           ...this.xValues().map(xVal => this.formatX()(xVal)),
           ...this.yValues().map(yVal => this.formatLabel()(yVal))
         ];
+
+        if (this._label_placement === 'legend') {
+            // simulate label length
+            allLabels = this.data().map(d => this.scaleX().transform(this.x()(d)) + ', ' + this.scaleY().transform(this.y()(d)))
+        }
 
         const text = this._element
             .append('text')
@@ -328,13 +333,12 @@ class Pie extends Geometry {
                     return label.node().getBBox().width < this._max_label_width;
                 }
 
-                // TODO: need a way to send multiple strings into a single line
-                // currently, opinionated for outside labels, not legend
                 // TODO: if the value is formatted with space as thousands separator, it risks being cut in half.
-                this._fitLabelsInSegment([labels.join(', ')], labelWrapper, isntTooWide, { tryLineWrap: false, keepTrailingString: false }) // keepTrailingString: this.showLabels()
+                const strings = labels.map((l, i, arr) => (i === arr.length - 1 ? ', ' : '') + l.toString());
+                this._fitLabelsInSegment(strings, labelWrapper, isntTooWide, { tryLineWrap: false, singleLine: true, keepTrailingString: true }) // keepTrailingString: this.showLabels()
 
-                // reset label fitting method
-                labelWrapper.selectAll('text').attr('x', labelHeight/2 + 'px').attr('y',0)
+                // reset label fitting position
+                labelWrapper.selectAll('text').attr('x', this._font_size + 'px').attr('y',0)
 
                 labelWrapper
                     .append('circle')
@@ -579,6 +583,7 @@ class Pie extends Geometry {
         const defaultOptions = {
             tryLineWrap: true,
             maxAttempts: 5,
+            singleLine: false,
             keepTrailingString: false // for labels that contain a trailing value string that should be maintained
         }
 
@@ -592,32 +597,40 @@ class Pie extends Geometry {
         let newStrings = []
         let wrapFailed = false
 
+        let textContainer = 'text';
+
+        if (options.singleLine) {
+            element = element.append('text');
+            textContainer = 'tspan';
+        }
+
         // loop lines
         while (!didFit && numAttempts < options.maxAttempts){
 
             didFit = true;
 
-            element.selectAll('text').remove();
+            element.selectAll(textContainer).remove();
 
-            let texts = element.selectAll('text');
+            let texts = element.selectAll(textContainer);
 
             newStrings = [];
 
             texts
                 .data(strings)
                 .enter()
-                .append('text')
+                .append(textContainer)
                 .merge(texts)
                 .text(string => string)
                 .style('font-size', this._font_size + 'px')
                 .attr('y',(string, i, nodes) => {
+                    if (options.singleLine) return 0
                     const lineHeightFactor = i - nodes.length/2 + 1;
                     return lineHeightFactor * Math.round(this._font_size * this._line_height) + 'px'
                 })
                 .each((string, i, nodes) => {
                     const text = d3.select(nodes[i]);
                     const keepLastString = options.keepTrailingString && i === nodes.length - 1;
-                    if (testFn(text) || keepLastString){
+                    if (testFn(options.singleLine ? element : text) || keepLastString){
                         newStrings.push(string);
                     } else if (options.tryLineWrap && !wrapFailed){
                         didFit = false
@@ -631,11 +644,12 @@ class Pie extends Geometry {
                             const truncatedText = this._getTruncatedText(string, truncSize);
                             if (truncatedText === string ){
                                 didFit = false
-                                newStrings.push(i === 0 ? string : this._ellipsis)
+                                // newStrings.push(i === 0 ? string : this._ellipsis)
+                                newStrings.push(this._ellipsis)
                                 break
                             }
                             text.text(truncatedText)
-                            if(testFn(text)) {
+                            if(testFn(options.singleLine ? element : text)) {
                                 // text fits, continue
                                 newStrings.push(truncatedText)
                                 break
@@ -645,7 +659,8 @@ class Pie extends Geometry {
                         }
                         if (truncSize === string.length){
                             didFit = false
-                            newStrings.push(i === 0 ? string : this._ellipsis)
+                            // newStrings.push(i === 0 ? string : this._ellipsis)
+                            newStrings.push(this._ellipsis)
                         }
                     }
                 })
@@ -657,9 +672,9 @@ class Pie extends Geometry {
                 const beginsWithEllipsis = string.trim().indexOf(this._ellipsis) === 0;
                 if (string.indexOf(this._ellipsis) !== -1) numEllipses ++;
 
-                if (beginsWithEllipsis && i === 0){
-                    return false
-                }
+                // if (i === 0 && beginsWithEllipsis){
+                    // return false
+                // }
 
                 // follows ellipsis in prev string
                 const prevString = (arr[i - 1] || '').trim();
@@ -899,23 +914,25 @@ class Pie extends Geometry {
 
         this._max_label_width = availableWidth / 4;
 
-        if (this._label_placement === 'hybrid') {
-            this._max_label_width *= 0.75; // reserve less space than we would for fully outside labels
-        }
-
-        if (this._label_placement === 'legend') {
-            this._max_label_width = availableWidth / 2 - 20;
-        }
 
         if (this._label_placement === 'outside' || this._label_placement === 'hybrid' || this._label_placement === 'legend'){
+
+
+            if (this._label_placement === 'hybrid') {
+                this._max_label_width *= 0.75; // reserve less space than we would for fully outside labels
+            }
+
+            if (this._label_placement === 'legend') {
+                this._max_label_width = availableWidth / 2 + this._font_size;
+            }
+
             widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
 
             const labelHeight = this._getLabelHeight();
-            const facetPadding = 20; // TODO: padding value from FantasticChart.js - does this need to be accessed more deliberately?
             if (this._label_placement === 'legend') {
-                availableWidth -= widestLabelWidth;
+                availableWidth -= (widestLabelWidth + 20 + this._font_size);
             } else {
-                verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - facetPadding;
+                verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - 20; // 20 = facet padding
                 availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
                 availableWidth -= widestLabelWidth * 2;
             }
