@@ -29,6 +29,7 @@ class Pie extends Geometry {
         this._outside_labels_elbow_offset = 10;
         this._ellipsis = '...'; //\u2026
         this._colour = null;
+        this._max_label_width = 0;
         this._supported_label_placements = ['inside', 'outside', 'hybrid', 'legend'];
         if (typeof labelPlacement !== 'undefined' && this._supported_label_placements.indexOf(labelPlacement) === -1) {
             console.warn('Unsupported label placement', labelPlacement);
@@ -909,32 +910,30 @@ class Pie extends Geometry {
         let availableWidth = this._width;
         let availableHeight = this._height;
 
-        let widestLabelWidth = 0;
         let verticalSpaceNeeded = 0;
 
-        this._max_label_width = availableWidth / 4;
-
+        let availableLabelWidth = availableWidth / 4;
 
         if (this._label_placement === 'outside' || this._label_placement === 'hybrid' || this._label_placement === 'legend'){
 
 
             if (this._label_placement === 'hybrid') {
-                this._max_label_width *= 0.75; // reserve less space than we would for fully outside labels
+                availableLabelWidth *= 0.75; // reserve less space than we would for fully outside labels
             }
 
             if (this._label_placement === 'legend') {
-                this._max_label_width = availableWidth / 2 + this._font_size;
+                availableLabelWidth = availableWidth / 2;
             }
 
-            widestLabelWidth = Math.min(this._getWidthOfWidestLabel(), this._max_label_width);
+            this._max_label_width = Math.min(this._getWidthOfWidestLabel(), availableLabelWidth);
 
             const labelHeight = this._getLabelHeight();
             if (this._label_placement === 'legend') {
-                availableWidth -= (widestLabelWidth + 20 + this._font_size);
+                availableWidth -= (this._max_label_width + 20 + this._font_size);
             } else {
                 verticalSpaceNeeded = this._outside_labels_elbow_offset * 2 + labelHeight - 20; // 20 = facet padding
                 availableHeight -= verticalSpaceNeeded; // allow some bleed into padding in unusual cases
-                availableWidth -= widestLabelWidth * 2;
+                availableWidth -= this._max_label_width * 2;
             }
         }
 
@@ -999,7 +998,7 @@ class Pie extends Geometry {
         if (this._label_placement === 'legend') {
             this._pie.attr("transform", 'translate(' + this._outer_radius + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')')
         } else {
-            this._pie.attr("transform", 'translate(' + (availableWidth/2 + widestLabelWidth) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')');
+            this._pie.attr("transform", 'translate(' + (availableWidth/2 + this._max_label_width) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')');
         }
 
         this._renderSegments(segments);
