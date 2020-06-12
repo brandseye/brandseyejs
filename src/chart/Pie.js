@@ -65,7 +65,11 @@ class Pie extends Geometry {
         ];
 
         if (this._label_placement === 'legend') {
-            allLabels = this.data().map(d => this.scaleX().transform(this.x()(d)) + (this.showLabels() ? ', ' + this.scaleY().transform(this.y()(d)) : ''))
+            allLabels = this.data().map(d => {
+                const xText = this.formatX()(this.scaleX().transform(this.x()(d)));
+                const yText = this.formatLabel()(this.scaleY().transform(this.y()(d)));
+                return xText + (this.showLabels() ? ', ' + yText : '')
+            })
         }
 
         const text = this._element
@@ -388,6 +392,7 @@ class Pie extends Geometry {
 
                 // TODO: if the value is formatted with space as thousands separator, it risks being cut in half.
                 const strings = labels.map((l, i, arr) => (i > 0 && i === arr.length - 1 ? ', ' : '') + l.toString());
+
                 this._fitLabelsInSegment(strings, labelWrapper, isntTooWide, { tryLineWrap: false, singleLine: true, keepTrailingString: true }) // keepTrailingString: this.showLabels()
 
                 // reset label fitting position
@@ -747,7 +752,7 @@ class Pie extends Geometry {
                 const beginsWithEllipsis = string.trim().indexOf(this._ellipsis) === 0;
                 if (string.indexOf(this._ellipsis) !== -1) numEllipses ++;
 
-                if (i === 0 && beginsWithEllipsis){
+                if (i === 0 && beginsWithEllipsis && !this._label_placement === 'legend'){
                     return false
                 }
 
@@ -997,7 +1002,7 @@ class Pie extends Geometry {
             // }
 
             if (this._label_placement === 'legend') {
-                availableLabelWidth = availableWidth / 2;
+                availableLabelWidth = availableWidth / 1.75;
             }
 
             this._max_label_width = Math.min(this._getWidthOfWidestLabel() + 5, availableLabelWidth);
