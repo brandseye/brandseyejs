@@ -294,8 +294,9 @@ class Pie extends Geometry {
             const text = d3.select(nodes[i]);
             let hide = text.node().getBBox().width > this._max_label_width;
             const thisLabel = labelSizes[segment.index];
-            let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
+            if (typeof thisLabel === 'undefined') return;
 
+            let lastVisibleLabel = this._getLastVisibleLabel(labelSizes, segment.index - 1);
             let ignore = segment.index === 0 || lastVisibleLabel === null || thisLabel.rightHandSide !== lastVisibleLabel.rightHandSide;
             if (!ignore && !hide){
                 if (thisLabel.rightHandSide) {
@@ -465,7 +466,7 @@ class Pie extends Geometry {
         const segmentLabels = segmentLabelsWrapper.selectAll('.segment-label')
             .data(segments, d => d.data._x);
 
-        let labelSizes = [];
+        const labelSizes = {};
 
         const segmentsWithHiddenLabels = {};
         segmentLabels.enter()
