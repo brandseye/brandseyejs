@@ -76,6 +76,7 @@ class FantasticChart {
         this._x_tick_values_fn = null;
         this._y_tick_values_fn = null;
         this._y2_tick_values_fn = null;
+        this._no_animation = false;
         return this;
     }
 
@@ -87,6 +88,15 @@ class FantasticChart {
     element(el) {
         if (arguments.length === 0) return this._element;
         this._element = el;
+        return this;
+    }
+
+    /**
+     * Disable all animations. Useful for offline rendering for image generation etc.
+     */
+    noAnimation(on) {
+        if (arguments.length === 0) return this._no_animation;
+        this._no_animation = on;
         return this;
     }
 
@@ -453,7 +463,8 @@ class FantasticChart {
             gridLineOpacity: this._grid_line_opacity,
             axisBox: this._axis_box,
             hideXAxisMin: this._hide_x_axis_min,
-            hideYAxisMin: this._hide_y_axis_min
+            hideYAxisMin: this._hide_y_axis_min,
+            noAnimation: !!this._no_animation
         }
 
         //-----------------------------------------------
@@ -742,6 +753,7 @@ class FantasticChart {
         if (!geom.setupY()) geom.setupY(this._y_getter)
 
         geom.setupX(this._x_getter)
+            .noAnimation(this._no_animation)
             .setupColour(this._colour)
             .setupSize(this._size)
             .setupScaleX(this._scale_x)

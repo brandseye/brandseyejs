@@ -62,7 +62,7 @@ function adjustFirstXTickLabel(axis) {
 
 export function xaxis(selection, height, width, axisObject, importance, options) {
     options = ensureOptions(options)
-    let { fontSize, gridLineOpacity } = options
+    let { fontSize, gridLineOpacity, noAnimation } = options
 
     selection.select(".x-axis").remove();
     let axis = selection.append("g").attr("class", "x-axis").style("opacity", 0).call(axisObject)
@@ -110,7 +110,8 @@ export function xaxis(selection, height, width, axisObject, importance, options)
             .attr("opacity", gridLineOpacity).attr("stroke", "currentColor")
     }
 
-    axis.transition().duration(AXIS_ANIMATION_DURATION).delay(AXIS_DELAY).style("opacity", 1)
+    if (noAnimation) axis.style("opacity", 1)
+    else axis.transition().duration(AXIS_ANIMATION_DURATION).delay(AXIS_DELAY).style("opacity", 1)
 
     return axis.node().getBBox().height;
 }
@@ -129,7 +130,7 @@ function removeOverlappingYTicks(axis, labelHeight) {
 
 export function yaxis(selection, axis, options) {
     options = ensureOptions(options)
-    let { fontSize, gridLineOpacity } = ensureOptions(options)
+    let { fontSize, gridLineOpacity, noAnimation } = ensureOptions(options)
 
     selection.select(".y-axis").remove();
     let y = selection.append("g")
@@ -151,10 +152,8 @@ export function yaxis(selection, axis, options) {
 
     if (!axis.scale().bandwidth) removeOverlappingYTicks(y, fontSize * 1.2)
 
-    y.transition()
-        .duration(AXIS_ANIMATION_DURATION)
-        .delay(AXIS_DELAY)
-        .style("opacity", 1);
+    if (noAnimation) y.style("opacity", 1)
+    else y.transition().duration(AXIS_ANIMATION_DURATION).delay(AXIS_DELAY).style("opacity", 1)
 
     return y.node().getBBox().width + 20;
 }
@@ -210,7 +209,7 @@ export function xGrid(selection, height, show, axis) {
 }
 
 export function yAxisLabel(element, height, margins, label, options, y2x) {
-    let { fontSize } = ensureOptions(options)
+    let { fontSize, noAnimation } = ensureOptions(options)
 
     let cls = y2x ? "y2-axis-label" : "y-axis-label"
     element.selectAll("." + cls).remove();
@@ -236,16 +235,14 @@ export function yAxisLabel(element, height, margins, label, options, y2x) {
         width = labelElement.node().getBBox().width;
     }
 
-    labelElement.attr("dx", -width / 2)
-                .style("opacity", 0)
-                .transition()
-                .delay(AXIS_DELAY)
-                .duration(AXIS_ANIMATION_DURATION)
-                .style("opacity", 1)
+    labelElement.attr("dx", -width / 2).style("opacity", 0)
+
+    if (noAnimation) labelElement.style("opacity", 1)
+    else labelElement.transition().delay(AXIS_DELAY).duration(AXIS_ANIMATION_DURATION).style("opacity", 1)
 }
 
 export function xAxisLabel(element, width, height, margins, label, options) {
-    let { fontSize } = ensureOptions(options)
+    let { fontSize, noAnimation } = ensureOptions(options)
 
     element.selectAll(".x-axis-label").remove();
 
@@ -270,10 +267,8 @@ export function xAxisLabel(element, width, height, margins, label, options) {
         textWidth = labelElement.node().getBBox().width;
     }
 
-    labelElement.attr("dx", -textWidth / 2)
-                .style("opacity", 0)
-                .transition()
-                .delay(AXIS_DELAY)
-                .duration(AXIS_ANIMATION_DURATION)
-                .style("opacity", 1)
+    labelElement.attr("dx", -textWidth / 2).style("opacity", 0)
+
+    if (noAnimation) labelElement.style("opacity", 1)
+    else labelElement.transition().delay(AXIS_DELAY).duration(AXIS_ANIMATION_DURATION).style("opacity", 1)
 }

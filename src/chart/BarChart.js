@@ -114,7 +114,7 @@ class BarHistogram extends Geometry {
 
                   bars.exit().remove();
 
-                  bars.enter()
+                  bars = bars.enter()
                       .append("rect")
                       .attr("y", d => yGroup(d._key))
                       // .attr("y", d => height - y(Math.min(0, d._y)))
@@ -163,19 +163,13 @@ class BarHistogram extends Geometry {
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .attr("x", d => x(Math.min(0, d._x)))
                       .attr("height", yGroup.bandwidth())
-                      .transition()
-                      .duration(1)
-                      .attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
+
+                  bars = this._no_animation ? bars : bars.transition().duration(1)
+                  bars.attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
               });
 
         // Labels loaded after our last bar grows.
-        if (this.showLabels()) {
-            element.transition("bar:growth")
-                   .on("end", (d, i, nodes) => {
-                       if (i < nodes.length - 1) return;
-                       this.renderLabels(element, data, x, yGroup, y, colours);
-                   })
-        }
+        if (this.showLabels()) this.renderLabels(element, data, x, yGroup, y, colours, !this._no_animation);
     }
 
     calcBarGrowth(i, max) {

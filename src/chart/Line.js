@@ -173,14 +173,7 @@ class Line extends Geometry {
         let lines = lineGroup.selectAll('.line');
         lines = lines.data(data, d => d._key);
 
-        lines.exit()
-            .interrupt()
-            .transition()
-            .attr("d", d => flatGeom(d.data))
-            .style("opacity", 0)
-            .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
-
-
+        lines.exit().remove();
 
         const determineStrokeWidth = d => d.data.length <= 1 ? 20 : this._stroke_width;
         const transparentColour = d3.hcl(colours.eighteen.darkGrey);
@@ -188,14 +181,11 @@ class Line extends Geometry {
         const determineStrokeColour = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
         const strokeFn = d => gradientId ? "url(#" + gradientId + ")" : d3.hcl(this.getD3Colour(d.data[0]))
 
-        lines.interrupt("line:resize")
-            .transition("line:resize")
-            .duration(500)
-            .attr("d", d => lineGeom(d.data))
+        lines.attr("d", d => lineGeom(d.data))
             .attr("stroke", strokeFn)
             .style("stroke-width", determineStrokeWidth);
 
-        lines
+        lines = lines
             .enter()
             .append("path")
                 .attr("class", d => "line series series-" + toColourKey(d.data[0]._colour))
@@ -205,14 +195,12 @@ class Line extends Geometry {
                 .style("opacity", 0)
                 .attr("d", d => flatGeom(d.data))
             .merge(lines)
-            .style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
-            .attr("stroke", strokeFn)
-            .transition("line:introduction")
-            .duration(500)
-            .delay(100)
-                .style("opacity", 1)
-                .attr("d", d => lineGeom(d.data));
 
+        lines.style("stroke-width", determineStrokeWidth) // Want to make a circle if we have a line with only a single data point
+            .attr("stroke", strokeFn)
+
+        lines = this._no_animation ? lines : lines.transition().duration(500)
+        lines.style("opacity", 1).attr("d", d => lineGeom(d.data));
 
         element.selectAll(".domain-selector").remove();
         if (this.scaleX().isDiscrete()) {

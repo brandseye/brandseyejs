@@ -91,13 +91,14 @@ class Histogram extends Geometry {
 
                   bars.exit().remove();
 
-                  bars.enter()
+                  bars = bars.enter()
                       .append("rect")
                       .attr("height", 0)
                       .style("cursor", "pointer")
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
-                      .attr("class", d => "bar series series-" + toColourKey(d._colour))
+
+                  bars.attr("class", d => "bar series series-" + toColourKey(d._colour))
                       .attr("x", d => xGroup(d._key))
                       .attr("y", d => height - y(Math.min(0, d._y)))
                       .attr("width", xGroup.bandwidth())
@@ -135,12 +136,12 @@ class Histogram extends Geometry {
                           sel.style("opacity", "1.0")
                           this._dispatch.call("tooltipHide", this);
                       })
-                      .transition()
-                      .duration(1)
-                      .attr("height", d => Math.abs(y(usingY2 ? d._y2 : 0) - y(d._y)))
+
+                  bars = this._no_animation ? bars : bars.transition().duration(1)
+                  bars.attr("height", d => Math.abs(y(usingY2 ? d._y2 : 0) - y(d._y)))
               });
 
-        if (this.showLabels()) this.renderLabels(element, data, x, xGroup, y, colours);
+        if (this.showLabels()) this.renderLabels(element, data, x, xGroup, y, colours, !this._no_animation);
     }
 
     calcBarGrowth(i, max) {
