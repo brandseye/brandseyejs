@@ -502,12 +502,11 @@ class Pie extends Geometry {
                 if (hidden) segmentsWithHiddenLabels[segment.data._key] = segment;
                }
             })
-
-        if (this._label_placement === 'hybrid'){
-            segmentLabels
-                .each((segment, i, nodes) => {
+            .each((segment, i, nodes) => {
+                if (this._label_placement === 'hybrid'){
                     const labelWrapper = d3.select(nodes[i]);
                     const line = this._appendIfEmpty(labelWrapper, 'polyline', 'label-line');
+
                     if (segmentsWithHiddenLabels.hasOwnProperty(segment.data._key)){
                         const textWrapper = this._appendIfEmpty(labelWrapper, 'g', 'text-wrapper');
                         labelSizes[segment.index] = this._renderOutsideLabel(textWrapper, segment);
@@ -516,15 +515,17 @@ class Pie extends Geometry {
                     } else {
                         line.remove();
                     }
-                })
-                .each((segment, i, nodes) => {
+                }
+            })
+            .each((segment, i, nodes) => {
+                if (this._label_placement === 'hybrid'){
                     if (segmentsWithHiddenLabels.hasOwnProperty(segment.data._key)){
                         const labelWrapper = d3.select(nodes[i]);
                         const hidden = this._maybeHideOutsideLabel(labelWrapper, segment, labelSizes);
                         if (hidden) segmentsWithHiddenLabels[segment.data._key] = segment;
                     }
-                })
-        }
+                }
+            })
 
         segmentLabels.exit().remove();
     }
