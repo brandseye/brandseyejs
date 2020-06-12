@@ -992,9 +992,9 @@ class Pie extends Geometry {
 
             let availableLabelWidth = availableWidth / 4;
 
-            if (this._label_placement === 'hybrid') {
-                availableLabelWidth *= 0.75; // reserve less space than we would for fully outside labels
-            }
+            // if (this._label_placement === 'hybrid') {
+            //     availableLabelWidth *= 0.75; // reserve less space than we would for fully outside labels
+            // }
 
             if (this._label_placement === 'legend') {
                 availableLabelWidth = availableWidth / 2;
