@@ -713,7 +713,9 @@ class Pie extends Geometry {
                             if (truncatedText === string ){
                                 didFit = false
                                 // newStrings.push(i === 0 ? string : this._ellipsis)
-                                newStrings.push(this._ellipsis)
+                                if (newStrings.slice(-1).indexOf(this._ellipsis) === -1){
+                                    newStrings.push(this._ellipsis)
+                                }
                                 break
                             }
                             text.text(truncatedText)
@@ -728,7 +730,9 @@ class Pie extends Geometry {
                         if (truncSize === string.length){
                             didFit = false
                             // newStrings.push(i === 0 ? string : this._ellipsis)
-                            newStrings.push(this._ellipsis)
+                            if (newStrings.slice(-1).indexOf(this._ellipsis) === -1){
+                                newStrings.push(this._ellipsis)
+                            }
                         }
                     }
                 })
@@ -736,32 +740,35 @@ class Pie extends Geometry {
                 .remove()
 
             let numEllipses = 0;
-            newStrings = newStrings.filter((string, i, arr) => {
+
+            let newStringsNormalised = []
+            newStrings = newStrings.forEach((string, i, arr) => {
                 const beginsWithEllipsis = string.trim().indexOf(this._ellipsis) === 0;
                 if (string.indexOf(this._ellipsis) !== -1) numEllipses ++;
 
-                // if (i === 0 && beginsWithEllipsis){
-                    // return false
-                // }
+                if (i === 0 && beginsWithEllipsis){
+                    return false
+                }
 
                 // follows ellipsis in prev string
                 const prevString = (arr[i - 1] || '').trim();
                 const prevStringEndsWithEllipsis = prevString && prevString.indexOf(this._ellipsis) === prevString.length - this._ellipsis.length;
                 if (beginsWithEllipsis && prevStringEndsWithEllipsis){
-                    return false
+                    newStringsNormalised.push(string.slice(this._ellipsis.length).trim())
+                } else {
+                    newStringsNormalised.push(string)
                 }
-                return true
             })
 
-            // two ... is ... too many
-            if (numEllipses > 1) newStrings = []
+            // two is too many
+            if (numEllipses > 1) newStringsNormalised = (options.keepTrailingString && strings.length > 0) ? strings.slice(-1) : []
 
-            const justEllipses = newStrings.filter(s => s === this._ellipsis).length;
-            if (justEllipses === newStrings.length) newStrings = []
+            const justEllipses = newStringsNormalised.filter(s => s === this._ellipsis);
+            if (justEllipses.length === newStringsNormalised.length) newStringsNormalised = [];
 
-            if (this._arrayEquals(strings, newStrings) && !wrapFailed) wrapFailed = true;
+            if (this._arrayEquals(strings, newStringsNormalised) && !wrapFailed) wrapFailed = true;
 
-            strings = newStrings;
+            strings = newStringsNormalised;
             numAttempts += 1;
         }
 
@@ -978,11 +985,11 @@ class Pie extends Geometry {
 
         let verticalSpaceNeeded = 0;
 
-        let availableLabelWidth = availableWidth / 4;
-
         this._max_label_width = 0;
 
         if (this._label_placement === 'outside' || this._label_placement === 'hybrid' || this._label_placement === 'legend'){
+
+            let availableLabelWidth = availableWidth / 4;
 
             if (this._label_placement === 'hybrid') {
                 availableLabelWidth *= 0.75; // reserve less space than we would for fully outside labels
@@ -992,7 +999,7 @@ class Pie extends Geometry {
                 availableLabelWidth = availableWidth / 2;
             }
 
-            this._max_label_width = Math.min(this._getWidthOfWidestLabel(), availableLabelWidth);
+            this._max_label_width = Math.min(this._getWidthOfWidestLabel() + 5, availableLabelWidth);
 
             const labelHeight = this._getLabelHeight();
             if (this._label_placement === 'legend') {
