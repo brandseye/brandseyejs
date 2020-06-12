@@ -64,6 +64,7 @@ export class Geometry {
         this._gradient_fn = null;
         this._opacity = null
         this._index = 0;  // Used for generating unique keys
+        this._no_animation = false;
     }
 
     name() {
@@ -76,6 +77,12 @@ export class Geometry {
     index(i) {
         if (arguments.length === 0) return this._index;
         this._index = i;
+        return this;
+    }
+
+    noAnimation(on) {
+        if (arguments.length === 0) return this._no_animation;
+        this._no_animation = on;
         return this;
     }
 

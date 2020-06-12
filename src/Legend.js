@@ -27,6 +27,7 @@ export function removeLegend(element) {
 export function renderLegend(element, geomBuckets, colourScale, width, height, min, options) {
     if (!options) options = { }
     let fontSize = options.fontSize || 12
+    let noAnimation = options.noAnimation
 
     min = min || 2;
     removeLegend(element);
@@ -49,7 +50,7 @@ export function renderLegend(element, geomBuckets, colourScale, width, height, m
 
         let elements = gm.selectAll(".legend-element").data(colours);
 
-        elements.enter()
+        elements = elements.enter()
             .append("g")
             .attr("class", (d, i) => "legend-element series series-" + toColourKey(d))
             .style("cursor", "default")
@@ -98,9 +99,9 @@ export function renderLegend(element, geomBuckets, colourScale, width, height, m
                     .style("opacity", 1);
             })
             .style("opacity", 0)
-            .transition()
-            .duration(1000)
-            .style("opacity", 1);
+
+        if (noAnimation) elements.style("opacity", 1)
+        else elements.transition().duration(1000).style("opacity", 1);
     })
 
     let bb = legend.node().getBBox()

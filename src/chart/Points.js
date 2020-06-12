@@ -64,22 +64,21 @@ class Point extends Geometry {
               .merge(groups)
               .each((d, i, nodes) => {
                   const group = d3.select(nodes[i]);
-                  const points = group.selectAll(".point")
+                  let points = group.selectAll(".point")
                       .data(d.data, d => d._x);
 
                   const isFirstRender = !group.property("renderedOnce");
                   group.property("renderedOnce", true);
 
-                  points.interrupt("point:move")
-                      .transition("point:move")
-                      .duration(500)
-                          .attr("cy", d => y(d._y))
+                  points.exit().remove();
+
+                  points.attr("cy", d => y(d._y))
                           .attr("cx", d => x(d._x) + x.bandwidth() / 2)
                           .attr("r", d => sizeScale(Math.abs(d._size)))
                           .style("stroke", determineStroke)
                           .style("fill", d => this.getD3Colour(d));
 
-                  points.enter()
+                  points = points.enter()
                       .append("circle")
                           .attr("class", "point")
                           .style("opacity", 0)
@@ -90,7 +89,8 @@ class Point extends Geometry {
                           .style("stroke", determineStroke)
                           .style("cursor", "pointer")
                       .merge(points)
-                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
+
+                  points.on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .on("mouseover", (d, i, nodes) => {
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
@@ -122,21 +122,12 @@ class Point extends Geometry {
                               point: d
                           })
                       })
-                      .transition("point:grow")
-                      .duration(800)
-                      .delay(isFirstRender ? 0 : 500)
-                        .attr("cy", d => y(d._y))
+
+                  points = this._no_animation ? points : points.transition().duration(800).delay(isFirstRender ? 0 : 500)
+
+                  points.attr("cy", d => y(d._y))
                         .style("opacity", defaultOpacity)
                         .attr("r", d => sizeScale(Math.abs(d._size)));
-
-                  points.exit()
-                      .interrupt()
-                      .transition()
-                      .duration(800)
-                      .style("opacity", 0)
-                      .attr("cy", y(0))
-                      .on("end", (d, i, nodes) => d3.select(nodes[i]).remove());
-
 
               });
     }
