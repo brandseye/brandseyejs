@@ -305,7 +305,7 @@ class Histogram extends Geometry {
                         .attr("y", ypos)
                         .attr("dx", animate ? -15 : 0)
                         .attr("dy", dy)
-                        .style("opacity", 0)
+                        .style("opacity", animate ? 0 : 1)
                         .style("pointer-events", "none")
                         .style("fill", d => findColour(d, dy, labelText));
 
@@ -315,11 +315,12 @@ class Histogram extends Geometry {
                   text
                       .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
 
-                  text
-                      .transition("labels")
-                      .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
-                      .attr("dx", 0)
-                      .style("opacity", 1)
+                  if (animate) {
+                      text.transition("labels")
+                          .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
+                          .attr("dx", 0)
+                          .style("opacity", 1)
+                  }
               })
         });
 

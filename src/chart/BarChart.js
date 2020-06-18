@@ -328,7 +328,7 @@ class BarHistogram extends Geometry {
                         .text(labelText)
                         .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
                         .attr("dx", (animate ? -15 : 0))
-                        .style("opacity", 0)
+                        .style("opacity", animate ? 0 : 1)
                         .style("pointer-events", "none");
 
                   // Set the x position, which is based on width.
@@ -348,11 +348,14 @@ class BarHistogram extends Geometry {
                       .attr("x", xpos)
                       .style("fill", d => findColour(d, effectiveBuffer < 0, labelText));
 
-                  text
-                      .transition("labels")
-                      .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
-                      .attr("dx", effectiveBuffer)
-                      .style("opacity", 1)
+                  if (animate) {
+                      text.transition("labels")
+                          .delay(() => animate ? this.calcBarGrowth(s_i, s_nodes.length) : 0) // Delay in lockstep with bar growth.
+                          .attr("dx", effectiveBuffer)
+                          .style("opacity", 1)
+                  } else {
+                      text.attr("dx", effectiveBuffer)
+                  }
               });
 
             if (maxWidth > xscale.range()[1]) {
