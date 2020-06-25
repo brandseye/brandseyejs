@@ -1077,9 +1077,9 @@ class Pie extends Geometry {
         this._pie = this._appendIfEmpty(this._element, 'g', 'pie');
 
         if (this._label_placement === 'legend') {
-            this._pie.attr("transform", 'translate(' + this._outer_radius + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')')
+            this._pie.attr("transform", 'translate(' + this._outer_radius + ',' + (availableHeight/2 + verticalSpaceNeeded/2) + ')')
         } else {
-            this._pie.attr("transform", 'translate(' + (availableWidth/2 + this._max_label_width) + ',' + (minDimension/2 + verticalSpaceNeeded/2) + ')');
+            this._pie.attr("transform", 'translate(' + (availableWidth/2 + this._max_label_width) + ',' + (availableHeight/2 + verticalSpaceNeeded/2) + ')');
         }
 
         this._renderSegments(segments);
