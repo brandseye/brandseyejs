@@ -526,7 +526,7 @@ class FantasticChart {
             left: outerPadding + yAxisWidth
         };
         if (this._show_y_axis && this._y_axis_label) margin.left += 20;
-        if (this._show_x_axis && this._x_axis_label) margin.bottom += 40;
+        if (this._show_x_axis && this._x_axis_label) margin.bottom += 15;
         if (y2AxisWidth && this._y2_axis_label) margin.right += 15;
         const width  = this._width - margin.left - margin.right;
 
