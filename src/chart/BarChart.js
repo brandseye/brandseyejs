@@ -48,7 +48,6 @@ class BarHistogram extends Geometry {
               height = this._height;
 
         element.classed("histogram", true);
-        element.style("opacity", this._opacity === null ? 1.0 : this._opacity)
 
         const x = this.getD3XScale(allData, width);
         const y = this.getD3YScale(data, height);
@@ -82,7 +81,8 @@ class BarHistogram extends Geometry {
 
         // Ensure that we're always using the correct height.
         element.select(".bars")
-               .attr("transform", "translate(0,0)");
+            .attr("transform", "translate(0,0)")
+            .style("opacity", this._opacity === null ? 1.0 : this._opacity)
 
         groups = groups.data(data, d => d._key);
 
