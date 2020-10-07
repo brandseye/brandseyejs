@@ -72,6 +72,7 @@ class FantasticChart {
         this._y_grid_lines = false;
         this._axis_box = false;
         this._x_label_angle = null;
+        this._x_label_notrim = false;
         this._grid_line_opacity = 0.15;
         this._x_tick_values_fn = null;
         this._y_tick_values_fn = null;
@@ -365,6 +366,15 @@ class FantasticChart {
         return this;
     }
 
+    /**
+     * Do not limit the length of x labels.
+     */
+    xLabelNotrim(on) {
+        if (arguments.length === 0) return this._x_label_notrim;
+        this._x_label_notrim = !!on;
+        return this;
+    }
+
     gridLineOpacity(opacity) {
         if (arguments.length === 0) return this._grid_line_opacity;
         if (typeof opacity !== "number") throw new Error("opacity must be a number or null");
@@ -551,7 +561,7 @@ class FantasticChart {
         const axisSizeArea = svg.append("g")
             .attr("transform", "translate(-1000, -1000)");
 
-        const xAxisRestriction = Math.min(25, Math.max(this._height * 0.07, 12));
+        const xAxisRestriction = this._x_label_notrim ? null : Math.min(25, Math.max(this._height * 0.07, 12));
         let axisHeight = 0;
         if (this._show_x_axis){
             facets.forEach(facet => {

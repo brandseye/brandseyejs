@@ -24,7 +24,7 @@
  * @returns {*}
  */
 export function restrictLength(text, length) {
-    if (!text) return text;
+    if (!text || !length) return text;
     text = "" + text;
     if (text.length <= length) return text;
 
