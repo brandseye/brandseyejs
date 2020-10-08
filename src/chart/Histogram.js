@@ -17,10 +17,10 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { Geometry, fromKey } from './Geometry';
-import { colours } from "../Colours";
-import { toColourKey } from "../Legend";
-import { labelIsZero } from "../helpers";
+import {fromKey, Geometry} from './Geometry';
+import {colours} from "../Colours";
+import {toColourKey} from "../Legend";
+import {labelIsZero} from "../helpers";
 
 
 class Histogram extends Geometry {
@@ -40,6 +40,8 @@ class Histogram extends Geometry {
               height = this._height;
 
         element.classed("histogram", true);
+
+        let stacked = this._stacked
 
         const x = this.getD3XScale(data, width);
         const y = this.getD3YScale(allData, height);
@@ -86,6 +88,15 @@ class Histogram extends Geometry {
               .each((s_d, s_i, nodes) => {
                   let group = d3.select(nodes[s_i]);
 
+                  // calculate the total height under each bar for stacking
+                  if (stacked) {
+                      let py = 0
+                      s_d.data.forEach(d => {
+                          d._py = py
+                          py += height - y(d._y)
+                      })
+                  }
+
                   let bars = group.selectAll(".bar")
                                   .data(s_d.data);
 
@@ -99,9 +110,9 @@ class Histogram extends Geometry {
                       .merge(bars)
 
                   bars.attr("class", d => "bar series series-" + toColourKey(d._colour))
-                      .attr("x", d => xGroup(d._key))
-                      .attr("y", d => height - y(Math.min(0, d._y)))
-                      .attr("width", xGroup.bandwidth())
+                      .attr("x", stacked ? 0 : d => xGroup(d._key))
+                      .attr("y", d => stacked ? d._py : height - y(Math.min(0, d._y)))
+                      .attr("width", stacked ? x.bandwidth() : xGroup.bandwidth())
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this._stroke_width)
                       .style("fill", fillFn)
@@ -214,14 +225,28 @@ class Histogram extends Geometry {
     }
 
     getD3YScale(data, height) {
-        data = (data || this.prepareData(null, false)).map(d => d.data).reduce((acc, val) => acc.concat(val));
         height = height || this.height();
+        data = (data || this.prepareData(null, false))
 
-        let extent = d3.extent(data, d => d._y)
-        if (this._y2_getter) {
-            let e2 = d3.extent(data, d => d._y2)
-            extent[0] = Math.min(extent[0], e2[0])
-            extent[1] = Math.max(extent[1], e2[1])
+        let extent
+        if (this._stacked) {
+            extent = [0,0]
+            data.forEach(g => {
+                let tot = d3.sum(g.data, d => d._y)
+                extent[1] = Math.max(extent[1], tot)
+                if (this._y2_getter) {
+                    tot = d3.sum(g.data, d => d._y2)
+                    extent[1] = Math.max(extent[1], tot)
+                }
+            })
+        } else {
+            data = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
+            extent = d3.extent(data, d => d._y)
+            if (this._y2_getter) {
+                let e2 = d3.extent(data, d => d._y2)
+                extent[0] = Math.min(extent[0], e2[0])
+                extent[1] = Math.max(extent[1], e2[1])
+            }
         }
 
         const max = Math.max(extent[1], this._axis_max_value || 0)
@@ -238,6 +263,8 @@ class Histogram extends Geometry {
 
     renderLabels(selection, data, xscale, xgroup, yscale, colourScale, animate) {
         animate = animate === undefined ? true : animate;
+        let stacked = this._stacked
+        let height = this._height
         selection.selectAll(".chart-labels").remove();
 
         let labels = selection.append("g")
@@ -248,7 +275,16 @@ class Histogram extends Geometry {
         let maxWidth = 0;     // For calculating the max width of text.
         let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
-        const calcDy = (y, ypos) => ((y >= 0 && ypos < 10) || ( y < 0 && this._height - ypos > 10)) ? fontSize + 2: -buffer;
+
+        let calcDy
+        if (stacked) {
+            calcDy = y => {
+                let h = height - yscale(y)
+                return -(h / 2) + (fontSize * 0.35)
+            }
+        } else {
+            calcDy = (y, ypos) => ((y >= 0 && ypos < 10) || ( y < 0 && this._height - ypos > 10)) ? fontSize + 2: -buffer
+        }
 
         // Want to figure out if the label is too dark / light for the
         // bar.
@@ -268,6 +304,8 @@ class Histogram extends Geometry {
                     ? lighterFillColour
                     : (onBar ? d3.hcl(fillColour).darker() : fillColour));
         };
+
+        let barWidth = stacked ? xscale.bandwidth() : xgroup.bandwidth()
 
         labels.enter().each((series, s_i, s_nodes) => {
             // We want to determine which groups may have missing values, and provide them.
@@ -295,7 +333,7 @@ class Histogram extends Geometry {
               .enter()
               .each((d, i, nodes) => {
                   const labelText = this.formatLabel()(d._y, d);
-                  let ypos = yscale(d._y);
+                  let ypos = stacked ? height - d._py : yscale(d._y);
                   let dy = calcDy(d._y, ypos);
                   let text = d3.select(nodes[i])
                         .append("text")
@@ -305,15 +343,14 @@ class Histogram extends Geometry {
                         .attr("y", ypos)
                         .attr("dx", animate ? -15 : 0)
                         .attr("dy", dy)
+                        .attr("text-anchor", "middle")
                         .style("opacity", animate ? 0 : 1)
                         .style("pointer-events", "none")
-                        .style("fill", d => findColour(d, dy, labelText));
+                        .style("fill", d => findColour(d, dy, labelText))
+                        .attr("x", (stacked ? 0 : xgroup(d._key)) + barWidth / 2)
+                        .style("display", stacked && (height - yscale(d._y)) < fontSize ? "none" : null)
 
-                  // Set the x position, which is based on width.
-                  const width = text.node().getBBox().width;
-                  maxWidth = Math.max(width, maxWidth);
-                  text
-                      .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2);
+                  maxWidth = Math.max(text.node().getBBox().width, maxWidth);
 
                   if (animate) {
                       text.transition("labels")
@@ -327,8 +364,8 @@ class Histogram extends Geometry {
 
         // Figure out if we don't have enough space to show our labels.
         // We then want to resize, if possible.
-        if (xgroup.bandwidth() < maxWidth * 1.10) {
-            let scale = maxWidth / xgroup.bandwidth() * 1.10;
+        if (barWidth < maxWidth * 1.10) {
+            let scale = maxWidth / barWidth * 1.10;
             fontSize = Math.floor(fontSize / scale);
 
             if (fontSize < 10) {
@@ -341,12 +378,8 @@ class Histogram extends Geometry {
                       .style("font-size", fontSize + "px")
                       .each((d, i, nodes) => {
                           const text = d3.select(nodes[i]);
-                          const width = text.node().getBBox().width;
                           const dy = calcDy(d._y, yscale(d._y));
-
-                          text
-                              .attr("x", xgroup(d._key) + xgroup.bandwidth() / 2 - width / 2)
-                              .style("fill", d => findColour(d, dy, text.text()))
+                          text.style("fill", d => findColour(d, dy, text.text()))
                               .attr("dy", dy);
                       })
             }

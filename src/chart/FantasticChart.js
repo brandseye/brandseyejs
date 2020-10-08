@@ -587,6 +587,11 @@ class FantasticChart {
         // Update margins and calculate height
 
         margin.bottom += axisHeight;
+
+        // make these whole numbers so height is a whole number .. this prevents gaps in stacked bars
+        margin.top = Math.floor(margin.top + 0.5)
+        margin.bottom = Math.floor(margin.bottom + 0.5)
+
         const height = this._height - margin.top - margin.bottom;
 
         //-----------------------------------------------

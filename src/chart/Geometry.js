@@ -65,6 +65,7 @@ export class Geometry {
         this._opacity = null
         this._index = 0;  // Used for generating unique keys
         this._no_animation = false;
+        this._stacked = false
     }
 
     name() {
@@ -77,6 +78,13 @@ export class Geometry {
     index(i) {
         if (arguments.length === 0) return this._index;
         this._index = i;
+        return this;
+    }
+
+    /** Use stacked bars. */
+    stacked(on) {
+        if (arguments.length === 0) return this._stacked;
+        this._stacked = on;
         return this;
     }
 
