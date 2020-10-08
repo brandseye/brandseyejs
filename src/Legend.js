@@ -46,7 +46,7 @@ export function renderLegend(element, geomBuckets, colourScale, width, height, m
         const colours = Array.from(buckets.colours);
         if (colours.length < min) return 0;
 
-        const boundings = getBoundings(element, colours);
+        const boundings = getBoundings(element, colours, null, fontSize);
 
         let elements = gm.selectAll(".legend-element").data(colours);
 
