@@ -17,10 +17,10 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { Geometry, fromKey } from './Geometry';
-import { colours } from "../Colours";
-import { toColourKey } from "../Legend";
-import { labelIsZero } from "../helpers";
+import {fromKey, Geometry} from './Geometry';
+import {colours} from "../Colours";
+import {toColourKey} from "../Legend";
+import {labelIsZero} from "../helpers";
 
 
 class BarHistogram extends Geometry {
@@ -296,6 +296,7 @@ class BarHistogram extends Geometry {
         let maxWidth = 0;     // For calculating the max width of the text.
         let fontSize = this._font_size;    // Our initial font size.
         const buffer = 5;     // Buffer space between words and the top of a bar.
+        const stacked = this._stacked
 
         // Want to figure out if the label is too dark / light for the
         // bar.
@@ -341,8 +342,8 @@ class BarHistogram extends Geometry {
               .enter()
               .each((d, i, nodes) => {
                   const labelText = this.formatLabel()(d._x, d);
-                  let ypos = yGroup(d._key) + yGroup.bandwidth() / 2;
-                  let xpos = xscale(d._x);
+                  let ypos = stacked ? yscale.bandwidth() / 2 : yGroup(d._key) + yGroup.bandwidth() / 2;
+                  let xpos = (stacked ? d._px : 0) + xscale(d._x);
                   let text = d3.select(nodes[i])
                         .append("text")
                         .style("font-size", fontSize + "px")
@@ -350,15 +351,27 @@ class BarHistogram extends Geometry {
                         .attr("class", d => "chart-label series series-" + toColourKey(d._colour))
                         .attr("dx", (animate ? -15 : 0))
                         .style("opacity", animate ? 0 : 1)
-                        .style("pointer-events", "none");
+                        .style("pointer-events", "none")
+                        .style("display", null);
 
                   // Set the x position, which is based on width.
                   const bb = text.node().getBBox();
                   const height = bb.height;
-                  const width = bb.width;
+                  let width = bb.width;
 
                   let effectiveBuffer = buffer;
-                  if (xpos + width >= this._width) {
+                  if (stacked) {
+                      width += buffer * 2
+                      let barWidth = xscale(d._x)
+                      if (width <= barWidth) { // put inside bar
+                          xpos -= width - buffer
+                      } else if (i === nodes.length - 1 && width <= this._width - xpos) { // last bar so put after end
+                          xpos += buffer
+                      } else {  // no space so hide label
+                          text.style("display", "none");
+                      }
+                      effectiveBuffer = 0
+                  } else if (xpos + width >= this._width) {
                       xpos = Math.max(0, xpos - width);
                       effectiveBuffer = -buffer;
                   }
@@ -387,7 +400,7 @@ class BarHistogram extends Geometry {
 
         // Figure out if we don't have enough space to show our labels.
         // We then want to resize, if possible.
-        if (yGroup.bandwidth() < maxHeight * 1.10) {
+        if (!stacked && yGroup.bandwidth() < maxHeight * 1.10) {
             let scale = maxHeight / yGroup.bandwidth() * 1.10;
             fontSize = Math.floor(fontSize / scale);
 
