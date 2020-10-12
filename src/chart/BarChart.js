@@ -46,6 +46,7 @@ class BarHistogram extends Geometry {
         const allData = this.prepareData(null, false);
         const width = this._width,
               height = this._height;
+        const stacked = this._stacked
 
         element.classed("histogram", true);
 
@@ -109,6 +110,15 @@ class BarHistogram extends Geometry {
               .each((s_d, s_i, nodes) => {
                   let group = d3.select(nodes[s_i]);
 
+                  // calculate the total width under each bar for stacking
+                  if (stacked) {
+                      let px = 0
+                      s_d.data.forEach(d => {
+                          d._px = px
+                          px += x(d._x)
+                      })
+                  }
+
                   let bars = group.selectAll(".bar")
                                   .data(s_d.data, d => d._y);
 
@@ -116,14 +126,13 @@ class BarHistogram extends Geometry {
 
                   bars = bars.enter()
                       .append("rect")
-                      .attr("y", d => yGroup(d._key))
-                      // .attr("y", d => height - y(Math.min(0, d._y)))
-                      .attr("x", x(0))
                       .attr("width", 0)
-                      .attr("height", yGroup.bandwidth())
                       .style("cursor", "pointer")
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
+                      .attr("y", d => stacked ? 0 : yGroup(d._key))
+                      .attr("x", d => stacked ? d._px : x(0))
+                      .attr("height", stacked ? y.bandwidth() : yGroup.bandwidth())
                       .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this.strokeWidth())
@@ -161,8 +170,6 @@ class BarHistogram extends Geometry {
                       })
                       .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
-                      .attr("x", d => x(Math.min(0, d._x)))
-                      .attr("height", yGroup.bandwidth())
 
                   bars = this._no_animation ? bars : bars.transition().duration(1)
                   bars.attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
@@ -230,14 +237,28 @@ class BarHistogram extends Geometry {
     }
 
     getD3XScale(data, width) {
-        data = (data || this.prepareData(null, false)).map(d => d.data).reduce((acc, val) => acc.concat(val));
+        data = (data || this.prepareData(null, false))
         width = width || this.width();
 
-        let extent = d3.extent(data, d => d._x)
-        if (this._x2_getter) {
-            let e2 = d3.extent(data, d => d._x2)
-            extent[0] = Math.min(extent[0], e2[0])
-            extent[1] = Math.max(extent[1], e2[1])
+        let extent
+        if (this._stacked) {
+            extent = [0,0]
+            data.forEach(g => {
+                let tot = d3.sum(g.data, d => d._x)
+                extent[1] = Math.max(extent[1], tot)
+                if (this._x2_getter) {
+                    tot = d3.sum(g.data, d => d._x2)
+                    extent[1] = Math.max(extent[1], tot)
+                }
+            })
+        } else {
+            data = data.map(d => d.data).reduce((acc, val) => acc.concat(val));
+            extent = d3.extent(data, d => d._x)
+            if (this._x2_getter) {
+                let e2 = d3.extent(data, d => d._x2)
+                extent[0] = Math.min(extent[0], e2[0])
+                extent[1] = Math.max(extent[1], e2[1])
+            }
         }
 
         const max = Math.max(extent[1], this._axis_max_value || 0)
