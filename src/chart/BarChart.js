@@ -365,12 +365,12 @@ class BarHistogram extends Geometry {
                       let barWidth = xscale(d._x)
                       if (width <= barWidth) { // put inside bar
                           xpos -= width - buffer
+                          effectiveBuffer = -1  // indicate that label is on bar for fill colour
                       } else if (i === nodes.length - 1 && width <= this._width - xpos) { // last bar so put after end
                           xpos += buffer
                       } else {  // no space so hide label
                           text.style("display", "none");
                       }
-                      effectiveBuffer = 0
                   } else if (xpos + width >= this._width) {
                       xpos = Math.max(0, xpos - width);
                       effectiveBuffer = -buffer;
