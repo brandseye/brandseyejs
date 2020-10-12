@@ -297,7 +297,7 @@ class Histogram extends Geometry {
         const fillColour = d3.hcl(colours.eighteen.darkGrey).brighter();
         const lighterFillColour = d3.hcl(colours.eighteen.midGrey);
         const findColour = (d, dy, labelText) => {
-            const onBar = (d._y >= 0 && dy > 0 || d._y < 0 && dy < 0);
+            const onBar = stacked || (d._y >= 0 && dy > 0 || d._y < 0 && dy < 0);
             return onBar && shouldInvert(d)
                 ? getInvertedColor(d).toString()
                 : (labelIsZero(labelText)

@@ -517,7 +517,7 @@ class FantasticChart {
                 return renderLegend(svg, geomBuckets,
                     csFn, this._width, this._height, geometries.length > 1 ? 1 : null, axisOptions)
             }
-            legendHeight = renderLegendFn()
+            legendHeight = renderLegendFn() + 8
         } else {
             removeLegend(svg)
         }
