@@ -131,7 +131,7 @@ class BarHistogram extends Geometry {
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .attr("y", d => stacked ? 0 : yGroup(d._key))
-                      .attr("x", d => stacked ? d._px : x(0))
+                      .attr("x", d => stacked ? d._px : x(Math.min(0, d._x)))
                       .attr("height", stacked ? y.bandwidth() : yGroup.bandwidth())
                       .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
