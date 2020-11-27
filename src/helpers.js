@@ -85,3 +85,5 @@ export function equals(lhs, rhs) {
 
     return lhs === rhs;
 }
+
+export function numCheck(v) { return typeof v === "number" ? v : 0 }

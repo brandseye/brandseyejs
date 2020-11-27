@@ -19,7 +19,7 @@
 
 import {Geometry} from './Geometry';
 import {toColourKey} from "../Legend";
-import {equals} from "../helpers";
+import {equals, numCheck} from "../helpers";
 import {colours} from "../Colours";
 
 
@@ -162,7 +162,7 @@ class Line extends Geometry {
 
         const lineGeom = d3.line()
             .x(d => x(d._x) + x.bandwidth() / 2)
-            .y(d => y(d._y))
+            .y(d => y(numCheck(d._y)))
             .curve(d3[this._curve]);
 
         const flatGeom = d3.line()
@@ -376,8 +376,6 @@ function getClosestPoint(xval, yval, data) {
 
     return min;
 }
-
-
 
 export function line() {
     return new Line();

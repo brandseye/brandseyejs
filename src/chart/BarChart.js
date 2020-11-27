@@ -20,7 +20,7 @@
 import {fromKey, Geometry} from './Geometry';
 import {colours} from "../Colours";
 import {toColourKey} from "../Legend";
-import {labelIsZero} from "../helpers";
+import {labelIsZero, numCheck} from "../helpers";
 
 
 class BarHistogram extends Geometry {
@@ -115,7 +115,7 @@ class BarHistogram extends Geometry {
                       let px = 0
                       s_d.data.forEach(d => {
                           d._px = px
-                          px += x(d._x)
+                          px += x(numCheck(d._x))
                       })
                   }
 
@@ -131,7 +131,7 @@ class BarHistogram extends Geometry {
                       .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .attr("y", d => stacked ? 0 : yGroup(d._key))
-                      .attr("x", d => stacked ? d._px : x(Math.min(0, d._x)))
+                      .attr("x", d => stacked ? d._px : x(Math.min(0, numCheck(d._x))))
                       .attr("height", stacked ? y.bandwidth() : yGroup.bandwidth())
                       .style("fill", fillFn)
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
@@ -172,7 +172,7 @@ class BarHistogram extends Geometry {
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
 
                   bars = this._no_animation ? bars : bars.transition().duration(1)
-                  bars.attr("width", d => Math.abs((usingX2 ? x(d._x2) : x(0)) - x(d._x)));
+                  bars.attr("width", d => Math.abs((usingX2 ? x(numCheck(d._x2)) : x(0)) - x(numCheck(d._x))));
               });
 
         // Labels loaded after our last bar grows.
@@ -343,7 +343,7 @@ class BarHistogram extends Geometry {
               .each((d, i, nodes) => {
                   const labelText = this.formatLabel()(d._x, d);
                   let ypos = stacked ? yscale.bandwidth() / 2 : yGroup(d._key) + yGroup.bandwidth() / 2;
-                  let xpos = (stacked ? d._px : 0) + xscale(d._x);
+                  let xpos = (stacked ? d._px : 0) + xscale(numCheck(d._x));
                   let text = d3.select(nodes[i])
                         .append("text")
                         .style("font-size", fontSize + "px")

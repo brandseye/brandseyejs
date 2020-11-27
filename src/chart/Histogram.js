@@ -20,7 +20,7 @@
 import {fromKey, Geometry} from './Geometry';
 import {colours} from "../Colours";
 import {toColourKey} from "../Legend";
-import {labelIsZero} from "../helpers";
+import {labelIsZero, numCheck} from "../helpers";
 
 
 class Histogram extends Geometry {
@@ -111,7 +111,7 @@ class Histogram extends Geometry {
 
                   bars.attr("class", d => "bar series series-" + toColourKey(d._colour))
                       .attr("x", stacked ? 0 : d => xGroup(d._key))
-                      .attr("y", d => stacked ? d._py : height - y(Math.min(0, d._y)))
+                      .attr("y", d => stacked ? d._py : height - y(Math.min(0, numCheck(d._y))))
                       .attr("width", stacked ? x.bandwidth() : xGroup.bandwidth())
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this._stroke_width)
@@ -149,7 +149,7 @@ class Histogram extends Geometry {
                       })
 
                   bars = this._no_animation ? bars : bars.transition().duration(1)
-                  bars.attr("height", d => Math.abs(y(usingY2 ? d._y2 : 0) - y(d._y)))
+                  bars.attr("height", d => Math.abs(y(usingY2 ? numCheck(d._y2) : 0) - y(numCheck(d._y))))
               });
 
         if (this.showLabels()) this.renderLabels(element, data, x, xGroup, y, colours, !this._no_animation);
@@ -421,7 +421,6 @@ class Histogram extends Geometry {
 
 
 }
-
 
 export function histogram() {
     return new Histogram();
