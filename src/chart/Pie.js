@@ -854,7 +854,8 @@ class Pie extends Geometry {
               .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
               this._dispatch.call("tooltipHide", this);
           })
-          .on("click auxclick", (d, i, nodes) => {
+          .on("click auxclick contextmenu", (d, i, nodes) => {
+              if (d3.event.type === "contextmenu") d3.event.preventDefault()
               this._dispatch.call("elementClick", this, {
                   e: d3.event,
                   point: d.data,

@@ -131,7 +131,8 @@ class Line extends Geometry {
                         .attr("fill", this.getD3Colour(d))
                         .style("opacity", 0.1)
                         .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                        .on("click auxclick", (d, i, nodes) => {
+                        .on("click auxclick contextmenu", (d, i, nodes) => {
+                            if (d3.event.type === "contextmenu") d3.event.preventDefault()
                             this._dispatch.call("elementClick", this, {
                                 e: d3.event,
                                 point: min,
@@ -220,8 +221,10 @@ class Line extends Geometry {
                     circles.attr("r", r).attr("cx", d => x(d._x) + mid).attr("cy", d => y(d._y)).attr("fill", colour)
                         .attr("opacity", 0.0)
                         .on("mouseenter", d => that._dispatch.call("tooltipShow", that, { e: d3.event, point: d, geometry: that }))
-                        .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                        .on("click auxclick", d => that._dispatch.call("elementClick", that, { e: d3.event, point: d, geometry: that }))
+                        .on("click auxclick contextmenu", d => {
+                            if (d3.event.type === "contextmenu") d3.event.preventDefault()
+                            that._dispatch.call("elementClick", that, { e: d3.event, point: d, geometry: that })
+                        })
                 })
             } else {
                 const selectors = element
@@ -279,8 +282,8 @@ class Line extends Geometry {
                                                  .style("opacity", 0)
                                                  .style("fill", d => this.getD3Colour(d))
                                                  .style("stroke", determineStrokeColour)
-                                             .on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                                             .on("click auxclick", d => {
+                                             .on("click auxclick contextmenu", d => {
+                                                 if (d3.event.type === "contextmenu") d3.event.preventDefault()
                                                  this._dispatch.call("elementClick", this, {
                                                      e: d3.event,
                                                      point: d

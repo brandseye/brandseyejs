@@ -90,8 +90,7 @@ class Point extends Geometry {
                           .style("cursor", "pointer")
                       .merge(points)
 
-                  points.on("contextmenu", () => d3.event.preventDefault()) // No right click.
-                      .on("mouseover", (d, i, nodes) => {
+                  points.on("mouseover", (d, i, nodes) => {
                           this._dispatch.call("tooltipShow", this, {
                               e: d3.event,
                               point: d
@@ -116,7 +115,8 @@ class Point extends Geometry {
                               .style("fill", d => this.getD3Colour(d))
                               .attr("r", d => sizeScale(Math.abs(d._size)));
                       })
-                      .on("click auxclick", d => {
+                      .on("click auxclick contextmenu", d => {
+                          if (d3.event.type === "contextmenu") d3.event.preventDefault()
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
                               point: d

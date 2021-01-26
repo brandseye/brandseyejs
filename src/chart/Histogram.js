@@ -106,7 +106,6 @@ class Histogram extends Geometry {
                       .append("rect")
                       .attr("height", 0)
                       .style("cursor", "pointer")
-                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
 
                   bars.attr("class", d => "bar series series-" + toColourKey(d._colour))
@@ -116,7 +115,8 @@ class Histogram extends Geometry {
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this._stroke_width)
                       .style("fill", fillFn)
-                      .on("click auxclick", (d, i, nodes) => {
+                      .on("click auxclick contextmenu", (d, i, nodes) => {
+                          if (d3.event.type === "contextmenu") d3.event.preventDefault()
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
                               point: d,

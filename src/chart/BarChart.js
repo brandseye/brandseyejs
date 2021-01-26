@@ -128,7 +128,6 @@ class BarHistogram extends Geometry {
                       .append("rect")
                       .attr("width", 0)
                       .style("cursor", "pointer")
-                      .on("contextmenu", () => d3.event.preventDefault()) // No right click.
                       .merge(bars)
                       .attr("y", d => stacked ? 0 : yGroup(d._key))
                       .attr("x", d => stacked ? d._px : x(Math.min(0, numCheck(d._x))))
@@ -137,7 +136,8 @@ class BarHistogram extends Geometry {
                       .style("stroke", d => d3.hcl(this.getD3Colour(d)).darker())
                       .style("stroke-width", this.strokeWidth())
                       .attr("class", d => "bar series series-" + toColourKey(d._colour))
-                      .on("click auxclick", (d, i, nodes) => {
+                      .on("click auxclick contextmenu", (d, i, nodes) => {
+                          if (d3.event.type === "contextmenu") d3.event.preventDefault()
                           this._dispatch.call("elementClick", this, {
                               e: d3.event,
                               point: d,
