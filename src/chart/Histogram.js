@@ -69,10 +69,11 @@ class Histogram extends Geometry {
         groups = groups.data(data)
         groups.exit().remove()
 
+        let geometryIndex = this._index
         const fillFn = d => {
             let colourFn = d._colourFn
             if (colourFn) {
-                let c = colourFn(d)
+                let c = colourFn(d, geometryIndex)
                 if (c) return c
             }
             return gradientId ? "url(#" + gradientId + ")" : this.getD3Colour(d)

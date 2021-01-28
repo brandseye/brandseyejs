@@ -48,9 +48,19 @@ class Point extends Geometry {
 
         groups.exit().remove();
 
+        let geometryIndex = this._index
+        const colourFn = d => {
+            let colourFn = d._colourFn
+            if (colourFn) {
+                let c = colourFn(d, geometryIndex)
+                if (c) return c
+            }
+            return this.getD3Colour(d)
+        }
+
         const transparentColour = d3.hcl(colours.eighteen.darkGrey);
         transparentColour.opacity = 0.8;
-        const determineStroke = d => d3.hcl(this.getD3Colour(d)).c < 20 ? transparentColour : "none";
+        const determineStroke = d => d3.hcl(colourFn(d)).c < 20 ? transparentColour : "none";
 
         // Try to choose opacity of the points based on how much data there is,
         // and how much space we have to display them. When they are overlapping (this is
@@ -76,7 +86,7 @@ class Point extends Geometry {
                           .attr("cx", d => x(d._x) + x.bandwidth() / 2)
                           .attr("r", d => sizeScale(Math.abs(d._size)))
                           .style("stroke", determineStroke)
-                          .style("fill", d => this.getD3Colour(d));
+                          .style("fill", colourFn);
 
                   points = points.enter()
                       .append("circle")
@@ -85,7 +95,7 @@ class Point extends Geometry {
                           .attr("cx", d => x(d._x) + x.bandwidth() / 2)
                           .attr("cy", y(0))
                           .attr("r", 1)
-                          .style("fill", d => this.getD3Colour(d))
+                          .style("fill", colourFn)
                           .style("stroke", determineStroke)
                           .style("cursor", "pointer")
                       .merge(points)
@@ -102,7 +112,7 @@ class Point extends Geometry {
                               .transition("point:grow")
                               .duration(250)
                               .style("opacity", 1)
-                              .style("fill", d => d3.hcl(this.getD3Colour(d)).darker())
+                              .style("fill", d => d3.hcl(colourFn(d)).darker())
                               .attr("r", d => sizeScale(Math.abs(d._size)) + 5);
                       })
                       .on("mouseout", (d, i, nodes) => {
@@ -112,7 +122,7 @@ class Point extends Geometry {
                               .transition("point:grow")
                               .duration(250)
                               .style("opacity", defaultOpacity)
-                              .style("fill", d => this.getD3Colour(d))
+                              .style("fill", colourFn)
                               .attr("r", d => sizeScale(Math.abs(d._size)));
                       })
                       .on("click auxclick contextmenu", d => {

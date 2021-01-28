@@ -821,6 +821,17 @@ class Pie extends Geometry {
     }
 
     _renderSegments(segments) {
+        let geometryIndex = this._index
+        const colourFn = d => {
+            d = d.data
+            let colourFn = d._colourFn
+            if (colourFn) {
+                let c = colourFn(d, geometryIndex)
+                if (c) return c
+            }
+            return this.getD3Colour(d)
+        }
+
         const segmentWrapper = this._appendIfEmpty(this._pie, 'g', 'segments');
         const paths = segmentWrapper.selectAll('.segment')
             .data(segments, d => d.data._x);
@@ -835,8 +846,8 @@ class Pie extends Geometry {
               .interrupt("hover:colour")
               .transition("hover:colour")
               .duration(50)
-              .attr("fill", d3.hcl(this.getD3Colour(d.data)).brighter(0.2))
-              .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker(0.4));
+              .attr("fill", d => d3.hcl(colourFn(d)).brighter(0.2))
+              .attr("stroke", d => d3.hcl(colourFn(d)).darker(0.4));
               this._dispatch.call("tooltipShow", this, {
                   e: d3.event,
                   point: d.data,
@@ -850,8 +861,8 @@ class Pie extends Geometry {
               .interrupt("hover:colour")
               .transition("hover:colour")
               .duration(100)
-              .attr("fill", d => this.getD3Colour(d.data))
-              .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker());
+              .attr("fill", colourFn)
+              .attr("stroke", d => d3.hcl(colourFn(d)).darker());
               this._dispatch.call("tooltipHide", this);
           })
           .on("click auxclick contextmenu", (d, i, nodes) => {
@@ -865,8 +876,8 @@ class Pie extends Geometry {
               })
           })
           .transition().duration(this._transition_duration)
-          .attr("fill", d => this.getD3Colour(d.data))
-          .attr("stroke", d => d3.hcl(this.getD3Colour(d.data)).darker())
+          .attr("fill", colourFn)
+          .attr("stroke", d => d3.hcl(colourFn(d)).darker())
           .style("cursor", "pointer")
           .attrTween('d', function(p,pi,pnodes){
               var pInt = d3.interpolate(this._current, p);
