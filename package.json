@@ -12,17 +12,22 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack -d --progress",
-    "dev": "webpack-dev-server"
+    "build": "webpack --mode development --progress",
+    "dev": "webpack-dev-server --mode development"
   },
   "devDependencies": {
-    "uglifyjs-webpack-plugin": "^2.1.2",
-    "webpack": "^4.8.3",
-    "webpack-cli": "^3.1.1",
-    "webpack-dev-server": "^3.10.3"
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "babel-loader": "^10.0.0",
+    "webpack": "^5.105.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.3"
   },
   "dependencies": {
     "compute-iqr": "^1.1.0",
-    "d3": "^5.4.0"
+    "d3": "^5.7.0"
+  },
+  "resolutions": {
+    "serialize-javascript": ">=3.1.0"
   }
 }

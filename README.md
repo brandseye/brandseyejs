@@ -23,7 +23,7 @@ There is currently minimal documentation.
 ## Examples
 
 There are many examples of the charts, and pulling data from a BrandsEye account, in the
-dist directory. 
+dist directory.
 
 ## Licenses
 
