@@ -1,5 +1,5 @@
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -8,23 +8,38 @@ module.exports = {
   },
   devServer: {
     port: 8000,
-    filename: 'b3js.js',
+    devMiddleware: {},
     publicPath: '/dist/',
     open: true,
     openPage: 'dist/examples/fantastic.html'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].js', library: 'b3js'
+    filename: '[name].js',
+    library: 'b3js',
+    libraryTarget: 'umd'
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader'
+        }
+      }
+    ]
   },
   optimization: {
       minimize: true,
-      minimizer: [new UglifyJsPlugin({
-          include: /\.min\.js$/
-      })]
+      minimizer: [
+          new TerserPlugin({
+              test: /\.min\.js$/,
+          })
+      ]
   },
   externals: {
-    lodash: {
+    d3: {
       commonjs: 'd3',
       commonjs2: 'd3',
       amd: 'd3',
