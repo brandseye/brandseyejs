@@ -488,11 +488,11 @@ class FantasticChart {
         let yAxisWidth = 0, y2AxisWidth = 0, firstY2AxisGeom = null;
         if (geometries.length) {
             if (this._show_y_axis){
-                const yScale = geometries[0].height(this._height).getD3YScale()
-                const ticks = yScale.ticks ? yScale.ticks() : yScale.domain()
+                const yScale = geometries[0].height(this._height).getD3YScale();
+                const ticks = yScale.ticks ? yScale.ticks() : yScale.domain();
                 yAxisWidth = maxBounding(svg, ticks
                     .map(geometries[0].formatY())
-                    .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
+                    .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15;
             }
             if (this._show_y2_axis) {
                 for (let i = 1; i < geometries.length; i++) {
