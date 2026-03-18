@@ -488,9 +488,11 @@ class FantasticChart {
         let yAxisWidth = 0, y2AxisWidth = 0, firstY2AxisGeom = null;
         if (geometries.length) {
             if (this._show_y_axis){
-                yAxisWidth = maxBounding(svg, geometries[0].yValues()
+                const yScale = geometries[0].height(this._height).getD3YScale();
+                const ticks = yScale.ticks ? yScale.ticks() : yScale.domain();
+                yAxisWidth = maxBounding(svg, ticks
                     .map(geometries[0].formatY())
-                    .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15
+                    .map(d => restrictLength(d, yAxisRestriction)), null, this._font_size).width + 15;
             }
             if (this._show_y2_axis) {
                 for (let i = 1; i < geometries.length; i++) {
@@ -535,7 +537,7 @@ class FantasticChart {
             bottom: outerPadding + legendHeight,
             left: outerPadding + yAxisWidth
         };
-        if (this._show_y_axis && this._y_axis_label) margin.left += 20;
+        if (this._show_y_axis && this._y_axis_label) margin.left += 30;
         if (this._show_x_axis && this._x_axis_label) margin.bottom += 15;
         if (y2AxisWidth && this._y2_axis_label) margin.right += 15;
         const width  = this._width - margin.left - margin.right;
@@ -699,7 +701,7 @@ class FantasticChart {
 
         if (this._show_y_axis) yAxisLabel(svg, height, margin, this._y_axis_label, axisOptions, 0);
         if (this._show_y2_axis) {
-            yAxisLabel(svg, height, margin, this._y2_axis_label, axisOptions, margin.left + width + y2AxisWidth + 20);
+            yAxisLabel(svg, height, margin, this._y2_axis_label, axisOptions, margin.left + width + y2AxisWidth + 30);
         }
         if (this._show_x_axis) xAxisLabel(svg, width, height, margin, this._x_axis_label, axisOptions);
 
