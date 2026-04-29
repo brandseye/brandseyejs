@@ -29,6 +29,7 @@
   },
   "resolutions": {
       "serialize-javascript": ">=7.0.5",
-      "d3-color": ">=3.1.0"
+      "d3-color": ">=3.1.0",
+      "picomatch": ">=2.3.2"
   }
 }
