@@ -9,6 +9,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
   - `nvm use`
 
 ### Install dependencies
+- use `yarn` or `corepack yarn`
 - Canonical install command (matches lockfile):
   - `yarn install`
 
