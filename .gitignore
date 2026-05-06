@@ -6,3 +6,4 @@ bob
 node_modules
 old-package.json
 ideas.js
+.DS_Store
