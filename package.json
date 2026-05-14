@@ -33,6 +33,7 @@
       "serialize-javascript": ">=7.0.5",
       "d3-color": ">=3.1.0",
       "picomatch": ">=2.3.2",
-      "path-to-regexp": "0.1.13"
+      "path-to-regexp": "0.1.13",
+      "ajv": ">=8.18.0"
   }
 }
