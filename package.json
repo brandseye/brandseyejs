@@ -21,7 +21,7 @@
     "babel-loader": "^10.0.0",
     "webpack": "^5.105.1",
     "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.3"
+    "webpack-dev-server": "^5.2.4"
   },
   "dependencies": {
     "compute-iqr": "^1.1.0",
