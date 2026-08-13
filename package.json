@@ -21,7 +21,7 @@
     "babel-loader": "^10.0.0",
     "webpack": "^5.105.1",
     "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.4"
+    "webpack-dev-server": "^5.2.6"
   },
   "dependencies": {
     "compute-iqr": "^1.1.0",
@@ -36,6 +36,8 @@
     "path-to-regexp": "0.1.13",
     "ajv": ">=8.18.0",
     "qs": ">=6.15.2",
-    "shell-quote": "1.8.4"
+    "shell-quote": "1.8.4",
+    "websocket-driver": "0.7.5",
+    "http-proxy-middleware": "2.0.10"
   }
 }
